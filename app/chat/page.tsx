@@ -344,10 +344,11 @@ function ChatArea({
   onBack: () => void
   updateConv: (id: string, item: Partial<Conversation>) => Promise<void>
 }) {
-  const { data: messages, add: addMessage } = useFirestoreCollection<Message>(
+  const { data: rawMessages, add: addMessage } = useFirestoreCollection<Message>(
     'chat_mensajes',
-    { where: ['conversationId', '==', conv.id], orderByField: 'createdAt' },
+    { where: ['conversationId', '==', conv.id] },
   )
+  const messages = [...rawMessages].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)

@@ -32,7 +32,10 @@ export function useFirestoreCollection<T extends { id: string }>(
     const unsub = onSnapshot(q, snap => {
       setData(snap.docs.map(d => ({ id: d.id, ...d.data() } as T)))
       setLoading(false)
-    }, () => setLoading(false))
+    }, err => {
+      console.error(`Firestore (${collectionName}):`, err)
+      setLoading(false)
+    })
     return unsub
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collectionName, whereKey, orderByField])
