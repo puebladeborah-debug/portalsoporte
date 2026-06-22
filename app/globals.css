@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+:root {
+  --bg-base: #060608;
+  --bg-surface: #0e0e12;
+  --bg-card: #13131a;
+  --border-subtle: #1e1e28;
+  --border-active: #3a3a50;
+  --silver: #b8bcc8;
+  --silver-bright: #d4d8e8;
+  --silver-dim: #6a6e7a;
+  --white: #f0f2ff;
+  --glow: rgba(180, 185, 210, 0.08);
+  --glow-strong: rgba(180, 185, 210, 0.18);
+}
+
+
+@theme inline {
+  --color-background: var(--bg-base);
+  --color-foreground: var(--white);
+}
+
+html {
+  background: var(--bg-base);
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--white);
+  font-family: 'SF Pro Display', 'Segoe UI', Arial, sans-serif;
+}
+
+/* Futuristic scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--silver-dim); }
+
+/* ── Luz azul corriendo alrededor de las tarjetas de categoría ─────────── */
+@keyframes catBeamSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.cat-glow {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.cat-glow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 700px;
+  height: 700px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(20,20,35,0.9) 0%,
+    rgba(20,20,35,0.9) 76%,
+    #1a3a8f 81%,
+    #2563eb 84%,
+    #60a5fa 87%,
+    #2563eb 90%,
+    #1a3a8f 93%,
+    rgba(20,20,35,0.9) 97%
+  );
+  animation: catBeamSpin 4s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cat-glow::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 11px;
+  background: #0e0e12;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cat-glow-inner {
+  position: relative;
+  z-index: 2;
+}
+
+.cat-glow:nth-child(2)::before { animation-delay: -0.8s; }
+.cat-glow:nth-child(3)::before { animation-delay: -1.6s; }
+.cat-glow:nth-child(4)::before { animation-delay: -2.4s; }
+.cat-glow:nth-child(5)::before { animation-delay: -3.2s; }
+
+/* Glow pulse animation */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(180,185,210,0.15); }
+  50% { box-shadow: 0 0 20px rgba(180,185,210,0.35); }
+}
+
+/* Scan line overlay */
+.scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.015) 2px,
+    rgba(255,255,255,0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Silver gradient text */
+.text-silver-gradient {
+  background: linear-gradient(135deg, #d4d8e8 0%, #8890a8 50%, #d4d8e8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card glass effect */
+.card-glass {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card-glass:hover {
+  border-color: var(--border-active);
+  box-shadow: 0 0 16px var(--glow);
+}
+
+/* Neon border effect */
+.border-glow {
+  border: 1px solid rgba(180,185,210,0.3);
+  box-shadow: 0 0 12px rgba(180,185,210,0.1), inset 0 0 12px rgba(180,185,210,0.03);
+}
