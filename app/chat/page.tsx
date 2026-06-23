@@ -5,7 +5,7 @@ import { useAuth } from '@/components/LoginGate'
 import { getMembers, TeamMember } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import {
-  MessageCircle, Plus, Users, User, Send, ArrowLeft, X, ChevronDown,
+  MessageCircle, Plus, Users, User, Send, ArrowLeft, X, ChevronDown, Smile,
 } from 'lucide-react'
 
 const S = {
@@ -90,6 +90,42 @@ function fmtDate(iso: string): string {
   yesterday.setDate(today.getDate() - 1)
   if (d.toDateString() === yesterday.toDateString()) return 'Ayer'
   return d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+/* ─── Selector de emojis ─────────────────────────────────────────────────── */
+const EMOJIS = [
+  '😀','😂','🤣','😅','😊','😍','😘','😜','🤔','😐','🙄','😢','😭','😡','😱','🥳',
+  '😴','🤗','🤝','👍','👎','👏','🙏','💪','✌️','👌','🤞','👋','❤️','💔','💛','💚',
+  '💙','💜','🧡','🖤','💯','🔥','⭐','✅','❌','⚠️','🎉','📌','📅','⏰','💰','📞',
+]
+
+function EmojiPicker({ onPick, onClose }: { onPick: (emoji: string) => void; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [onClose])
+
+  return (
+    <div ref={ref} className="absolute bottom-full mb-2 left-0 rounded-2xl overflow-hidden z-20"
+      style={{ background: '#0c0c14', border: `1px solid ${S.borderLight}`, boxShadow: '0 8px 40px rgba(0,0,0,0.7)' }}>
+      <div className="grid grid-cols-8 gap-1 p-3" style={{ maxWidth: '280px' }}>
+        {EMOJIS.map(e => (
+          <button key={e} onClick={() => onPick(e)}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-lg transition-all"
+            style={{ background: 'transparent' }}
+            onMouseEnter={ev => (ev.currentTarget.style.background = 'rgba(180,185,210,0.1)')}
+            onMouseLeave={ev => (ev.currentTarget.style.background = 'transparent')}>
+            {e}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 /* ─── New Conversation Modal ─────────────────────────────────────────────── */
@@ -351,9 +387,15 @@ function ChatArea({
   const messages = [...rawMessages].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [showEmoji, setShowEmoji] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const { member } = useAuth()
+
+  function pickEmoji(emoji: string) {
+    setInput(prev => prev + emoji)
+    inputRef.current?.focus()
+  }
 
   const label   = convLabel(conv, myId, members)
   const isGroup = conv.type === 'group'
@@ -460,9 +502,21 @@ function ChatArea({
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 px-4 py-3"
+      <div className="flex-shrink-0 px-4 py-3 relative"
         style={{ borderTop: `1px solid ${S.border}`, background: S.panel }}>
+        {showEmoji && (
+          <EmojiPicker onPick={e => { pickEmoji(e); }} onClose={() => setShowEmoji(false)} />
+        )}
         <div className="flex items-end gap-2">
+          <button onClick={() => setShowEmoji(o => !o)}
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+            style={{
+              background: showEmoji ? 'rgba(180,185,210,0.15)' : 'rgba(180,185,210,0.05)',
+              color: showEmoji ? S.silverBright : S.silverDim,
+              border: `1px solid ${showEmoji ? 'rgba(180,185,210,0.25)' : S.border}`,
+            }}>
+            <Smile size={18} />
+          </button>
           <textarea
             ref={inputRef}
             value={input}
