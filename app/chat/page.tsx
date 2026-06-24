@@ -592,7 +592,7 @@ export default function ChatPage() {
 
   const selected = conversations.find(c => c.id === selectedId) ?? null
 
-  useEffect(() => { setMembers(getMembers()) }, [])
+  useEffect(() => { getMembers().then(setMembers) }, [])
 
   function selectConv(conv: Conversation) {
     setSelectedId(conv.id)

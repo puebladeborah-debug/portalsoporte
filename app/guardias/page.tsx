@@ -94,7 +94,7 @@ export default function GuardiasPage() {
     (session && members.find(m => m.id === session.memberId)?.permissions.includes('guardias'))
 
   useEffect(() => {
-    setMembers(getMembers())
+    getMembers().then(setMembers)
   }, [])
 
   // Guardia efectiva para un día: override explícito si existe, si no, el patrón semanal

@@ -72,7 +72,14 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
   const lastPos = useRef<{ x: number; y: number } | null>(null)
 
   const displayName = memberName.split(' · ').pop() || memberName
-  const memberRole = getMembers().find(m => m.id === memberId)?.role || 'Equipo de Soporte'
+  const [memberRole, setMemberRole] = useState('Equipo de Soporte')
+
+  useEffect(() => {
+    getMembers().then(all => {
+      const role = all.find(m => m.id === memberId)?.role
+      if (role) setMemberRole(role)
+    })
+  }, [memberId])
 
   const today = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
 

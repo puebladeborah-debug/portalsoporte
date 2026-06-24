@@ -70,13 +70,13 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
       }
     }
 
-    const members = getMembers()
+    const members = await getMembers()
     const updated = members.map(m => {
       if (m.id !== session.memberId) return m
       const newName = m.id === 'dlp' ? `DLP · ${editName}` : editName
       return { ...m, name: newName }
     })
-    saveMembers(updated)
+    await saveMembers(updated)
     refresh()
     setSaving(false)
     setCurrentPw(''); setEditPw(''); setConfirmPw('')

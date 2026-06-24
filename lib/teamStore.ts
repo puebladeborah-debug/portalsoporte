@@ -90,7 +90,6 @@ export type Session = {
   loginTime: string
 }
 
-const STORE_KEY = 'team_members_v4'
 const ATTEND_KEY = 'attendance_v1'
 const SESSION_KEY = 'session_v1'
 
@@ -291,56 +290,91 @@ export const DEFAULT_MEMBERS: TeamMember[] = [
   },
 ]
 
-export function getMembers(): TeamMember[] {
-  if (typeof window === 'undefined') return DEFAULT_MEMBERS
-  const saved = localStorage.getItem(STORE_KEY)
-  if (!saved) {
-    localStorage.setItem(STORE_KEY, JSON.stringify(DEFAULT_MEMBERS))
+// ─── Equipo (Firestore) ─────────────────────────────────────────────────────
+// El perfil completo (permisos, admin, tareas, horario...) vive en la
+// colección "equipo" — visible solo para quien tenga sesión de Firebase.
+// La colección "directorio" guarda solo username→correo, de lectura pública,
+// para poder ubicar el correo de alguien ANTES de haber iniciado sesión
+// (Firebase necesita el correo, no el username, para autenticar).
+const EQUIPO_COLLECTION = 'equipo'
+const DIRECTORIO_COLLECTION = 'directorio'
+
+export async function getMembers(): Promise<TeamMember[]> {
+  const { collection, getDocs, doc, writeBatch } = await import('firebase/firestore')
+  const { db } = await import('./firebase')
+
+  const snap = await getDocs(collection(db, EQUIPO_COLLECTION))
+  if (snap.empty) {
+    // Primera vez que se lee: siembra Firestore con los miembros por defecto.
+    try {
+      const batch = writeBatch(db)
+      for (const m of DEFAULT_MEMBERS) {
+        batch.set(doc(db, EQUIPO_COLLECTION, m.id), m as unknown as Record<string, unknown>)
+        batch.set(doc(db, DIRECTORIO_COLLECTION, m.username.toLowerCase()), { email: m.email, memberId: m.id })
+      }
+      await batch.commit()
+    } catch {
+      // Si todavía no hay sesión de Firebase no se puede escribir; se usa
+      // el valor por defecto mientras tanto, sin romper la pantalla.
+    }
     return DEFAULT_MEMBERS
   }
-  const stored: TeamMember[] = JSON.parse(saved)
-
-  // Combina lo guardado con los valores por defecto: conserva cualquier
-  // personalización ya hecha (horario, tareas, permisos...) pero agrega
-  // campos nuevos (como "email") y miembros nuevos que aún no existían.
-  const merged = DEFAULT_MEMBERS.map(def => {
-    const existing = stored.find(m => m.id === def.id)
-    return existing ? { ...def, ...existing, email: existing.email || def.email } : def
-  })
-  const extras = stored.filter(m => !DEFAULT_MEMBERS.some(def => def.id === m.id))
-  const result = [...merged, ...extras]
-
-  const resultStr = JSON.stringify(result)
-  if (resultStr !== saved) localStorage.setItem(STORE_KEY, resultStr)
-  return result
+  return snap.docs.map(d => d.data() as TeamMember)
 }
 
-export function saveMembers(members: TeamMember[]) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(members))
+export async function saveMembers(members: TeamMember[]) {
+  const { collection, getDocs, doc, writeBatch } = await import('firebase/firestore')
+  const { db } = await import('./firebase')
+
+  const [equipoSnap, dirSnap] = await Promise.all([
+    getDocs(collection(db, EQUIPO_COLLECTION)),
+    getDocs(collection(db, DIRECTORIO_COLLECTION)),
+  ])
+  const existingIds = new Set(equipoSnap.docs.map(d => d.id))
+  const newIds = new Set(members.map(m => m.id))
+  const existingUsernames = new Set(dirSnap.docs.map(d => d.id))
+  const newUsernames = new Set(members.map(m => m.username.toLowerCase()))
+
+  const batch = writeBatch(db)
+  for (const m of members) {
+    batch.set(doc(db, EQUIPO_COLLECTION, m.id), m as unknown as Record<string, unknown>)
+    batch.set(doc(db, DIRECTORIO_COLLECTION, m.username.toLowerCase()), { email: m.email, memberId: m.id })
+  }
+  for (const id of existingIds) if (!newIds.has(id)) batch.delete(doc(db, EQUIPO_COLLECTION, id))
+  for (const uname of existingUsernames) if (!newUsernames.has(uname)) batch.delete(doc(db, DIRECTORIO_COLLECTION, uname))
+  await batch.commit()
 }
 
-// Login local (legado) — válido solo contra lo guardado en este navegador.
-export function loginLocal(username: string, password: string): TeamMember | null {
-  const members = getMembers()
-  return members.find(
-    m => m.username.toLowerCase() === username.toLowerCase().trim() && m.password === password
-  ) ?? null
-}
-
-// Login real con Firebase Authentication. Verifica la identidad contra Firebase
-// (no contra lo guardado en este navegador) usando el correo real del perfil.
+// Login real con Firebase Authentication. Primero ubica el correo de la
+// persona en el directorio público (o en los miembros originales, como
+// respaldo si el directorio aún no existe), luego verifica la contraseña
+// contra Firebase y por último carga su perfil completo ya autenticado.
 export async function login(username: string, password: string): Promise<TeamMember | null> {
-  const member = getMembers().find(m => m.username.toLowerCase() === username.toLowerCase().trim())
-  if (!member?.email) return null
+  const uname = username.toLowerCase().trim()
+  const { doc, getDoc } = await import('firebase/firestore')
+  const { db } = await import('./firebase')
+
+  let email: string | undefined
+  try {
+    const dirSnap = await getDoc(doc(db, DIRECTORIO_COLLECTION, uname))
+    if (dirSnap.exists()) email = (dirSnap.data() as { email?: string }).email
+  } catch {
+    // sigue al respaldo de abajo
+  }
+  if (!email) email = DEFAULT_MEMBERS.find(m => m.username.toLowerCase() === uname)?.email
+
+  if (!email) return null
 
   const { signInWithEmailAndPassword } = await import('firebase/auth')
   const { auth } = await import('./firebase')
   try {
-    await signInWithEmailAndPassword(auth, member.email, password)
+    await signInWithEmailAndPassword(auth, email, password)
   } catch {
     return null
   }
-  return member
+
+  const members = await getMembers()
+  return members.find(m => m.username.toLowerCase() === uname) ?? null
 }
 
 export function getSession(): Session | null {

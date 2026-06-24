@@ -24,7 +24,7 @@ export default function AttendanceDashboard() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
   function loadData() {
-    setMembers(getMembers())
+    getMembers().then(setMembers)
     fetch('/api/attendance')
       .then(r => r.json())
       .then(data => setRecords(data))

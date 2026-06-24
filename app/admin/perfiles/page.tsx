@@ -110,7 +110,7 @@ export default function PerfilesPage() {
 
   useEffect(() => {
     if (session && !session.isAdmin) router.replace('/')
-    setMembers(getMembers().filter(m => !m.isAdmin))
+    getMembers().then(all => setMembers(all.filter(m => !m.isAdmin)))
   }, [session, router])
 
   if (!session?.isAdmin) return null

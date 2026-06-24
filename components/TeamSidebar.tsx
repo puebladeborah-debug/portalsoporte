@@ -83,16 +83,17 @@ export default function TeamSidebar() {
   }
 
   useEffect(() => {
-    const saved = getMembers()
-    setMembers(saved)
-    const savedChecks = localStorage.getItem(`teamchecks_${TODAY}`)
-    if (savedChecks) {
-      setChecks(JSON.parse(savedChecks))
-    } else {
-      const init: Record<string, boolean[]> = {}
-      saved.forEach(m => { init[m.id] = new Array(m.tasks.length).fill(false) })
-      setChecks(init)
-    }
+    getMembers().then(saved => {
+      setMembers(saved)
+      const savedChecks = localStorage.getItem(`teamchecks_${TODAY}`)
+      if (savedChecks) {
+        setChecks(JSON.parse(savedChecks))
+      } else {
+        const init: Record<string, boolean[]> = {}
+        saved.forEach(m => { init[m.id] = new Array(m.tasks.length).fill(false) })
+        setChecks(init)
+      }
+    })
     setAttendance(getAttendance().filter(r => r.date === TODAY).map(r => r.memberId))
     const confirmed = localStorage.getItem(`extra_confirmed_${TODAY}`)
     if (confirmed) setConfirmedExtras(JSON.parse(confirmed))
@@ -132,7 +133,7 @@ export default function TeamSidebar() {
     setAttendance(prev => [...new Set([...prev, member.id])])
   }
 
-  function addMember() {
+  async function addMember() {
     if (!newName.trim() || !newRole.trim() || !newEmail.trim()) return
     const m: TeamMember = {
       id: `m_${Date.now()}`, name: newName.trim(), role: newRole.trim(),
@@ -142,29 +143,29 @@ export default function TeamSidebar() {
       email: newEmail.trim(),
       permissions: newPerms, tasks: newTasks.split('\n').map(t => t.trim()).filter(Boolean),
     }
-    const updated = [...members, m]; setMembers(updated); saveMembers(updated)
+    const updated = [...members, m]; setMembers(updated); await saveMembers(updated)
     setChecks(prev => ({ ...prev, [m.id]: new Array(m.tasks.length).fill(false) }))
     setNewEmail('')
     setNewName(''); setNewRole(''); setNewUsername(''); setNewPassword(''); setNewTasks(''); setShowAddForm(false)
   }
 
-  function deleteMember(id: string) {
+  async function deleteMember(id: string) {
     if (id === 'dlp') return
-    const updated = members.filter(m => m.id !== id); setMembers(updated); saveMembers(updated)
+    const updated = members.filter(m => m.id !== id); setMembers(updated); await saveMembers(updated)
   }
 
-  function updatePermissions(memberId: string, perm: Permission, value: boolean) {
+  async function updatePermissions(memberId: string, perm: Permission, value: boolean) {
     const updated = members.map(m => {
       if (m.id !== memberId) return m
       return { ...m, permissions: value ? [...m.permissions, perm] : m.permissions.filter(p => p !== perm) }
     })
-    setMembers(updated); saveMembers(updated)
+    setMembers(updated); await saveMembers(updated)
   }
 
-  function toggleAdmin(memberId: string, value: boolean) {
+  async function toggleAdmin(memberId: string, value: boolean) {
     if (memberId === 'dlp') return // Deborah siempre es administradora
     const updated = members.map(m => (m.id === memberId ? { ...m, isAdmin: value } : m))
-    setMembers(updated); saveMembers(updated)
+    setMembers(updated); await saveMembers(updated)
   }
 
   const [resetStatus, setResetStatus] = useState<Record<string, 'sent' | 'error'>>({})
@@ -201,7 +202,7 @@ export default function TeamSidebar() {
     }, 50)
   }
 
-  function saveEditMember() {
+  async function saveEditMember() {
     if (!editingMember || !editForm.name.trim()) return
     const updated = members.map(m => {
       if (m.id !== editingMember.id) return m
@@ -221,7 +222,7 @@ export default function TeamSidebar() {
       }
     })
     setMembers(updated)
-    saveMembers(updated)
+    await saveMembers(updated)
     // Reset checks if tasks changed
     const member = updated.find(m => m.id === editingMember.id)
     if (member) {

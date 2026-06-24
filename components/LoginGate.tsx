@@ -41,12 +41,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isPublic = PUBLIC_ROUTES.some(r => (pathname ?? '').startsWith(r)) ||
     (pathname ?? '').startsWith('/asistencia-ready')
 
-  function refresh() {
+  async function refresh() {
     try {
       const s = getSession()
       setSessionState(s)
       if (s) {
-        const members = getMembers()
+        const members = await getMembers()
         const m = members.find((x: TeamMember) => x.id === s.memberId) ?? null
         setMember(m)
         if (!hasSignedReglamento(s.memberId)) {
@@ -114,8 +114,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           memberName={session.memberName}
           onDone={() => {
             setNeedsSignature(false)
-            const m = getMembers().find(x => x.id === session.memberId)
-            if (!m?.perfilCompleto && !m?.isAdmin) setNeedsProfile(true)
+            getMembers().then(members => {
+              const m = members.find(x => x.id === session.memberId)
+              if (!m?.perfilCompleto && !m?.isAdmin) setNeedsProfile(true)
+            })
           }}
         />
       )}

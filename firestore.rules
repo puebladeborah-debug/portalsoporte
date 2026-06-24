@@ -11,6 +11,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Directorio público: solo username → correo. Necesario para que el
+    // login pueda ubicar el correo de alguien ANTES de tener sesión
+    // (Firebase pide correo, no username, para autenticar). No expone
+    // contraseñas, permisos ni ningún otro dato del equipo.
+    match /directorio/{username} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
     // Cualquier persona del equipo autenticada puede leer y escribir
     // estas colecciones (chat, guardias, pagos, incidencias, reembolsos, etc.)
     match /equipo/{docId} {

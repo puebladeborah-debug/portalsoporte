@@ -110,9 +110,9 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
 
   const nonAdminMembers = useMemo(() => members.filter(m => !m.isAdmin), [members])
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     const regs = getGiraRegistros(evento.id)
-    const membersCopy = getMembers().filter(m => !m.isAdmin)
+    const membersCopy = (await getMembers()).filter(m => !m.isAdmin)
     const full = membersCopy.map(m =>
       regs.find(r => r.memberId === m.id) ?? emptyRegistro(evento.id, m)
     )
@@ -484,7 +484,7 @@ export default function GirasPage() {
 
   useEffect(() => {
     setEventos(getGiraEventos().sort((a, b) => a.fecha.localeCompare(b.fecha)))
-    setMembers(getMembers())
+    getMembers().then(setMembers)
   }, [])
 
   function reload() {

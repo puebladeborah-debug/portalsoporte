@@ -82,7 +82,7 @@ export default function IncidenciasAdminPage() {
   useEffect(() => {
     if (session && !session.isAdmin) router.replace('/')
     setIncidencias(getIncidencias())
-    setMembers(getMembers().filter(m => !m.isAdmin))
+    getMembers().then(all => setMembers(all.filter(m => !m.isAdmin)))
   }, [session, router])
 
   function reload() { setIncidencias(getIncidencias()) }

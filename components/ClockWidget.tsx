@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from './LoginGate'
-import { getMembers, getHorarioHoy } from '@/lib/teamStore'
+import { getMembers, getHorarioHoy, TeamMember } from '@/lib/teamStore'
 
 function pad(n: number) { return String(n).padStart(2, '0') }
 
@@ -39,9 +39,9 @@ export default function ClockWidget() {
   useEffect(() => {
     if (!session) return
 
+    let member: TeamMember | null = null
+
     function readTasks(t: Date) {
-      const members = getMembers()
-      const member = members.find(m => m.id === session!.memberId)
       if (!member) return
       const horario = getHorarioHoy(member)
       setHoraSalida(horario?.activo ? (horario.salida || '') : '')
@@ -59,7 +59,13 @@ export default function ClockWidget() {
 
     const start = new Date()
     setNow(start)
-    readTasks(start)
+
+    // El perfil del miembro se carga una sola vez (no en cada tick) para no
+    // golpear Firestore cada 2.5 segundos.
+    getMembers().then(members => {
+      member = members.find(m => m.id === session!.memberId) ?? null
+      readTasks(new Date())
+    })
 
     let tick = 0
     const id = setInterval(() => {

@@ -34,13 +34,13 @@ export default function ProfileSetupGate({ memberId, memberName, onDone }: Props
     setForm(prev => ({ ...prev, [key]: val }))
   }
 
-  function save() {
-    const members = getMembers()
+  async function save() {
+    const members = await getMembers()
     const updated = members.map(m => {
       if (m.id !== memberId) return m
       return { ...m, ...form, perfilCompleto: true }
     })
-    saveMembers(updated)
+    await saveMembers(updated)
     setDone(true)
     setTimeout(onDone, 1800)
   }
