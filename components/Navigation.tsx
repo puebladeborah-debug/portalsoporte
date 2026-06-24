@@ -240,7 +240,7 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
 
 export default function Navigation() {
   const pathname = usePathname()
-  const { session, logout } = useAuth()
+  const { session, member, logout } = useAuth()
   const [showProfile, setShowProfile] = useState(false)
 
   const firstName = session?.memberName.split(' · ').pop()?.split(' ')[0] || ''
@@ -278,7 +278,7 @@ export default function Navigation() {
         <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
           <NoticesPanel />
 
-          {session?.isAdmin && (
+          {member?.isAdmin && (
             <Link href="/admin"
               className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors"
               style={{ color: '#3a3e4a', border: `1px solid ${S.border}` }}>

@@ -66,7 +66,7 @@ const BLANK: Omit<Incidencia, 'id' | 'createdAt' | 'createdBy'> = {
 }
 
 export default function IncidenciasAdminPage() {
-  const { session } = useAuth()
+  const { session, member } = useAuth()
   const router = useRouter()
 
   const [incidencias, setIncidencias] = useState<Incidencia[]>([])
@@ -80,10 +80,10 @@ export default function IncidenciasAdminPage() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    if (session && !session.isAdmin) router.replace('/')
+    if (session && !member?.isAdmin) router.replace('/')
     setIncidencias(getIncidencias())
     getMembers().then(all => setMembers(all.filter(m => !m.isAdmin)))
-  }, [session, router])
+  }, [session, member, router])
 
   function reload() { setIncidencias(getIncidencias()) }
 
@@ -119,7 +119,7 @@ export default function IncidenciasAdminPage() {
     .filter(i => !filterTipo || i.tipoIncidencia === filterTipo)
     .filter(i => !search || i.colaboradorName.toLowerCase().includes(search.toLowerCase()) || i.descripcion.toLowerCase().includes(search.toLowerCase()))
 
-  if (!session?.isAdmin) return null
+  if (!member?.isAdmin) return null
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>

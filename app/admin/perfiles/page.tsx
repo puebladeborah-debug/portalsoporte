@@ -104,16 +104,16 @@ function MemberCard({ m }: { m: TeamMember }) {
 }
 
 export default function PerfilesPage() {
-  const { session } = useAuth()
+  const { session, member } = useAuth()
   const router = useRouter()
   const [members, setMembers] = useState<TeamMember[]>([])
 
   useEffect(() => {
-    if (session && !session.isAdmin) router.replace('/')
+    if (session && !member?.isAdmin) router.replace('/')
     getMembers().then(all => setMembers(all.filter(m => !m.isAdmin)))
-  }, [session, router])
+  }, [session, member, router])
 
-  if (!session?.isAdmin) return null
+  if (!member?.isAdmin) return null
 
   const completos  = members.filter(m => m.perfilCompleto).length
   const pendientes = members.length - completos

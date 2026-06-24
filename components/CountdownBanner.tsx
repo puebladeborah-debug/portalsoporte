@@ -163,13 +163,13 @@ const BLANK: Omit<CountdownEvent, 'id'> = {
 }
 
 export default function CountdownBanner() {
-  const { session } = useAuth()
+  const { member } = useAuth()
   const [events, setEvents] = useState<CountdownEvent[]>([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ ...BLANK })
   const [editId, setEditId] = useState<string | null>(null)
 
-  const canEdit = !!session?.isAdmin
+  const canEdit = !!member?.isAdmin
 
   useEffect(() => { setEvents(getCountdownEvents()) }, [])
 

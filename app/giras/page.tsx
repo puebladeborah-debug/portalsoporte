@@ -153,7 +153,8 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
     setAlertaAck(true)
   }
 
-  const showAlarmBanner = alerta && !alertaAck && !session?.isAdmin
+  const isAdminLive = !!members.find(m => m.id === session?.memberId)?.isAdmin
+  const showAlarmBanner = alerta && !alertaAck && !isAdminLive
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>
@@ -480,7 +481,8 @@ export default function GirasPage() {
   const [form, setForm] = useState({ ...BLANK_EV })
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
 
-  const canManage = session?.isAdmin || (session && members.find(m => m.id === session.memberId)?.permissions.includes('giras'))
+  const myGirasProfile = members.find(m => m.id === session?.memberId)
+  const canManage = !!myGirasProfile?.isAdmin || !!myGirasProfile?.permissions.includes('giras')
 
   useEffect(() => {
     setEventos(getGiraEventos().sort((a, b) => a.fecha.localeCompare(b.fecha)))

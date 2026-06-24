@@ -33,8 +33,8 @@ type ExtraTask = { id: string; text: string; date: string; targetMembers: string
 const TODAY = new Date().toISOString().split('T')[0]
 
 export default function TeamSidebar() {
-  const { session } = useAuth()
-  const adminMode = !!session?.isAdmin
+  const { member: myMember } = useAuth()
+  const adminMode = !!myMember?.isAdmin
   const [members, setMembers] = useState<TeamMember[]>([])
   const [open, setOpen] = useState<string | null>(null)
   const [checks, setChecks] = useState<Record<string, boolean[]>>({})

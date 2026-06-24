@@ -90,8 +90,8 @@ export default function GuardiasPage() {
   const [editPatron, setEditPatron] = useState<GuardiaPatron>({})
 
   const nonAdminMembers = members.filter(m => !m.isAdmin)
-  const canEdit = session?.isAdmin ||
-    (session && members.find(m => m.id === session.memberId)?.permissions.includes('guardias'))
+  const myProfile = members.find(m => m.id === session?.memberId)
+  const canEdit = !!myProfile?.isAdmin || !!myProfile?.permissions.includes('guardias')
 
   useEffect(() => {
     getMembers().then(setMembers)
