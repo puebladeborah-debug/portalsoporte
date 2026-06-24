@@ -29,20 +29,29 @@ export default function ProfileSetupGate({ memberId, memberName, onDone }: Props
     alergias: '',
     tipoSangre: '',
   })
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   function f(key: keyof typeof form, val: string) {
     setForm(prev => ({ ...prev, [key]: val }))
   }
 
   async function save() {
-    const members = await getMembers()
-    const updated = members.map(m => {
-      if (m.id !== memberId) return m
-      return { ...m, ...form, perfilCompleto: true }
-    })
-    await saveMembers(updated)
-    setDone(true)
-    setTimeout(onDone, 1800)
+    setSaving(true)
+    setError('')
+    try {
+      const members = await getMembers()
+      const updated = members.map(m => {
+        if (m.id !== memberId) return m
+        return { ...m, ...form, perfilCompleto: true }
+      })
+      await saveMembers(updated)
+      setDone(true)
+      setTimeout(onDone, 1800)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar. Intenta de nuevo.')
+      setSaving(false)
+    }
   }
 
   const step1Valid = form.telefonoPersonal.trim().length >= 7
@@ -234,17 +243,24 @@ export default function ProfileSetupGate({ memberId, memberName, onDone }: Props
             ) : (
               <button
                 onClick={save}
-                disabled={!step3Valid}
+                disabled={!step3Valid || saving}
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
                 style={{
                   background: step3Valid ? 'rgba(100,200,120,0.15)' : 'rgba(180,185,210,0.04)',
                   color: step3Valid ? '#70c080' : S.silverDim,
                   border: step3Valid ? '1px solid rgba(100,200,120,0.35)' : `1px solid ${S.border}`,
+                  opacity: saving ? 0.6 : 1,
                 }}>
-                Guardar y entrar al portal
+                {saving ? 'Guardando…' : 'Guardar y entrar al portal'}
               </button>
             )}
           </div>
+
+          {error && (
+            <p className="text-center text-[11px] font-semibold" style={{ color: '#e07070' }}>
+              {error}
+            </p>
+          )}
 
           <p className="text-center text-[9px]" style={{ color: S.silverDim }}>
             Puedes actualizar esta información en cualquier momento desde tu perfil

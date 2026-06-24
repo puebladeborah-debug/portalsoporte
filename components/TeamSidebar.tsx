@@ -133,6 +133,21 @@ export default function TeamSidebar() {
     setAttendance(prev => [...new Set([...prev, member.id])])
   }
 
+  const [teamError, setTeamError] = useState('')
+
+  async function persistMembers(updated: TeamMember[], previous: TeamMember[]): Promise<boolean> {
+    setMembers(updated)
+    setTeamError('')
+    try {
+      await saveMembers(updated)
+      return true
+    } catch (err) {
+      setMembers(previous)
+      setTeamError(err instanceof Error ? `No se pudo guardar: ${err.message}` : 'No se pudo guardar el cambio')
+      return false
+    }
+  }
+
   async function addMember() {
     if (!newName.trim() || !newRole.trim() || !newEmail.trim()) return
     const m: TeamMember = {
@@ -143,7 +158,9 @@ export default function TeamSidebar() {
       email: newEmail.trim(),
       permissions: newPerms, tasks: newTasks.split('\n').map(t => t.trim()).filter(Boolean),
     }
-    const updated = [...members, m]; setMembers(updated); await saveMembers(updated)
+    const previous = members
+    const updated = [...members, m]
+    await persistMembers(updated, previous)
     setChecks(prev => ({ ...prev, [m.id]: new Array(m.tasks.length).fill(false) }))
     setNewEmail('')
     setNewName(''); setNewRole(''); setNewUsername(''); setNewPassword(''); setNewTasks(''); setShowAddForm(false)
@@ -151,21 +168,25 @@ export default function TeamSidebar() {
 
   async function deleteMember(id: string) {
     if (id === 'dlp') return
-    const updated = members.filter(m => m.id !== id); setMembers(updated); await saveMembers(updated)
+    const previous = members
+    const updated = members.filter(m => m.id !== id)
+    await persistMembers(updated, previous)
   }
 
   async function updatePermissions(memberId: string, perm: Permission, value: boolean) {
+    const previous = members
     const updated = members.map(m => {
       if (m.id !== memberId) return m
       return { ...m, permissions: value ? [...m.permissions, perm] : m.permissions.filter(p => p !== perm) }
     })
-    setMembers(updated); await saveMembers(updated)
+    await persistMembers(updated, previous)
   }
 
   async function toggleAdmin(memberId: string, value: boolean) {
     if (memberId === 'dlp') return // Deborah siempre es administradora
+    const previous = members
     const updated = members.map(m => (m.id === memberId ? { ...m, isAdmin: value } : m))
-    setMembers(updated); await saveMembers(updated)
+    await persistMembers(updated, previous)
   }
 
   const [resetStatus, setResetStatus] = useState<Record<string, 'sent' | 'error'>>({})
@@ -204,6 +225,7 @@ export default function TeamSidebar() {
 
   async function saveEditMember() {
     if (!editingMember || !editForm.name.trim()) return
+    const previous = members
     const updated = members.map(m => {
       if (m.id !== editingMember.id) return m
       const newIsAdmin = m.id === 'dlp' ? true : editIsAdmin
@@ -221,8 +243,8 @@ export default function TeamSidebar() {
         horario: editHorario,
       }
     })
-    setMembers(updated)
-    await saveMembers(updated)
+    const ok = await persistMembers(updated, previous)
+    if (!ok) return
     // Reset checks if tasks changed
     const member = updated.find(m => m.id === editingMember.id)
     if (member) {
@@ -532,16 +554,21 @@ export default function TeamSidebar() {
             </div>
 
             {/* Botones fijos al fondo */}
-            <div className="flex gap-2 px-5 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${S.border}` }}>
-              <button onClick={() => setEditingMember(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
-                Cancelar
-              </button>
-              <button onClick={saveEditMember}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-                style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}` }}>
-                <Check size={14} /> Guardar
-              </button>
+            <div className="px-5 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${S.border}` }}>
+              {teamError && (
+                <p className="text-[11px] font-semibold mb-2 text-center" style={{ color: '#e07070' }}>{teamError}</p>
+              )}
+              <div className="flex gap-2">
+                <button onClick={() => setEditingMember(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                  Cancelar
+                </button>
+                <button onClick={saveEditMember}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+                  style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}` }}>
+                  <Check size={14} /> Guardar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -563,6 +590,13 @@ export default function TeamSidebar() {
               </button>
             )}
           </div>
+
+          {teamError && (
+            <div className="mb-3 px-3 py-2 rounded-xl text-[10px] leading-relaxed"
+              style={{ background: 'rgba(220,80,80,0.08)', border: '1px solid rgba(220,80,80,0.25)', color: '#e07070' }}>
+              {teamError}
+            </div>
+          )}
 
           {/* Add member form */}
           {adminMode && showAddForm && (
