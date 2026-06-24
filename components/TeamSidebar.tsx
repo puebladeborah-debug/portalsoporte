@@ -3,11 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   ChevronDown, ChevronRight, CheckCircle2, Circle, Users, Plus, X,
-  QrCode, Shield, Trash2, Lock, Pencil, Check, Zap, Bell,
+  QrCode, Trash2, Pencil, Check, Zap, Bell, KeyRound,
 } from 'lucide-react'
 import QRCode from 'qrcode'
 import { getMembers, saveMembers, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, saveReporteQR } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
+import { useAuth } from './LoginGate'
+import { auth } from '@/lib/firebase'
+import { sendPasswordResetEmail } from 'firebase/auth'
 
 const S = {
   bg: '#08080e', card: '#0e0e14', border: '#1a1a24',
@@ -30,13 +33,14 @@ type ExtraTask = { id: string; text: string; date: string; targetMembers: string
 const TODAY = new Date().toISOString().split('T')[0]
 
 export default function TeamSidebar() {
+  const { session } = useAuth()
+  const adminMode = !!session?.isAdmin
   const [members, setMembers] = useState<TeamMember[]>([])
   const [open, setOpen] = useState<string | null>(null)
   const [checks, setChecks] = useState<Record<string, boolean[]>>({})
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [qrMember, setQrMember] = useState<TeamMember | null>(null)
   const [qrStatus, setQrStatus] = useState<'completo' | 'incompleto'>('completo')
-  const [adminMode, setAdminMode] = useState(false)
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('adminModeChange', { detail: { active: adminMode } }))
@@ -46,9 +50,6 @@ export default function TeamSidebar() {
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('sidebarActiveChange', { detail: { active: open !== null } }))
   }, [open])
-  const [pin, setPin] = useState('')
-  const [pinError, setPinError] = useState(false)
-  const [showPinModal, setShowPinModal] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newName, setNewName] = useState('')
   const [newRole, setNewRole] = useState('')
@@ -131,13 +132,6 @@ export default function TeamSidebar() {
     setAttendance(prev => [...new Set([...prev, member.id])])
   }
 
-  function verifyPin() {
-    const admin = getMembers().find(m => m.isAdmin)
-    if (pin === (admin?.password || '1234')) {
-      setAdminMode(true); setShowPinModal(false); setPinError(false); setPin('')
-    } else { setPinError(true) }
-  }
-
   function addMember() {
     if (!newName.trim() || !newRole.trim() || !newEmail.trim()) return
     const m: TeamMember = {
@@ -171,6 +165,23 @@ export default function TeamSidebar() {
     if (memberId === 'dlp') return // Deborah siempre es administradora
     const updated = members.map(m => (m.id === memberId ? { ...m, isAdmin: value } : m))
     setMembers(updated); saveMembers(updated)
+  }
+
+  const [resetStatus, setResetStatus] = useState<Record<string, 'sent' | 'error'>>({})
+
+  async function resetPassword(m: TeamMember) {
+    if (!m.email) return
+    try {
+      await sendPasswordResetEmail(auth, m.email)
+      setResetStatus(prev => ({ ...prev, [m.id]: 'sent' }))
+    } catch {
+      setResetStatus(prev => ({ ...prev, [m.id]: 'error' }))
+    }
+    setTimeout(() => setResetStatus(prev => {
+      const next = { ...prev }
+      delete next[m.id]
+      return next
+    }), 5000)
   }
 
   function openEditMember(member: TeamMember) {
@@ -535,36 +546,6 @@ export default function TeamSidebar() {
         </div>
       )}
 
-      {/* PIN Modal */}
-      {showPinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.85)' }}>
-          <div className="rounded-2xl p-6 w-72" style={{ background: '#0a0a12', border: '1px solid rgba(180,185,210,0.2)' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <Shield size={16} style={{ color: S.silver }} />
-              <p className="text-sm font-bold flex-1" style={{ color: S.silverBright }}>Acceso Administrador</p>
-              <button onClick={() => { setShowPinModal(false); setPin(''); setPinError(false) }} style={{ color: S.silverDim }}><X size={15} /></button>
-            </div>
-            <p className="text-xs mb-3" style={{ color: S.silverDim }}>Ingresa tu contraseña de directora</p>
-            <input type="password" value={pin} onChange={e => setPin(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && verifyPin()} placeholder="••••••••"
-              className="w-full text-center text-xl tracking-widest p-3 rounded-xl outline-none mb-3"
-              style={{ background: '#0e0e18', border: `1px solid ${pinError ? 'rgba(220,80,80,0.5)' : S.border}`, color: S.silverBright }}
-              autoFocus maxLength={20} />
-            {pinError && <p className="text-xs text-center mb-3" style={{ color: '#e07070' }}>Contraseña incorrecta</p>}
-            <div className="flex gap-2">
-              <button onClick={() => { setShowPinModal(false); setPin(''); setPinError(false) }}
-                className="flex-1 py-2 rounded-xl text-xs" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
-                Cancelar
-              </button>
-              <button onClick={verifyPin}
-                className="flex-1 py-2 rounded-xl text-xs font-bold" style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}` }}>
-                Entrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* SIDEBAR */}
       <aside className="hidden md:flex flex-col flex-shrink-0 overflow-y-auto"
         style={{ width: '220px', background: 'rgba(6,6,10,0.95)', borderLeft: '1px solid rgba(180,185,210,0.07)', backdropFilter: 'blur(16px)', height: 'calc(100vh - 64px)', position: 'sticky', top: '64px' }}>
@@ -574,21 +555,10 @@ export default function TeamSidebar() {
           <div className="flex items-center gap-2 mb-4 px-1">
             <Users size={13} style={{ color: S.silver }} />
             <p className="text-xs font-bold tracking-[0.15em] uppercase flex-1" style={{ color: S.silverDim }}>Equipo</p>
-            {adminMode ? (
-              <div className="flex gap-1">
-                <button onClick={() => setShowAddForm(!showAddForm)} className="p-1 rounded-lg"
-                  style={{ color: S.silver, border: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.05)' }}>
-                  <Plus size={12} />
-                </button>
-                <button onClick={() => setAdminMode(false)} className="p-1 rounded-lg"
-                  style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.2)', background: 'rgba(220,80,80,0.05)' }}>
-                  <Lock size={12} />
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => setShowPinModal(true)} className="p-1 rounded-lg"
-                style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
-                <Shield size={12} />
+            {adminMode && (
+              <button onClick={() => setShowAddForm(!showAddForm)} className="p-1 rounded-lg"
+                style={{ color: S.silver, border: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.05)' }}>
+                <Plus size={12} />
               </button>
             )}
           </div>
@@ -808,6 +778,14 @@ export default function TeamSidebar() {
                               onChange={e => toggleAdmin(member.id, e.target.checked)} />
                             Administrador (acceso total)
                           </label>
+
+                          <button onClick={() => resetPassword(member)} disabled={!member.email}
+                            className="w-full flex items-center justify-center gap-1.5 text-[10px] font-semibold px-2 py-1.5 rounded-lg mb-2"
+                            style={{ color: '#6aaddc', border: '1px solid rgba(106,173,220,0.25)', background: 'rgba(106,173,220,0.06)' }}>
+                            <KeyRound size={10} />
+                            {resetStatus[member.id] === 'sent' ? '✓ Correo enviado' : resetStatus[member.id] === 'error' ? 'Error al enviar' : 'Restablecer contraseña'}
+                          </button>
+
                           <p className="text-[9px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Permisos</p>
                           <div className="space-y-1 mb-2">
                             {ALL_PERMISSIONS.map(p => (

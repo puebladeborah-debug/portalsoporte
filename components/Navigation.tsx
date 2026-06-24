@@ -8,6 +8,8 @@ import { BookOpen, CheckSquare, Search, Home, Settings, LogOut, User, Eye, EyeOf
 import NoticesPanel from './NoticesPanel'
 import { useAuth } from './LoginGate'
 import { getMembers, saveMembers, getIncidenciasByMember, Incidencia, TipoIncidencia } from '@/lib/teamStore'
+import { auth } from '@/lib/firebase'
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 
 const S = { silver: '#b8bcc8', silverBright: '#d4d8e8', silverDim: '#3a3e4a', border: '#1a1a24' }
 
@@ -35,29 +37,51 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
   const { session, member, refresh } = useAuth()
   const [tab, setTab] = useState<'perfil' | 'incidencias'>('perfil')
   const [editName, setEditName] = useState(member?.name.split(' · ').pop() || '')
+  const [currentPw, setCurrentPw] = useState('')
   const [editPw, setEditPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [msg, setMsg] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
   const [misIncidencias, setMisIncidencias] = useState<Incidencia[]>([])
 
   useEffect(() => {
     if (session) setMisIncidencias(getIncidenciasByMember(session.memberId))
   }, [session])
 
-  function save() {
+  async function save() {
     if (!session) return
+    setError('')
+
+    if (editPw) {
+      if (editPw !== confirmPw) { setError('Las contraseñas nuevas no coinciden'); return }
+      if (!currentPw) { setError('Ingresa tu contraseña actual para confirmar el cambio'); return }
+      const user = auth.currentUser
+      if (!user?.email) { setError('No hay sesión activa de Firebase'); return }
+      setSaving(true)
+      try {
+        await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, currentPw))
+        await updatePassword(user, editPw)
+      } catch {
+        setError('Tu contraseña actual no es correcta')
+        setSaving(false)
+        return
+      }
+    }
+
     const members = getMembers()
     const updated = members.map(m => {
       if (m.id !== session.memberId) return m
-      const newName = m.isAdmin ? `DLP · ${editName}` : editName
-      const newPw = editPw && editPw === confirmPw ? editPw : m.password
-      return { ...m, name: newName, password: newPw }
+      const newName = m.id === 'dlp' ? `DLP · ${editName}` : editName
+      return { ...m, name: newName }
     })
     saveMembers(updated)
     refresh()
+    setSaving(false)
+    setCurrentPw(''); setEditPw(''); setConfirmPw('')
     setMsg('¡Cambios guardados!')
-    setTimeout(() => setMsg(''), 2000)
+    setTimeout(() => setMsg(''), 2500)
   }
 
   return (
@@ -121,23 +145,33 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {editPw && (
-            <div>
-              <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Confirmar contraseña</p>
-              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: '#0a0a14', border: `1px solid ${editPw !== confirmPw && confirmPw ? 'rgba(220,80,80,0.4)' : S.border}`, color: S.silverBright }} />
-              {editPw !== confirmPw && confirmPw && (
-                <p className="text-[10px] mt-1" style={{ color: '#e07070' }}>Las contraseñas no coinciden</p>
-              )}
-            </div>
+            <>
+              <div>
+                <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Confirmar contraseña nueva</p>
+                <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
+                  style={{ background: '#0a0a14', border: `1px solid ${editPw !== confirmPw && confirmPw ? 'rgba(220,80,80,0.4)' : S.border}`, color: S.silverBright }} />
+                {editPw !== confirmPw && confirmPw && (
+                  <p className="text-[10px] mt-1" style={{ color: '#e07070' }}>Las contraseñas no coinciden</p>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Tu contraseña actual</p>
+                <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)}
+                  placeholder="Para confirmar que eres tú"
+                  className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
+                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              </div>
+            </>
           )}
 
           <div className="pt-1 flex flex-col gap-2">
             {msg && <p className="text-xs text-center" style={{ color: '#70c080' }}>{msg}</p>}
-            <button onClick={save} disabled={editPw !== '' && editPw !== confirmPw}
+            {error && <p className="text-xs text-center" style={{ color: '#e07070' }}>{error}</p>}
+            <button onClick={save} disabled={saving || (editPw !== '' && editPw !== confirmPw)}
               className="w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
-              style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)' }}>
-              <Pencil size={14} /> Guardar cambios
+              style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)', opacity: saving ? 0.6 : 1 }}>
+              <Pencil size={14} /> {saving ? 'Guardando…' : 'Guardar cambios'}
             </button>
           </div>
 
