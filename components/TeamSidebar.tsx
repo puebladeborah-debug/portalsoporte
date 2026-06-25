@@ -32,6 +32,16 @@ type ExtraTask = { id: string; text: string; date: string; targetMembers: string
 
 const TODAY = new Date().toISOString().split('T')[0]
 
+// IDs de perfiles solo de visualización (sin tareas ni funciones operativas)
+const EXEC_IDS = ['jsr', 'mdl']
+
+function nombreCorto(nombre: string) {
+  const partes = nombre.split(' ')
+  if (partes.length <= 1) return nombre
+  const resto = partes.slice(1).map(p => (/^[a-zà-ú]/.test(p) ? p : `${p[0]}.`))
+  return `${partes[0]} ${resto.join(' ')}`
+}
+
 export default function TeamSidebar() {
   const { member: myMember } = useAuth()
   const adminMode = !!myMember?.isAdmin
@@ -627,9 +637,37 @@ export default function TeamSidebar() {
             </div>
           )}
 
+          {/* Perfiles solo de visualización (sin tareas/funciones) */}
+          {members.some(m => EXEC_IDS.includes(m.id)) && (
+            <div className="flex gap-1.5 mb-2.5">
+              {members.filter(m => EXEC_IDS.includes(m.id)).map(m => (
+                <div key={m.id} className="relative flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl"
+                  style={{ background: 'rgba(180,185,210,0.03)', border: `1px solid ${S.border}` }}>
+                  {adminMode && (
+                    <button onClick={() => openEditMember(m)}
+                      className="absolute top-1 right-1 p-0.5 rounded"
+                      style={{ color: S.silverDim }} title="Editar perfil">
+                      <Pencil size={9} />
+                    </button>
+                  )}
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold"
+                    style={{ background: 'rgba(180,185,210,0.08)', color: S.silver }}>
+                    {m.initial}
+                  </div>
+                  <p className="text-[10px] font-semibold text-center leading-tight truncate w-full" style={{ color: S.silverBright }}>
+                    {nombreCorto(m.name)}
+                  </p>
+                  <p className="text-[8px] tracking-widest uppercase" style={{ color: S.silverDim }}>
+                    {m.role}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Member list */}
-          <div className="space-y-2">
-            {members.map(member => {
+          <div className="space-y-1.5">
+            {members.filter(m => !EXEC_IDS.includes(m.id)).map(member => {
               const done = doneCount(member)
               const total = member.tasks.length
               const isOpen = open === member.id
@@ -645,11 +683,11 @@ export default function TeamSidebar() {
 
                   {/* Member header — div instead of button to allow nested buttons */}
                   <div onClick={() => setOpen(isOpen ? null : member.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 transition-all"
+                    className="w-full flex items-center gap-2 px-2.5 py-2 transition-all"
                     style={{ background: isOpen ? 'rgba(180,185,210,0.05)' : 'transparent', cursor: 'pointer' }}>
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold"
                         style={{ background: completed ? 'rgba(100,200,120,0.15)' : 'rgba(180,185,210,0.08)', color: completed ? '#70c080' : S.silver }}>
                         {member.initial}
                       </div>

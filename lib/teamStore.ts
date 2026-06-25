@@ -279,7 +279,7 @@ export const DEFAULT_MEMBERS: TeamMember[] = [
   {
     id: 'mdl',
     name: 'Manuel de León',
-    role: 'CEO',
+    role: 'COO',
     initial: 'M',
     isAdmin: false,
     username: 'manuel',
