@@ -287,7 +287,7 @@ export default function ClockWidget() {
                   {alertLevel !== 'done' && minsLeft === 0 && `¡Salida! ${pendingCount} pend.`}
                 </p>
                 {alertLevel !== 'done' && pendingCount > 0 && (
-                  <Link href="/tareas"
+                  <Link href="/"
                     className="text-[7px] px-1.5 py-0.5 rounded-md flex-shrink-0"
                     style={{ color: ac.text, border: `1px solid ${ac.border}`,
                       background: ac.bg, fontFamily: '"Courier New",monospace' }}>
