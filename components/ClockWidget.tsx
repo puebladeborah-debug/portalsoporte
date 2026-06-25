@@ -7,8 +7,8 @@ import { useAuth } from './LoginGate'
 import { getMembers, getHorarioHoy, TeamMember } from '@/lib/teamStore'
 
 const POS_KEY = 'clock_widget_pos_v1'
-const WIDGET_W = 164
-const WIDGET_H_ESTIMATE = 160
+const WIDGET_W = 128
+const WIDGET_H_ESTIMATE = 130
 
 function pad(n: number) { return String(n).padStart(2, '0') }
 
@@ -223,27 +223,27 @@ export default function ClockWidget() {
           }}>
 
           {/* Agarradera visual (todo el reloj se puede arrastrar, esto es solo el indicador) */}
-          <div className="flex items-center justify-center py-1.5"
+          <div className="flex items-center justify-center py-1"
             style={{ background: 'rgba(180,185,210,0.07)', borderBottom: '1px solid rgba(180,185,210,0.1)' }}>
-            <GripHorizontal size={16} style={{ color: 'rgba(180,185,210,0.55)' }} />
+            <GripHorizontal size={13} style={{ color: 'rgba(180,185,210,0.55)' }} />
           </div>
 
-          <div className="px-3 pt-2.5 pb-2.5">
+          <div className="px-2.5 pt-2 pb-2">
 
             {/* Fecha */}
-            <p className="text-[8px] tracking-[0.24em] mb-1"
+            <p className="text-[7px] tracking-[0.2em] mb-0.5"
               style={{ color: 'rgba(180,185,210,0.38)', fontFamily: '"Courier New", monospace' }}>
               {dia} · {fecha}
             </p>
 
             {/* Hora principal */}
-            <div className="flex items-baseline gap-0.5 mb-2">
-              <span style={{ ...chrome, fontSize: '2.6rem', lineHeight: 1 }}>{hh}</span>
-              <span style={{ ...chrome, fontSize: '2.2rem', lineHeight: 1,
+            <div className="flex items-baseline gap-0.5 mb-1.5">
+              <span style={{ ...chrome, fontSize: '2rem', lineHeight: 1 }}>{hh}</span>
+              <span style={{ ...chrome, fontSize: '1.7rem', lineHeight: 1,
                 opacity: showColon ? 1 : 0.07, transition: 'opacity 0.08s' }}>:</span>
-              <span style={{ ...chrome, fontSize: '2.6rem', lineHeight: 1 }}>{mm}</span>
-              <span style={{ ...chromeSecond, fontSize: '0.9rem', lineHeight: 1,
-                marginLeft: '4px', alignSelf: 'flex-end', paddingBottom: '3px' }}>{ss}</span>
+              <span style={{ ...chrome, fontSize: '2rem', lineHeight: 1 }}>{mm}</span>
+              <span style={{ ...chromeSecond, fontSize: '0.7rem', lineHeight: 1,
+                marginLeft: '3px', alignSelf: 'flex-end', paddingBottom: '2px' }}>{ss}</span>
 
               {/* Indicador de alerta (punto de color) */}
               {alertLevel !== 'none' && (
