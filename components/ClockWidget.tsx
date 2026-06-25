@@ -1,10 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { AlertTriangle, CheckCircle2, GripHorizontal } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from './LoginGate'
 import { getMembers, getHorarioHoy, TeamMember } from '@/lib/teamStore'
+
+const POS_KEY = 'clock_widget_pos_v1'
+const WIDGET_W = 164
+const WIDGET_H_ESTIMATE = 160
 
 function pad(n: number) { return String(n).padStart(2, '0') }
 
@@ -24,6 +28,61 @@ export default function ClockWidget() {
   const [totalTasks, setTotalTasks] = useState(0)
   const [horaSalida, setHoraSalida] = useState('')
   const [sidebarActive, setSidebarActive] = useState(false)
+
+  // ── Arrastrar y soltar el reloj a cualquier parte de la pantalla ──────────
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const dragOffset = useRef({ x: 0, y: 0 })
+
+  function clamp(x: number, y: number) {
+    const maxX = window.innerWidth - WIDGET_W - 4
+    const maxY = window.innerHeight - WIDGET_H_ESTIMATE - 4
+    return { x: Math.min(Math.max(4, x), Math.max(4, maxX)), y: Math.min(Math.max(4, y), Math.max(4, maxY)) }
+  }
+
+  useEffect(() => {
+    const saved = localStorage.getItem(POS_KEY)
+    if (saved) {
+      try { setPos(clamp(JSON.parse(saved).x, JSON.parse(saved).y)) } catch {}
+    }
+  }, [])
+
+  // Si la ventana cambia de tamaño, asegura que el reloj siga visible
+  useEffect(() => {
+    function onResize() {
+      setPos(curr => curr ? clamp(curr.x, curr.y) : curr)
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  function onHandlePointerDown(e: React.PointerEvent) {
+    e.preventDefault()
+    const rect = (e.currentTarget as HTMLElement).closest('[data-clock-widget]')!.getBoundingClientRect()
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    setDragging(true)
+  }
+
+  useEffect(() => {
+    if (!dragging) return
+    function onMove(e: PointerEvent) {
+      const next = clamp(e.clientX - dragOffset.current.x, e.clientY - dragOffset.current.y)
+      setPos(next)
+    }
+    function onUp() {
+      setDragging(false)
+      setPos(curr => {
+        if (curr) localStorage.setItem(POS_KEY, JSON.stringify(curr))
+        return curr
+      })
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+  }, [dragging])
 
   useEffect(() => {
     const onAdmin    = (e: Event) => setSidebarActive((e as CustomEvent).detail.active)
@@ -130,18 +189,21 @@ export default function ClockWidget() {
 
   return (
     <>
-      {/* ── Desktop: reloj compacto esquina inferior derecha ────────────────── */}
-      <div className="hidden md:block fixed select-none"
-        style={{
-          width: '164px',
-          zIndex: 200,
-          right:     sidebarActive ? 'auto'   : '20px',
-          left:      sidebarActive ? '20px'   : 'auto',
-          top:       sidebarActive ? '50%'    : 'auto',
-          bottom:    sidebarActive ? 'auto'   : '20px',
-          transform: sidebarActive ? 'translateY(-50%)' : 'none',
-          transition: 'left 0.35s ease, right 0.35s ease, top 0.35s ease, bottom 0.35s ease, transform 0.35s ease',
-        }}>
+      {/* ── Desktop: reloj compacto, arrastrable ─────────────────────────────── */}
+      <div data-clock-widget className="hidden md:block fixed select-none"
+        style={pos
+          ? { width: `${WIDGET_W}px`, zIndex: 200, left: `${pos.x}px`, top: `${pos.y}px`, right: 'auto', bottom: 'auto', transform: 'none' }
+          : {
+              width: `${WIDGET_W}px`,
+              zIndex: 200,
+              right:     sidebarActive ? 'auto'   : '20px',
+              left:      sidebarActive ? '20px'   : 'auto',
+              top:       sidebarActive ? '50%'    : 'auto',
+              bottom:    sidebarActive ? 'auto'   : '20px',
+              transform: sidebarActive ? 'translateY(-50%)' : 'none',
+              transition: 'left 0.35s ease, right 0.35s ease, top 0.35s ease, bottom 0.35s ease, transform 0.35s ease',
+            }
+        }>
 
         <div className="rounded-2xl overflow-hidden"
           style={{
@@ -154,6 +216,19 @@ export default function ClockWidget() {
               'inset 0 1px 0 rgba(255,255,255,0.05)',
             ].join(', '),
           }}>
+
+          {/* Agarradera para arrastrar */}
+          <div
+            onPointerDown={onHandlePointerDown}
+            className="flex items-center justify-center py-1"
+            style={{
+              cursor: dragging ? 'grabbing' : 'grab',
+              background: 'rgba(180,185,210,0.04)',
+              borderBottom: '1px solid rgba(180,185,210,0.06)',
+              touchAction: 'none',
+            }}>
+            <GripHorizontal size={12} style={{ color: 'rgba(180,185,210,0.3)' }} />
+          </div>
 
           <div className="px-3 pt-2.5 pb-2.5">
 
