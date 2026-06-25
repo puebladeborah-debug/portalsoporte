@@ -57,8 +57,10 @@ export default function ClockWidget() {
   }, [])
 
   function onHandlePointerDown(e: React.PointerEvent) {
+    // No iniciar arrastre si el clic fue sobre el link "Ver" (debe funcionar normal)
+    if ((e.target as HTMLElement).closest('a')) return
     e.preventDefault()
-    const rect = (e.currentTarget as HTMLElement).closest('[data-clock-widget]')!.getBoundingClientRect()
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
     setDragging(true)
   }
@@ -189,10 +191,11 @@ export default function ClockWidget() {
 
   return (
     <>
-      {/* ── Desktop: reloj compacto, arrastrable ─────────────────────────────── */}
+      {/* ── Desktop: reloj compacto, arrastrable desde cualquier punto ───────── */}
       <div data-clock-widget className="hidden md:block fixed select-none"
+        onPointerDown={onHandlePointerDown}
         style={pos
-          ? { width: `${WIDGET_W}px`, zIndex: 200, left: `${pos.x}px`, top: `${pos.y}px`, right: 'auto', bottom: 'auto', transform: 'none' }
+          ? { width: `${WIDGET_W}px`, zIndex: 200, left: `${pos.x}px`, top: `${pos.y}px`, right: 'auto', bottom: 'auto', transform: 'none', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }
           : {
               width: `${WIDGET_W}px`,
               zIndex: 200,
@@ -202,6 +205,8 @@ export default function ClockWidget() {
               bottom:    sidebarActive ? 'auto'   : '20px',
               transform: sidebarActive ? 'translateY(-50%)' : 'none',
               transition: 'left 0.35s ease, right 0.35s ease, top 0.35s ease, bottom 0.35s ease, transform 0.35s ease',
+              cursor: dragging ? 'grabbing' : 'grab',
+              touchAction: 'none',
             }
         }>
 
@@ -217,17 +222,10 @@ export default function ClockWidget() {
             ].join(', '),
           }}>
 
-          {/* Agarradera para arrastrar */}
-          <div
-            onPointerDown={onHandlePointerDown}
-            className="flex items-center justify-center py-1"
-            style={{
-              cursor: dragging ? 'grabbing' : 'grab',
-              background: 'rgba(180,185,210,0.04)',
-              borderBottom: '1px solid rgba(180,185,210,0.06)',
-              touchAction: 'none',
-            }}>
-            <GripHorizontal size={12} style={{ color: 'rgba(180,185,210,0.3)' }} />
+          {/* Agarradera visual (todo el reloj se puede arrastrar, esto es solo el indicador) */}
+          <div className="flex items-center justify-center py-1.5"
+            style={{ background: 'rgba(180,185,210,0.07)', borderBottom: '1px solid rgba(180,185,210,0.1)' }}>
+            <GripHorizontal size={16} style={{ color: 'rgba(180,185,210,0.55)' }} />
           </div>
 
           <div className="px-3 pt-2.5 pb-2.5">
