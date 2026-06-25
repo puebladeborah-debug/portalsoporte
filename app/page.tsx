@@ -35,7 +35,7 @@ export default function HomePage() {
   }
 
   return (
-    <div style={{ background: S.bg, height: 'calc(100vh - 64px)', display: 'flex', position: 'relative', overflow: 'hidden' }}>
+    <div className="flex md:h-[calc(100vh-112px)] md:overflow-hidden" style={{ background: S.bg, position: 'relative' }}>
 
       {/* Particle animation background */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
@@ -44,7 +44,7 @@ export default function HomePage() {
 
       {/* Columna izquierda — Logo (solo escritorio, compacto) */}
       <aside className="hidden md:flex flex-col items-center pt-5 px-4 flex-shrink-0"
-        style={{ width: '150px', borderRight: `1px solid ${S.border}`, position: 'sticky', top: '64px', alignSelf: 'flex-start', height: '100%', zIndex: 1 }}>
+        style={{ width: '150px', borderRight: `1px solid ${S.border}`, position: 'sticky', top: '112px', alignSelf: 'flex-start', height: '100%', zIndex: 1 }}>
         <Image
           src="/logo.jpg"
           alt="Club Sinergetico Soporte"
@@ -77,7 +77,7 @@ export default function HomePage() {
         </div>
 
         {/* Header escritorio */}
-        <div className="hidden md:flex items-center justify-between mb-4">
+        <div className="hidden md:flex items-center justify-between mb-3">
           <div>
             <h1 className="text-xl font-bold"
               style={{ background: 'linear-gradient(135deg,#f0f2ff 0%,#b8bcc8 60%,#f0f2ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -100,7 +100,7 @@ export default function HomePage() {
         </div>
 
         {/* Buscador */}
-        <div className="relative mb-4">
+        <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={15} style={{ color: S.silverDim }} />
           <input
             type="text"
@@ -134,9 +134,9 @@ export default function HomePage() {
         </div>
 
         {/* Acceso rápido */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-3">
           <Link href="/tareas"
-            className="flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-200"
+            className="flex items-center gap-2.5 p-2 rounded-xl transition-all duration-200"
             style={{ background: 'linear-gradient(135deg,#1a1a24,#0e0e16)', border: `1px solid ${S.borderActive}` }}>
             <div className="p-1.5 rounded-lg" style={{ background: 'rgba(180,185,210,0.1)' }}>
               <CheckSquare size={16} style={{ color: S.silverBright }} />
@@ -147,7 +147,7 @@ export default function HomePage() {
             </div>
           </Link>
           <Link href="/buscar"
-            className="flex items-center gap-2.5 p-2.5 rounded-xl transition-all duration-200"
+            className="flex items-center gap-2.5 p-2 rounded-xl transition-all duration-200"
             style={{ background: S.card, border: `1px solid ${S.border}` }}>
             <div className="p-1.5 rounded-lg" style={{ background: 'rgba(180,185,210,0.05)' }}>
               <Search size={16} style={{ color: S.silver }} />
@@ -160,29 +160,29 @@ export default function HomePage() {
         </div>
 
         {/* Categorías */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-1.5">
           <Zap size={11} style={{ color: S.silver }} />
           <h2 className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: S.silverDim }}>
             Manuales y Categorías
           </h2>
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {categories.map((cat) => (
             <div key={cat.id} className="cat-glow">
               <Link href={`/manual?categoria=${cat.slug}`}
-                className="cat-glow-inner flex items-center gap-3 p-3 rounded-xl transition-all duration-200"
+                className="cat-glow-inner flex items-center gap-3 p-2 rounded-xl transition-all duration-200"
                 style={{ background: S.card }}>
                 {cat.slug === 'estructura-organizacional'
-                  ? <Image src="/estructura.png" alt={cat.name} width={28} height={28} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 28 }} />
+                  ? <Image src="/estructura.png" alt={cat.name} width={24} height={24} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 24 }} />
                   : cat.slug === 'manual-operacion'
-                  ? <Image src="/manual.png" alt={cat.name} width={28} height={28} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 28 }} />
+                  ? <Image src="/manual.png" alt={cat.name} width={24} height={24} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 24 }} />
                   : cat.slug === 'procedimientos-politicas'
-                  ? <Image src="/procedimientos.png" alt={cat.name} width={28} height={28} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 28 }} />
+                  ? <Image src="/procedimientos.png" alt={cat.name} width={24} height={24} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 24 }} />
                   : cat.slug === 'preguntas-frecuentes'
-                  ? <Image src="/preguntas.png" alt={cat.name} width={28} height={28} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 28 }} />
+                  ? <Image src="/preguntas.png" alt={cat.name} width={24} height={24} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 24 }} />
                   : cat.slug === 'rutas-criticas'
-                  ? <Image src="/ruta.png" alt={cat.name} width={28} height={28} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 28 }} />
-                  : <span className="text-xl flex-shrink-0">{cat.icon}</span>
+                  ? <Image src="/ruta.png" alt={cat.name} width={24} height={24} className="rounded-md object-cover flex-shrink-0" style={{ minWidth: 24 }} />
+                  : <span className="text-lg flex-shrink-0">{cat.icon}</span>
                 }
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-xs" style={{ color: '#d4d8e8' }}>{cat.name}</p>

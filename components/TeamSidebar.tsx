@@ -586,7 +586,7 @@ export default function TeamSidebar() {
 
       {/* SIDEBAR */}
       <aside className="hidden md:flex flex-col flex-shrink-0 overflow-y-auto"
-        style={{ width: '220px', background: 'rgba(6,6,10,0.95)', borderLeft: '1px solid rgba(180,185,210,0.07)', backdropFilter: 'blur(16px)', height: 'calc(100vh - 64px)', position: 'sticky', top: '64px' }}>
+        style={{ width: '220px', background: 'rgba(6,6,10,0.95)', borderLeft: '1px solid rgba(180,185,210,0.07)', backdropFilter: 'blur(16px)', height: 'calc(100vh - 112px)', position: 'sticky', top: '112px' }}>
         <div className="px-3 py-4 flex-1">
 
           {/* Header */}
