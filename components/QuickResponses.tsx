@@ -118,7 +118,7 @@ export default function QuickResponses() {
       {/* Botón flotante */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all z-[150] md:bottom-5"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all z-30 md:bottom-5"
         style={{
           background: 'linear-gradient(135deg,#1a1a2e,#0e0e18)',
           border: '1px solid rgba(180,185,210,0.25)',

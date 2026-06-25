@@ -161,6 +161,16 @@ function NuevoContactoModal({ members, myId, onClose, onCreate }: {
 
         <div className="px-5 py-4" style={{ borderTop: `1px solid ${S.border}` }}>
           {error && <p className="text-[11px] font-semibold text-center mb-2" style={{ color: '#e07070' }}>{error}</p>}
+          {!valido && !error && (
+            <p className="text-[11px] text-center mb-2" style={{ color: S.silverDim }}>
+              Falta: {[
+                !clienteNombre.trim() && 'nombre del cliente',
+                !fecha && 'fecha',
+                !hora && 'hora',
+                metodo === 'llamada' && !telefono.trim() && 'teléfono',
+              ].filter(Boolean).join(', ')}
+            </p>
+          )}
           <button onClick={crear} disabled={!valido || saving}
             className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
             style={{ background: valido ? 'rgba(180,185,210,0.1)' : 'rgba(180,185,210,0.04)', color: valido ? S.silverBright : S.silverDim, border: `1px solid ${valido ? S.borderActive : S.border}`, opacity: saving ? 0.6 : 1 }}>

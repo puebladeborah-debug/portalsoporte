@@ -195,10 +195,10 @@ export default function ClockWidget() {
       <div data-clock-widget className="hidden md:block fixed select-none"
         onPointerDown={onHandlePointerDown}
         style={pos
-          ? { width: `${WIDGET_W}px`, zIndex: 200, left: `${pos.x}px`, top: `${pos.y}px`, right: 'auto', bottom: 'auto', transform: 'none', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }
+          ? { width: `${WIDGET_W}px`, zIndex: 30, left: `${pos.x}px`, top: `${pos.y}px`, right: 'auto', bottom: 'auto', transform: 'none', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }
           : {
               width: `${WIDGET_W}px`,
-              zIndex: 200,
+              zIndex: 30,
               right:     sidebarActive ? 'auto'   : '20px',
               left:      sidebarActive ? '20px'   : 'auto',
               top:       sidebarActive ? '50%'    : 'auto',
