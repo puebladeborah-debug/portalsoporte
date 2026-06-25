@@ -486,6 +486,9 @@ export function deleteIncidencia(id: string) {
   localStorage.setItem(INCIDENCIAS_KEY, JSON.stringify(all))
 }
 
+// IDs de perfiles solo de visualización (sin tareas ni funciones operativas)
+export const EXEC_IDS = ['jsr', 'mdl']
+
 // ─── Guardias (ahora viven en Firestore — ver lib/firestoreCollection.ts) ──────
 
 export const DEFAULT_GUARDIA_PATRON: GuardiaPatron = {

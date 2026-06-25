@@ -11,6 +11,7 @@ import TeamSidebar from '@/components/TeamSidebar'
 import ClockWidget from '@/components/ClockWidget'
 import QuickResponses from '@/components/QuickResponses'
 import CountdownBanner from '@/components/CountdownBanner'
+import ContactarCliente from '@/components/ContactarCliente'
 
 const S = {
   bg: '#060608', card: '#0e0e12', border: '#1e1e28',
@@ -158,6 +159,8 @@ export default function HomePage() {
             </div>
           </Link>
         </div>
+
+        <ContactarCliente />
 
         {/* Categorías */}
         <div className="flex items-center gap-2 mb-1.5">

@@ -6,7 +6,7 @@ import {
   QrCode, Trash2, Pencil, Check, Zap, Bell, KeyRound,
 } from 'lucide-react'
 import QRCode from 'qrcode'
-import { getMembers, saveMembers, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, saveReporteQR } from '@/lib/teamStore'
+import { getMembers, saveMembers, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, saveReporteQR, EXEC_IDS } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from './LoginGate'
 import { auth } from '@/lib/firebase'
@@ -31,9 +31,6 @@ const ALL_PERMISSIONS: { key: Permission; label: string }[] = [
 type ExtraTask = { id: string; text: string; date: string; targetMembers: string[]; createdBy: string }
 
 const TODAY = new Date().toISOString().split('T')[0]
-
-// IDs de perfiles solo de visualización (sin tareas ni funciones operativas)
-const EXEC_IDS = ['jsr', 'mdl']
 
 function nombreCorto(nombre: string) {
   const partes = nombre.split(' ')
