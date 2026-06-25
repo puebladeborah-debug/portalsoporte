@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { BookOpen, NotebookPen, Search, Home, Settings, LogOut, User, Eye, EyeOff, Pencil, X, AlertTriangle, Info, AlertCircle, Shield, CalendarDays, MapPin, ScrollText, MessageCircle, CreditCard, FileWarning, Banknote } from 'lucide-react'
+import { BookOpen, CalendarClock, Search, Home, Settings, LogOut, User, Eye, EyeOff, Pencil, X, AlertTriangle, Info, AlertCircle, Shield, CalendarDays, MapPin, ScrollText, MessageCircle, CreditCard, FileWarning, Banknote } from 'lucide-react'
 import NoticesPanel from './NoticesPanel'
 import { useAuth } from './LoginGate'
 import { getMembers, saveMembers, getIncidenciasByMember, Incidencia, TipoIncidencia } from '@/lib/teamStore'
@@ -22,7 +22,7 @@ const navItems = [
   { href: '/reembolsos', label: 'Reembolsos', icon: Banknote },
   { href: '/chat', label: 'Chat', icon: MessageCircle },
   { href: '/buscar', label: 'Buscar', icon: Search },
-  { href: '/notas', label: 'Notas Personales', icon: NotebookPen },
+  { href: '/agenda', label: 'Agenda', icon: CalendarClock },
   { href: '/guardias', label: 'Guardias', icon: CalendarDays },
   { href: '/giras',    label: 'Giras',    icon: MapPin },
 ]

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
-import { Search, BookOpen, NotebookPen, ChevronRight, Zap } from 'lucide-react'
+import { Search, BookOpen, CalendarClock, ChevronRight, Zap } from 'lucide-react'
 import { categories, articles } from '@/lib/data'
 import Fuse from 'fuse.js'
 import ParticleCanvas from '@/components/ParticleCanvas'
@@ -135,15 +135,15 @@ export default function HomePage() {
 
         {/* Acceso rápido */}
         <div className="grid grid-cols-2 gap-2 mb-3">
-          <Link href="/notas"
+          <Link href="/agenda"
             className="flex items-center gap-2.5 p-2 rounded-xl transition-all duration-200"
             style={{ background: 'linear-gradient(135deg,#1a1a24,#0e0e16)', border: `1px solid ${S.borderActive}` }}>
             <div className="p-1.5 rounded-lg" style={{ background: 'rgba(180,185,210,0.1)' }}>
-              <NotebookPen size={16} style={{ color: S.silverBright }} />
+              <CalendarClock size={16} style={{ color: S.silverBright }} />
             </div>
             <div>
-              <p className="font-semibold text-xs" style={{ color: S.silverBright }}>Notas Personales</p>
-              <p className="text-[10px]" style={{ color: S.silverDim }}>Privadas, solo tuyas</p>
+              <p className="font-semibold text-xs" style={{ color: S.silverBright }}>Agenda</p>
+              <p className="text-[10px]" style={{ color: S.silverDim }}>Privada, solo tuya</p>
             </div>
           </Link>
           <Link href="/buscar"

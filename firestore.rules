@@ -50,11 +50,19 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // Notas personales: privadas de verdad. Ni siquiera el administrador
-    // puede leer o escribir la nota de otra persona — Firebase compara el
-    // dueño real de la sesión (su UID de autenticación) contra el dueño
-    // guardado en la nota, sin excepción para nadie, admin incluido.
+    // Agenda personal (Pendientes, Notas, Llamadas): privada de verdad.
+    // Ni siquiera el administrador puede leer o escribir lo de otra
+    // persona — Firebase compara el dueño real de la sesión (su UID de
+    // autenticación) contra el dueño guardado, sin excepción para nadie.
     match /notas_personales/{noteId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.ownerUid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerUid;
+    }
+    match /agenda_pendientes/{itemId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.ownerUid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerUid;
+    }
+    match /agenda_llamadas/{callId} {
       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.ownerUid;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerUid;
     }
