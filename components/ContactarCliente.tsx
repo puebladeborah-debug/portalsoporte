@@ -280,10 +280,10 @@ export default function ContactarCliente() {
   if (!session || !member || EXEC_IDS.includes(member.id)) return null
 
   const asignables = members.filter(m => !EXEC_IDS.includes(m.id))
-  const ordenados = [...contactos].sort((a, b) => {
-    if (a.estado !== b.estado) return a.estado === 'pendiente' ? -1 : 1
-    return `${a.fecha}${a.hora}`.localeCompare(`${b.fecha}${b.hora}`)
-  })
+  // Las completadas se archivan en Incidencias → Contacto Cliente y desaparecen de Inicio
+  const ordenados = [...contactos]
+    .filter(c => c.estado === 'pendiente')
+    .sort((a, b) => `${a.fecha}${a.hora}`.localeCompare(`${b.fecha}${b.hora}`))
 
   async function completar(id: string, resolucion: string) {
     await update(id, { estado: 'completada', resolucion, completedAt: new Date().toISOString() })

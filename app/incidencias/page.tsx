@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Headset, Video, MapPin, Gem, Plus, X, Calendar, FileText,
   CheckCircle2, Clock, AlertCircle, Ban, Trash2, DollarSign,
-  BarChart3, List, Trophy, Banknote,
+  BarChart3, List, Trophy, Banknote, Phone, Mail, MessageCircle, UserRound,
 } from 'lucide-react'
 import { useAuth } from '@/components/LoginGate'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
+import { getMembers, TeamMember } from '@/lib/teamStore'
 
 const S = {
   bg:           '#060608',
@@ -60,6 +61,35 @@ function situacionInfo(s: Situacion) {
 }
 function categoriaInfo(c: Categoria) {
   return CATEGORIAS.find(x => x.id === c)!
+}
+
+/* ─── Contacto Cliente (archivo de contactos completados) ───────────────── */
+type MetodoContacto = 'whatsapp' | 'correo' | 'llamada'
+
+type ContactoCliente = {
+  id: string
+  clienteNombre: string
+  fecha: string
+  hora: string
+  metodo: MetodoContacto
+  lada?: string
+  telefono?: string
+  asignadoA: string
+  asignadoPor: string
+  estado: 'pendiente' | 'completada'
+  resolucion?: string
+  createdAt: string
+  completedAt?: string
+}
+
+const METODO_CONTACTO_INFO: Record<MetodoContacto, { label: string; icon: React.ReactNode }> = {
+  whatsapp: { label: 'WhatsApp', icon: <MessageCircle size={13} /> },
+  correo:   { label: 'Correo',   icon: <Mail size={13} /> },
+  llamada:  { label: 'Llamada',  icon: <Phone size={13} /> },
+}
+
+function nombreCortoMiembro(nombre: string) {
+  return nombre.includes(' · ') ? nombre.split(' · ').pop()! : nombre
 }
 
 const fmtMXN = (n: number) => n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 })
@@ -593,9 +623,77 @@ function Estadisticas({ casos }: { casos: Caso[] }) {
   )
 }
 
+/* ─── Archivo de Contacto Cliente (se llenan solos al completarse) ───────── */
+function ArchivoContactos() {
+  const [members, setMembers] = useState<TeamMember[]>([])
+  useEffect(() => { getMembers().then(setMembers) }, [])
+
+  const { data: todos, loading } = useFirestoreCollection<ContactoCliente>('contactos_cliente')
+  const completados = todos
+    .filter(c => c.estado === 'completada')
+    .sort((a, b) => (b.completedAt || '').localeCompare(a.completedAt || ''))
+
+  function nombreDe(memberId: string) {
+    const m = members.find(x => x.id === memberId)
+    return m ? nombreCortoMiembro(m.name) : '—'
+  }
+
+  return (
+    <div>
+      <div className="mb-4">
+        <h3 className="text-sm font-bold" style={{ color: S.silverBright }}>Contacto Cliente — completados</h3>
+        <p className="text-xs mt-0.5" style={{ color: S.silverDim }}>
+          Se archivan aquí automáticamente al marcarse como completados en Inicio
+        </p>
+      </div>
+
+      {loading ? (
+        <p className="text-center text-sm py-10" style={{ color: S.silverDim }}>Cargando…</p>
+      ) : completados.length === 0 ? (
+        <div className="text-center py-12" style={{ color: S.silverDim }}>
+          <Phone size={32} className="mx-auto mb-3 opacity-20" />
+          <p className="text-sm">Sin contactos completados todavía</p>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {completados.map(c => {
+            const mInfo = METODO_CONTACTO_INFO[c.metodo]
+            return (
+              <div key={c.id} className="rounded-2xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.border}` }}>
+                <div className="px-4 py-3">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <p className="text-sm font-bold truncate" style={{ color: S.silverBright }}>{c.clienteNombre}</p>
+                    <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0"
+                      style={{ background: 'rgba(100,200,120,0.12)', color: '#70c080', border: '1px solid rgba(100,200,120,0.3)' }}>
+                      <CheckCircle2 size={11} /> Completada
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] mb-2 flex-wrap" style={{ color: S.silverDim }}>
+                    <span className="flex items-center gap-1"><Calendar size={11} />
+                      {new Date(c.fecha + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })} · {c.hora}
+                    </span>
+                    <span className="flex items-center gap-1">{mInfo.icon} {mInfo.label}</span>
+                    {c.metodo === 'llamada' && c.telefono && <span>{c.lada} {c.telefono}</span>}
+                    <span className="flex items-center gap-1"><UserRound size={11} /> {nombreDe(c.asignadoA)}</span>
+                  </div>
+                  {c.resolucion && (
+                    <p className="text-xs leading-relaxed" style={{ color: '#9094a4' }}>
+                      <span style={{ color: S.silverDim }}>Resolución: </span>{c.resolucion}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ─── Página principal ───────────────────────────────────────────────────── */
 export default function IncidenciasPage() {
-  const [vista, setVista] = useState<'lista' | 'stats'>('lista')
+  const [vista, setVista] = useState<'lista' | 'stats' | 'contactos'>('lista')
   const [categoria, setCategoria] = useState<Categoria>('soporte')
   const [modal, setModal] = useState<'new' | Caso | null>(null)
 
@@ -637,9 +735,19 @@ export default function IncidenciasPage() {
             }>
             <BarChart3 size={15} /> Estadísticas
           </button>
+          <button onClick={() => setVista('contactos')}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={vista === 'contactos'
+              ? { background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)' }
+              : { background: 'rgba(180,185,210,0.03)', color: S.silverDim, border: `1px solid ${S.border}` }
+            }>
+            <Phone size={15} /> Contacto Cliente
+          </button>
         </div>
 
-        {vista === 'lista' ? (
+        {vista === 'contactos' ? (
+          <ArchivoContactos />
+        ) : vista === 'lista' ? (
           <>
             {/* Tabs de categoría */}
             <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
