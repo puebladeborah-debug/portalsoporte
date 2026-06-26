@@ -10,6 +10,9 @@ import { useAuth } from './LoginGate'
 import { getMembers, saveMembers, getIncidenciasByMember, Incidencia, TipoIncidencia } from '@/lib/teamStore'
 import { auth } from '@/lib/firebase'
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
+import { useFirestoreCollection } from '@/lib/firestoreCollection'
+
+type ConvMeta = { id: string; participantIds: string[]; unreadCount?: Record<string, number> }
 
 const S = { silver: '#b8bcc8', silverBright: '#d4d8e8', silverDim: '#3a3e4a', border: '#1a1a24' }
 
@@ -245,6 +248,11 @@ export default function Navigation() {
 
   const firstName = session?.memberName.split(' · ').pop()?.split(' ')[0] || ''
 
+  const { data: misConvs } = useFirestoreCollection<ConvMeta>('chat_conversaciones', {
+    where: ['participantIds', 'array-contains', session?.memberId || '__none__'],
+  })
+  const hayChatsSinLeer = misConvs.some(c => (c.unreadCount?.[session?.memberId || ''] || 0) > 0)
+
   return (
     <>
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
@@ -265,11 +273,14 @@ export default function Navigation() {
 
         {navItems.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} title={label}
-            className="flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all duration-200 flex-shrink-0"
+            className="relative flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all duration-200 flex-shrink-0"
             style={pathname === href
               ? { color: '#d4d8e8', background: 'rgba(180,185,210,0.1)', border: '1px solid rgba(180,185,210,0.2)' }
               : { color: '#3a3e4a', border: '1px solid transparent' }
             }>
+            {href === '/chat' && hayChatsSinLeer && (
+              <span className="absolute top-2 right-3 w-2.5 h-2.5 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
+            )}
             <Icon size={32} />
             <span className="text-[10px] mt-1.5 leading-none font-medium">{label}</span>
           </Link>
@@ -317,8 +328,11 @@ export default function Navigation() {
         style={{ background: 'rgba(6,6,8,0.96)', borderTop: '1px solid rgba(180,185,210,0.1)', backdropFilter: 'blur(20px)' }}>
         {navItems.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href}
-            className="flex-1 flex flex-col items-center py-3 gap-1 text-xs font-medium transition-all"
+            className="relative flex-1 flex flex-col items-center py-3 gap-1 text-xs font-medium transition-all"
             style={pathname === href ? { color: '#d4d8e8' } : { color: '#3a3e4a' }}>
+            {href === '/chat' && hayChatsSinLeer && (
+              <span className="absolute top-2 right-1/4 w-2 h-2 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
+            )}
             <Icon size={20} />
             {label}
           </Link>

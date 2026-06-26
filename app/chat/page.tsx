@@ -32,6 +32,7 @@ type Conversation = {
   createdAt: string
   lastMessage: string | null
   lastMessageAt: string | null
+  unreadCount?: Record<string, number>
 }
 
 type Message = {
@@ -294,6 +295,7 @@ function ConvItem({
   const label    = convLabel(conv, myId, members)
   const initial  = convInitial(conv, myId, members)
   const subtitle = convSubtitle(conv, myId, members)
+  const unread   = conv.unreadCount?.[myId] || 0
 
   return (
     <button onClick={onClick}
@@ -303,26 +305,34 @@ function ConvItem({
         borderLeft: `2px solid ${active ? S.silver : 'transparent'}`,
       }}>
       {/* Avatar */}
-      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-        style={{ background: conv.type === 'group' ? 'rgba(100,160,220,0.15)' : 'rgba(180,185,210,0.1)',
-                 color: conv.type === 'group' ? '#6aaddc' : S.silver }}>
-        {conv.type === 'group' ? <Users size={16} /> : initial}
+      <div className="relative flex-shrink-0">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+          style={{ background: conv.type === 'group' ? 'rgba(100,160,220,0.15)' : 'rgba(180,185,210,0.1)',
+                   color: conv.type === 'group' ? '#6aaddc' : S.silver }}>
+          {conv.type === 'group' ? <Users size={16} /> : initial}
+        </div>
+        {unread > 0 && (
+          <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold"
+            style={{ background: '#dc4646', color: '#fff', border: '2px solid #08080e' }}>
+            {unread > 9 ? '9+' : unread}
+          </div>
+        )}
       </div>
       {/* Info */}
       <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold truncate"
-            style={{ color: active ? S.silverBright : S.silver }}>
+            style={{ color: unread > 0 ? S.silverBright : active ? S.silverBright : S.silver }}>
             {label}
           </p>
           {conv.lastMessageAt && (
-            <span className="text-[10px] flex-shrink-0" style={{ color: S.silverDim }}>
+            <span className="text-[10px] flex-shrink-0" style={{ color: unread > 0 ? '#dc6060' : S.silverDim }}>
               {fmtTime(conv.lastMessageAt)}
             </span>
           )}
         </div>
         <p className="text-[11px] truncate mt-0.5"
-          style={{ color: conv.lastMessage ? '#5a5e6a' : S.silverDim }}>
+          style={{ color: unread > 0 ? S.silverBright : conv.lastMessage ? '#5a5e6a' : S.silverDim, fontWeight: unread > 0 ? 600 : 400 }}>
           {conv.lastMessage ?? subtitle}
         </p>
       </div>
@@ -397,6 +407,14 @@ function ChatArea({
     inputRef.current?.focus()
   }
 
+  // Marca como leída esta conversación (al abrirla y cada vez que llega un mensaje nuevo mientras está abierta)
+  useEffect(() => {
+    if ((conv.unreadCount?.[myId] || 0) > 0) {
+      updateConv(conv.id, { unreadCount: { ...(conv.unreadCount || {}), [myId]: 0 } })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conv.id, messages.length])
+
   const label   = convLabel(conv, myId, members)
   const isGroup = conv.type === 'group'
 
@@ -418,7 +436,12 @@ function ChatArea({
       content,
       createdAt,
     })
-    await updateConv(conv.id, { lastMessage: content, lastMessageAt: createdAt })
+
+    const nuevoUnread: Record<string, number> = { ...(conv.unreadCount || {}) }
+    for (const pid of conv.participantIds) {
+      nuevoUnread[pid] = pid === myId ? 0 : (nuevoUnread[pid] || 0) + 1
+    }
+    await updateConv(conv.id, { lastMessage: content, lastMessageAt: createdAt, unreadCount: nuevoUnread })
 
     setSending(false)
     inputRef.current?.focus()
