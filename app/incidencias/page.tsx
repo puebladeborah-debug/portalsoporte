@@ -628,14 +628,21 @@ function ArchivoContactos() {
   const [members, setMembers] = useState<TeamMember[]>([])
   useEffect(() => { getMembers().then(setMembers) }, [])
 
-  const { data: todos, loading } = useFirestoreCollection<ContactoCliente>('contactos_cliente')
+  const { data: todos, loading, remove } = useFirestoreCollection<ContactoCliente>('contactos_cliente')
   const completados = todos
     .filter(c => c.estado === 'completada')
     .sort((a, b) => (b.completedAt || '').localeCompare(a.completedAt || ''))
 
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+
   function nombreDe(memberId: string) {
     const m = members.find(x => x.id === memberId)
     return m ? nombreCortoMiembro(m.name) : '—'
+  }
+
+  async function eliminar(id: string) {
+    await remove(id)
+    setConfirmDelete(null)
   }
 
   return (
@@ -677,9 +684,29 @@ function ArchivoContactos() {
                     <span className="flex items-center gap-1"><UserRound size={11} /> {nombreDe(c.asignadoA)}</span>
                   </div>
                   {c.resolucion && (
-                    <p className="text-xs leading-relaxed" style={{ color: '#9094a4' }}>
+                    <p className="text-xs leading-relaxed mb-2" style={{ color: '#9094a4' }}>
                       <span style={{ color: S.silverDim }}>Resolución: </span>{c.resolucion}
                     </p>
+                  )}
+
+                  {confirmDelete === c.id ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-[11px] flex-1" style={{ color: S.silverDim }}>¿Eliminar este registro?</p>
+                      <button onClick={() => setConfirmDelete(null)}
+                        className="text-[11px] px-2.5 py-1 rounded-lg" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                        Cancelar
+                      </button>
+                      <button onClick={() => eliminar(c.id)}
+                        className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg"
+                        style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)' }}>
+                        <Trash2 size={11} /> Eliminar
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDelete(c.id)}
+                      className="flex items-center gap-1 text-[10px] mt-1" style={{ color: S.silverDim }}>
+                      <Trash2 size={10} /> Eliminar
+                    </button>
                   )}
                 </div>
               </div>
