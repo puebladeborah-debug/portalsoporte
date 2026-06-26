@@ -625,6 +625,8 @@ function Estadisticas({ casos }: { casos: Caso[] }) {
 
 /* ─── Archivo de Contacto Cliente (se llenan solos al completarse) ───────── */
 function ArchivoContactos() {
+  const { member } = useAuth()
+  const esAdmin = !!member?.isAdmin
   const [members, setMembers] = useState<TeamMember[]>([])
   useEffect(() => { getMembers().then(setMembers) }, [])
 
@@ -689,24 +691,26 @@ function ArchivoContactos() {
                     </p>
                   )}
 
-                  {confirmDelete === c.id ? (
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-[11px] flex-1" style={{ color: S.silverDim }}>¿Eliminar este registro?</p>
-                      <button onClick={() => setConfirmDelete(null)}
-                        className="text-[11px] px-2.5 py-1 rounded-lg" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
-                        Cancelar
+                  {esAdmin && (
+                    confirmDelete === c.id ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-[11px] flex-1" style={{ color: S.silverDim }}>¿Eliminar este registro?</p>
+                        <button onClick={() => setConfirmDelete(null)}
+                          className="text-[11px] px-2.5 py-1 rounded-lg" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                          Cancelar
+                        </button>
+                        <button onClick={() => eliminar(c.id)}
+                          className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg"
+                          style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)' }}>
+                          <Trash2 size={11} /> Eliminar
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setConfirmDelete(c.id)}
+                        className="flex items-center gap-1 text-[10px] mt-1" style={{ color: S.silverDim }}>
+                        <Trash2 size={10} /> Eliminar
                       </button>
-                      <button onClick={() => eliminar(c.id)}
-                        className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg"
-                        style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)' }}>
-                        <Trash2 size={11} /> Eliminar
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => setConfirmDelete(c.id)}
-                      className="flex items-center gap-1 text-[10px] mt-1" style={{ color: S.silverDim }}>
-                      <Trash2 size={10} /> Eliminar
-                    </button>
+                    )
                   )}
                 </div>
               </div>
