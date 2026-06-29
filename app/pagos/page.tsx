@@ -351,6 +351,16 @@ const PRESENCIALES: Subseccion[] = [
       { nombre: '499 USA', precio: '$499 USD', url: 'https://checkout.synergyforeducation.com/pay/pl_139ed0991655dc08ed14a20be2f4daca' },
     ],
   },
+  {
+    titulo: 'Webinar Manuel MX Revolución IA · Martes 8 pm CDMX',
+    items: [
+      { nombre: 'TOTAL LEGENDAR IA',     precio: '$5,997.00', url: 'https://checkout.synergyforeducation.com/pay/pl_43aafece8aa3b645e8a4c93e6f156f3b' },
+      { nombre: 'CS TOTAL LEGENDAR IA',  precio: '$3,997.00', url: 'https://checkout.synergyforeducation.com/pay/pl_43aafece8aa3b645e8a4c93e6f156f3b' },
+      { nombre: 'APARTADO MDL IA 50%',   precio: '$3,000.00', url: 'https://checkout.synergyforeducation.com/pay/pl_2e1adf756bb9797429e7a5848a5dbda3' },
+      { nombre: 'APARTADO MDL IA',       precio: '$2,000.00', url: 'https://checkout.synergyforeducation.com/pay/pl_e7fa50c588635ebae00133d2e9c51195' },
+      { nombre: 'APARTADO MDL IA',       precio: '$1,000.00', url: 'https://checkout.synergyforeducation.com/pay/pl_dd35c5d7d56708b17602bbabb9c34cc8' },
+    ],
+  },
 ]
 
 /* ─── Componente campo copiable ─────────────────────────────────────────── */
