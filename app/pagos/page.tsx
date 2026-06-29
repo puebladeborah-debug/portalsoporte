@@ -44,79 +44,201 @@ const BANCARIOS = [
 /* ─── Black Access / Bootcamp ───────────────────────────────────────────── */
 const BLACK_ACCESS: Subseccion[] = [
   {
-    titulo: 'Links Oficiales',
+    titulo: 'BOOTCAMP MEX PAUTA',
+    items: [
+      { nombre: 'BOOTCAMP MEX PAUTA · 05,06 Y 07 DE JUNIO', precio: '$13,036', url: 'https://bootcampsinergetico.com/?utm_source=clubsinergetico' },
+      { nombre: 'BOLETERA BOOTCAMP (WhatsApp)',             precio: '$13,036', url: 'https://go.wha.link/b8B1We' },
+    ],
+  },
+  {
+    titulo: 'LINKS OFICIALES CON REGISTRO TODO EL MUNDO',
     items: [
       { nombre: 'CHECKOUT BLACK ACCESS OFICIAL', precio: 'Ver link', url: 'https://synergyunlimited.com/' },
     ],
   },
   {
-    titulo: 'México · Black Access (contado y a meses)',
+    titulo: 'LINKS MÉXICO BLACK',
     items: [
       { nombre: 'BLACK ACCESS 36,997 MXN',            precio: '$36,997 MXN', url: 'https://www.synergyforeducation.com/offers/bEcVEwrw' },
       { nombre: 'PASE DOBLE BLACK ACCESS 55,497 MXN', precio: '$55,497 MXN', url: 'https://www.synergyforeducation.com/offers/SkQRGRbe' },
+    ],
+  },
+  {
+    titulo: 'A MESES',
+    items: [
       { nombre: 'BLACK ACCESS A MESES 42,916 MXN',    precio: '$42,916 MXN', url: 'https://buy.stripe.com/eVq28s5wo4k28fgetg7Rk1e' },
       { nombre: 'PASE DOBLE BLACK ACCESS 64,376 MXN', precio: '$64,376 MXN', url: 'https://buy.stripe.com/7sY00k9MEg2K3Z01Gu7Rk1f' },
     ],
   },
   {
-    titulo: 'Apartados México',
+    titulo: 'APARTADO CONTADO',
     items: [
       { nombre: 'BLACK ACCESS 9,999 MXN',             precio: '$9,999 MXN',  url: 'https://www.synergyforeducation.com/offers/QW4bS32r' },
       { nombre: 'PASE DOBLE BLACK ACCESS 15,999 MXN', precio: '$15,999 MXN', url: 'https://www.synergyforeducation.com/offers/nMxUDpQp' },
+    ],
+  },
+  {
+    titulo: 'APARTADO A MESES',
+    items: [
       { nombre: 'BLACK ACCESS 11,599 MXN',            precio: '$11,599 MXN', url: 'https://buy.stripe.com/9B6cN68IAaIq8fgcl87Rk1g' },
       { nombre: 'PASE DOBLE BLACK ACCESS 18,558 MXN', precio: '$18,558 MXN', url: 'https://buy.stripe.com/7sYeVebUMdUCgLMgBo7Rk1h' },
     ],
   },
   {
-    titulo: 'General Access · México',
+    titulo: 'GENERAL CONTADO PAUTA',
     items: [
       { nombre: 'GENERAL ACCESS 5,997 MXN', precio: '$5,997 MXN', url: 'https://www.synergyforeducation.com/offers/sHf5tG7W' },
+    ],
+  },
+  {
+    titulo: 'GENERAL MESES PAUTA',
+    items: [
       { nombre: 'GENERAL ACCESS 6,837 MXN', precio: '$6,837 MXN', url: 'https://buy.stripe.com/5kQcN69ME7we6783OC7Rk1i' },
+    ],
+  },
+  {
+    titulo: 'GENERAL CONTADO CLUB',
+    items: [
       { nombre: 'GENERAL ACCESS 3,997 MXN', precio: '$3,997 MXN', url: 'https://www.synergyforeducation.com/offers/Q4LogqdV' },
+    ],
+  },
+  {
+    titulo: 'GENERAL MESES CLUB',
+    items: [
       { nombre: 'GENERAL ACCESS 4,556 MXN', precio: '$4,556 MXN', url: 'https://buy.stripe.com/dRmcN65wo6sa5345WK7Rk1j' },
+    ],
+  },
+  {
+    titulo: 'VIP CONTADO PAUTA',
+    items: [
       { nombre: 'GENERAL ACCESS 7,997 MXN', precio: '$7,997 MXN', url: 'https://www.synergyforeducation.com/offers/8dLZZrus' },
+    ],
+  },
+  {
+    titulo: 'VIP MESES PAUTA',
+    items: [
       { nombre: 'GENERAL ACCESS 9,116 MXN', precio: '$9,116 MXN', url: 'https://buy.stripe.com/eVqdRa2kc4k20MOad07Rk1k' },
     ],
   },
   {
-    titulo: 'VIP Access · México',
+    titulo: 'VIP CONTADO CLUB',
     items: [
       { nombre: 'VIP ACCESS 5,997 MXN', precio: '$5,997 MXN', url: 'https://www.synergyforeducation.com/offers/vFAPaM3B' },
+    ],
+  },
+  {
+    titulo: 'VIP MESES CLUB',
+    items: [
       { nombre: 'VIP ACCESS 6,836 MXN', precio: '$6,836 MXN', url: 'https://buy.stripe.com/6oU8wQ6As2bU7bc0Cq7Rk1l' },
     ],
   },
   {
-    titulo: 'Centurion · México',
+    titulo: 'CENTURION CONTADO',
     items: [
-      { nombre: 'CENTURION 90,000 MXN',               precio: '$90,000 MXN',  url: 'https://www.synergyforeducation.com/offers/VoBDAjgW' },
-      { nombre: 'CENTURION 104,000 MXN',              precio: '$104,000 MXN', url: 'https://buy.stripe.com/bJedRacYQ6sa9jk0Cq7Rk1m' },
-      { nombre: 'CENTURION 144,000 MXN',              precio: '$144,000 MXN', url: 'https://www.synergyforeducation.com/offers/wfLpTKeQ' },
-      { nombre: 'CENTURION 167,000 MXN',              precio: '$167,000 MXN', url: 'https://buy.stripe.com/14AbJ2bUM3fY8fg84S7Rk1n' },
-      { nombre: 'ABONO CENTURION 55,997 MXN',         precio: '$55,997 MXN',  url: 'https://www.synergyforeducation.com/offers/LJtVB2Dm' },
-      { nombre: 'ABONO CENTURION 64,997 MXN',         precio: '$64,997 MXN',  url: 'https://buy.stripe.com/dRm5kEcYQ4k2cvwgBo7Rk1o' },
-      { nombre: 'ABONO CENTURION 91,997 MXN',         precio: '$91,997 MXN',  url: 'https://www.synergyforeducation.com/offers/tPTU7xdQ' },
+      { nombre: 'CENTURION 90,000 MXN', precio: '$90,000 MXN', url: 'https://www.synergyforeducation.com/offers/VoBDAjgW' },
+    ],
+  },
+  {
+    titulo: 'CENTURION A MESES',
+    items: [
+      { nombre: 'CENTURION 104,000 MXN', precio: '$104,000 MXN', url: 'https://buy.stripe.com/bJedRacYQ6sa9jk0Cq7Rk1m' },
+    ],
+  },
+  {
+    titulo: 'CENTURION CONTADO DOBLE',
+    items: [
+      { nombre: 'CENTURION 144,000 MXN', precio: '$144,000 MXN', url: 'https://www.synergyforeducation.com/offers/wfLpTKeQ' },
+    ],
+  },
+  {
+    titulo: 'CENTURION A MESES DOBLE',
+    items: [
+      { nombre: 'CENTURION 167,000 MXN', precio: '$167,000 MXN', url: 'https://buy.stripe.com/14AbJ2bUM3fY8fg84S7Rk1n' },
+    ],
+  },
+  {
+    titulo: 'ABONO CENTURION CONTADO',
+    items: [
+      { nombre: 'ABONO CENTURION 55,997 MXN', precio: '$55,997 MXN', url: 'https://www.synergyforeducation.com/offers/LJtVB2Dm' },
+    ],
+  },
+  {
+    titulo: 'ABONO CENTURION A MESES',
+    items: [
+      { nombre: 'ABONO CENTURION 64,997 MXN', precio: '$64,997 MXN', url: 'https://buy.stripe.com/dRm5kEcYQ4k2cvwgBo7Rk1o' },
+    ],
+  },
+  {
+    titulo: 'ABONO CENTURION DOBLE CONTADO',
+    items: [
+      { nombre: 'ABONO CENTURION 91,997 MXN', precio: '$91,997 MXN', url: 'https://www.synergyforeducation.com/offers/tPTU7xdQ' },
+    ],
+  },
+  {
+    titulo: 'ABONO CENTURION DOBLE A MESES',
+    items: [
       { nombre: 'CENTURION DOBLE A MESES 106,716 MXN', precio: '$106,716 MXN', url: 'https://buy.stripe.com/8x228s2kcaIqeDE5WK7Rk1p' },
     ],
   },
   {
-    titulo: 'USA · Black Access',
+    titulo: 'BLACK ACCESS CONTADO Y A MESES (USA)',
     items: [
-      { nombre: 'BLACK ACCESS 1997 USD',              precio: '$1,997 USD', url: 'https://www.synergyforeducation.com/offers/ttDoMbie' },
-      { nombre: 'PASE DOBLE BLACK ACCESS 2997 USD',   precio: '$2,997 USD', url: 'https://www.synergyforeducation.com/offers/5Frzbkfk' },
-      { nombre: 'APARTADO 499 USD',                   precio: '$499 USD',   url: 'https://www.synergyforeducation.com/offers/rE7ZWZea' },
-      { nombre: 'APARTADO 799 USD',                   precio: '$799 USD',   url: 'https://www.synergyforeducation.com/offers/BKZNFA2P' },
-      { nombre: 'GENERAL 297 USD',                    precio: '$297 USD',   url: 'https://www.synergyforeducation.com/offers/oyzBqqCj' },
-      { nombre: 'GENERAL 197 USD',                    precio: '$197 USD',   url: 'https://www.synergyforeducation.com/offers/uNJqZNRV' },
-      { nombre: 'VIP 397 USD',                        precio: '$397 USD',   url: 'https://www.synergyforeducation.com/offers/cipSNDwV' },
-      { nombre: 'VIP 297 USD',                        precio: '$297 USD',   url: 'https://www.synergyforeducation.com/offers/4x5wRKH4' },
-      { nombre: 'CENTURION 4997 USD',                 precio: '$4,997 USD', url: 'https://www.synergyforeducation.com/offers/rdpUDkve' },
-      { nombre: 'CENTURION DOBLE 7997 USD',           precio: '$7,997 USD', url: 'https://www.synergyforeducation.com/offers/LA9tfSqF' },
-      { nombre: 'ABONO CENTURION 3,000 USD',          precio: '$3,000 USD', url: 'https://www.synergyforeducation.com/offers/2muzVugM' },
-      { nombre: 'ABONO CENTURION DOBLE 5,000 USD',    precio: '$5,000 USD', url: 'https://www.synergyforeducation.com/offers/ry6JizC2' },
+      { nombre: 'BLACK ACCESS 1997 USD',            precio: '$1,997 USD', url: 'https://www.synergyforeducation.com/offers/ttDoMbie' },
+      { nombre: 'PASE DOBLE BLACK ACCESS 2997 USD', precio: '$2,997 USD', url: 'https://www.synergyforeducation.com/offers/5Frzbkfk' },
+      { nombre: 'APARTADO 499 USD',                 precio: '$499 USD',   url: 'https://www.synergyforeducation.com/offers/rE7ZWZea' },
+      { nombre: 'APARTADO 799 USD',                 precio: '$799 USD',   url: 'https://www.synergyforeducation.com/offers/BKZNFA2P' },
     ],
   },
   {
-    titulo: 'LATAM',
+    titulo: 'GENERAL CONTADO PAUTA (USA)',
+    items: [
+      { nombre: '297 USD', precio: '$297 USD', url: 'https://www.synergyforeducation.com/offers/oyzBqqCj' },
+    ],
+  },
+  {
+    titulo: 'GENERAL CONTADO CLUB (USA)',
+    items: [
+      { nombre: '197 USD', precio: '$197 USD', url: 'https://www.synergyforeducation.com/offers/uNJqZNRV' },
+    ],
+  },
+  {
+    titulo: 'VIP CONTADO PAUTA (USA)',
+    items: [
+      { nombre: '397 USD', precio: '$397 USD', url: 'https://www.synergyforeducation.com/offers/cipSNDwV' },
+    ],
+  },
+  {
+    titulo: 'VIP CONTADO CLUB (USA)',
+    items: [
+      { nombre: '297 USD', precio: '$297 USD', url: 'https://www.synergyforeducation.com/offers/4x5wRKH4' },
+    ],
+  },
+  {
+    titulo: 'CENTURION CONTADO (USA)',
+    items: [
+      { nombre: '4997 USD', precio: '$4,997 USD', url: 'https://www.synergyforeducation.com/offers/rdpUDkve' },
+    ],
+  },
+  {
+    titulo: 'CENTURION DOBLE CONTADO (USA)',
+    items: [
+      { nombre: '7997 USD', precio: '$7,997 USD', url: 'https://www.synergyforeducation.com/offers/LA9tfSqF' },
+    ],
+  },
+  {
+    titulo: 'ABONO CENTURION CONTADO (USA)',
+    items: [
+      { nombre: '3,000 USD', precio: '$3,000 USD', url: 'https://www.synergyforeducation.com/offers/2muzVugM' },
+    ],
+  },
+  {
+    titulo: 'ABONO CENTURION DOBLE CONTADO (USA)',
+    items: [
+      { nombre: '5,000 USD', precio: '$5,000 USD', url: 'https://www.synergyforeducation.com/offers/ry6JizC2' },
+    ],
+  },
+  {
+    titulo: 'LINKS LATAM',
     items: [
       { nombre: 'BLACK ACCESS LATAM',            precio: 'Ver link', url: 'https://pay.hotmart.com/Q106162772V?off=5o7ja6fi' },
       { nombre: 'PASE DOBLE BLACK ACCESS LATAM', precio: 'Ver link', url: 'https://pay.hotmart.com/O106162861G?off=y0uogpak' },
