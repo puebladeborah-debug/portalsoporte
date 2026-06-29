@@ -430,7 +430,9 @@ function BuscadorModal({ onClose }: { onClose: () => void }) {
   const resultados: ResultadoBusqueda[] = q.length < 1 ? [] : todasLasEntradas().filter(e =>
     e.nombre.toLowerCase().includes(q) ||
     e.precio.toLowerCase().includes(q) ||
-    (e.url ?? '').toLowerCase().includes(q)
+    (e.url ?? '').toLowerCase().includes(q) ||
+    e.subseccion.toLowerCase().includes(q) ||
+    e.seccion.toLowerCase().includes(q)
   )
 
   function copy(url: string, key: string) {
