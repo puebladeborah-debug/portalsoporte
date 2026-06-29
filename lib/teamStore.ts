@@ -501,6 +501,12 @@ export const DEFAULT_GUARDIA_PATRON: GuardiaPatron = {
 
 // ─── Giras ────────────────────────────────────────────────────────────────────
 
+export type RecepcionDocumentos = {
+  apartados: number
+  interesados: number
+  completos: number
+}
+
 export type GiraEvento = {
   id: string
   nombre: string
@@ -509,6 +515,9 @@ export type GiraEvento = {
   horario2?: string
   createdBy: string
   createdAt: string
+  // Recepción de documentos — hojas recibidas por horario
+  recepcion1?: RecepcionDocumentos
+  recepcion2?: RecepcionDocumentos
 }
 
 export type GiraCatData = {

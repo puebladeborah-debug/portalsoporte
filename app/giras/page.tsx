@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Plus, X, Check, ChevronLeft, Trash2, AlertTriangle,
-  Clock, MapPin, Bell, CheckCircle2, Calendar,
+  Clock, MapPin, Bell, CheckCircle2, Calendar, FileText,
 } from 'lucide-react'
 import { useAuth } from '@/components/LoginGate'
 import {
@@ -11,7 +11,7 @@ import {
   getGiraRegistros, saveGiraRegistro,
   getGiraAlerta, setGiraAlerta, clearGiraAlerta,
   emptyRegistro,
-  GiraEvento, GiraRegistro, GiraCatData,
+  GiraEvento, GiraRegistro, GiraCatData, RecepcionDocumentos,
   getMembers, TeamMember,
 } from '@/lib/teamStore'
 
@@ -83,6 +83,43 @@ function CatRow({ label, color, data, onChange }: {
   )
 }
 
+// ── Recepción de Documentos (hojas recibidas por horario) ────────────────────
+const RECEPCION_VACIA: RecepcionDocumentos = { apartados: 0, interesados: 0, completos: 0 }
+
+function RecepcionDocumentosPanel({ titulo, data, onChange }: {
+  titulo: string
+  data: RecepcionDocumentos
+  onChange: (d: RecepcionDocumentos) => void
+}) {
+  return (
+    <div className="rounded-2xl overflow-hidden mb-3" style={{ background: S.card, border: '1px solid rgba(96,165,250,0.25)' }}>
+      <div className="px-4 py-2.5" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(96,165,250,0.04)' }}>
+        <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: '#60a5fa' }}>
+          <FileText size={13} /> Recepción de Documentos — {titulo}
+        </p>
+        <p className="text-[10px] mt-0.5" style={{ color: S.silverDim }}>Número de hojas recibidas</p>
+      </div>
+      <div className="px-4 py-3 grid grid-cols-3 gap-2">
+        {([
+          { key: 'apartados' as const,   label: 'Apartados' },
+          { key: 'interesados' as const, label: 'Interesados' },
+          { key: 'completos' as const,   label: 'Completos' },
+        ]).map(({ key, label }) => (
+          <div key={key}>
+            <p className="text-[9px] tracking-widest uppercase mb-1 text-center"
+              style={{ color: CAT_COLORS[key].text }}>{label}</p>
+            <input type="number" min="0" value={data[key] || ''}
+              onChange={e => onChange({ ...data, [key]: parseInt(e.target.value) || 0 })}
+              placeholder="0"
+              className="w-full px-2 py-2 rounded-lg outline-none text-sm text-center font-bold"
+              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Vista de detalle del evento ──────────────────────────────────────────────
 
 function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUpdate }: {
@@ -141,6 +178,12 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
     }
     saveGiraRegistro(updated)
     setRegistros(prev => prev.map(r => r.id === updated.id ? updated : r))
+  }
+
+  function updateRecepcion(horario: 1 | 2, d: RecepcionDocumentos) {
+    const updated = horario === 1 ? { ...evento, recepcion1: d } : { ...evento, recepcion2: d }
+    saveGiraEvento(updated)
+    onEventoUpdate(updated)
   }
 
   function triggerHojasListas() {
@@ -265,6 +308,20 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
           style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)', color: '#fbbf24' }}>
           ⚠️ RECUERDA HACER DOUBLE CHECK — NO TE CONFÍES
         </div>
+
+        {/* Recepción de Documentos — una vez por horario */}
+        <RecepcionDocumentosPanel
+          titulo={evento.horario1}
+          data={evento.recepcion1 ?? RECEPCION_VACIA}
+          onChange={d => updateRecepcion(1, d)}
+        />
+        {evento.horario2 && (
+          <RecepcionDocumentosPanel
+            titulo={evento.horario2}
+            data={evento.recepcion2 ?? RECEPCION_VACIA}
+            onChange={d => updateRecepcion(2, d)}
+          />
+        )}
 
         {/* Registros por miembro */}
         <div className="space-y-3">
