@@ -184,8 +184,10 @@ const WEBINARS_LINKS: Subseccion[] = [
   {
     titulo: 'Renovación Club Sinergético',
     items: [
-      { nombre: 'Renovación MX',       precio: '$4,997', url: 'https://pay.hotmart.com/Y99824146R?off=ckc0y9q3&bid=1748027679564' },
-      { nombre: 'Renovación USA',      precio: '$999',   url: 'https://www.synergyforeducation.com/offers/moLFo6Pi' },
+      { nombre: 'RENOVACIÓN MX LINK ANTES', precio: '$5,396.00', url: 'https://pay.hotmart.com/Y99824146R?off=ckc0y9q3&bid=1748027679564' },
+      { nombre: 'RENOVACION MX 1 año',      precio: '$5,997.00', url: 'https://checkout.synergyforeducation.com/pay/pl_d5a368bddbdd56eac7c049c65fe3d6c9' },
+      { nombre: 'RENOVACION LATAM 1 año',   precio: '$299.00',   url: 'https://pay.hotmart.com/D106300176V?off=ill2992e' },
+      { nombre: 'RENOVACION USA 1 año',     precio: '$999.00',   url: 'https://www.synergyforeducation.com/offers/hAH7JZbL' },
       { nombre: 'OXXO (Emergencias)',  precio: '$1,000', url: 'https://mpago.li/1ykFsjZ' },
       { nombre: 'OXXO (Emergencias)',  precio: '$1,500', url: 'https://mpago.li/2w7ZW4c' },
     ],
@@ -201,12 +203,13 @@ const WEBINARS_LINKS: Subseccion[] = [
   {
     titulo: 'Upgrades / Renovar Club Sinergético LIVE',
     items: [
-      { nombre: 'Upgrade MX · 3 Meses extra',      precio: '$2,000' },
-      { nombre: 'Upgrade MX · 12 Meses',           precio: '$4,000', url: 'https://pay.hotmart.com/S103254182Y?off=tb6ky0re&checkoutMode=10' },
-      { nombre: 'Upgrade LATAM · 3 Meses extra',   precio: '$50' },
-      { nombre: 'Upgrade LATAM · 12 Meses',        precio: '$100',   url: 'https://pay.hotmart.com/E106300427A?off=c79ny8c0' },
-      { nombre: 'Upgrade USA · 3 Meses extra',     precio: '$200' },
-      { nombre: 'Upgrade USA · 12 Meses',          precio: '$300',   url: 'https://www.synergyforeducation.com/offers/E9xNErzt' },
+      { nombre: 'MX 3M extras Cambia a 2k', precio: '$2,000.00', url: 'https://pay.hotmart.com/D103381825X?off=1qewqn8n&checkoutMode=10' },
+      { nombre: 'MX 12M UPGRADE',           precio: '$4,000.00', url: 'https://pay.hotmart.com/D103381825X?off=sbq3ji19&checkoutMode=10' },
+      { nombre: 'MX 12M UPGRADE',           precio: '$6,000.00', url: 'https://buy.stripe.com/5kQ8wQ0c4cQy2UW98W7Rk1U' },
+      { nombre: 'LATAM 3M extras',          precio: '$50.00',    url: 'https://pay.hotmart.com/W10325522U?off=l7mfo7ms&checkoutMode=10' },
+      { nombre: 'LATAM 12M UPGRADE',        precio: '$100.00',   url: 'https://pay.hotmart.com/E106300427A?off=c79ny8c0' },
+      { nombre: 'US 3M extras $ 200',       precio: '$200.00',   url: 'https://www.synergyforeducation.com/offers/kzoXLXk3' },
+      { nombre: 'US 12M UPGRADE',           precio: '$300.00',   url: 'https://www.synergyforeducation.com/offers/E9xNErzt' },
     ],
   },
 ]
