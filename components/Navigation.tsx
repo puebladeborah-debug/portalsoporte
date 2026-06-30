@@ -262,32 +262,34 @@ export default function Navigation() {
         style={{ background: 'rgba(6,6,8,0.92)', borderBottom: '1px solid rgba(180,185,210,0.12)', backdropFilter: 'blur(20px)', boxShadow: '0 1px 30px rgba(0,0,0,0.6)' }}>
 
         <Link href="/" className="flex items-center gap-3 mr-4 flex-shrink-0">
-          <Image src="/logo.jpg" alt="Club Sinergetico" width={64} height={64} className="rounded-xl" />
-          <div>
-            <p className="text-lg font-black tracking-widest uppercase"
+          <Image src="/logo.jpg" alt="Club Sinergetico" width={56} height={56} className="rounded-xl" />
+          <div className="hidden lg:block">
+            <p className="text-base font-black tracking-widest uppercase whitespace-nowrap"
               style={{ background: 'linear-gradient(135deg,#d4d8e8,#8890a8,#d4d8e8)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
               Club Sinergetico
             </p>
-            <p className="text-sm tracking-[0.3em] uppercase" style={{ color: '#5a5e6a' }}>Soporte</p>
+            <p className="text-xs tracking-[0.3em] uppercase" style={{ color: '#5a5e6a' }}>Soporte</p>
           </div>
         </Link>
 
-        {navItems.map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} title={label}
-            className="relative flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all duration-200 flex-shrink-0"
-            style={pathname === href
-              ? { color: '#d4d8e8', background: 'rgba(180,185,210,0.1)', border: '1px solid rgba(180,185,210,0.2)' }
-              : { color: '#3a3e4a', border: '1px solid transparent' }
-            }>
-            {href === '/chat' && hayChatsSinLeer && (
-              <span className="absolute top-2 right-3 w-2.5 h-2.5 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
-            )}
-            <Icon size={32} />
-            <span className="text-[10px] mt-1.5 leading-none font-medium">{label}</span>
-          </Link>
-        ))}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar min-w-0 flex-1 h-full">
+          {navItems.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} title={label}
+              className="relative flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all duration-200 flex-shrink-0"
+              style={pathname === href
+                ? { color: '#d4d8e8', background: 'rgba(180,185,210,0.1)', border: '1px solid rgba(180,185,210,0.2)' }
+                : { color: '#3a3e4a', border: '1px solid transparent' }
+              }>
+              {href === '/chat' && hayChatsSinLeer && (
+                <span className="absolute top-1.5 right-2.5 w-2.5 h-2.5 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
+              )}
+              <Icon size={24} />
+              <span className="text-[9px] mt-1 leading-none font-medium whitespace-nowrap">{label}</span>
+            </Link>
+          ))}
+        </div>
 
-        <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+        <div className="ml-2 flex items-center gap-1.5 flex-shrink-0">
           <NoticesPanel />
 
           {member?.isAdmin && (
@@ -324,24 +326,24 @@ export default function Navigation() {
         </div>
       </header>
 
-      {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 flex z-50"
+      {/* Mobile bottom nav — se desliza horizontalmente porque ya no caben todas las secciones en una fila fija */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 flex overflow-x-auto no-scrollbar z-50"
         style={{ background: 'rgba(6,6,8,0.96)', borderTop: '1px solid rgba(180,185,210,0.1)', backdropFilter: 'blur(20px)' }}>
         {navItems.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href}
-            className="relative flex-1 flex flex-col items-center py-3 gap-1 text-xs font-medium transition-all"
-            style={pathname === href ? { color: '#d4d8e8' } : { color: '#3a3e4a' }}>
+            className="relative flex-shrink-0 flex flex-col items-center justify-center py-2.5 gap-1 text-[10px] font-medium transition-all"
+            style={{ width: '64px', ...(pathname === href ? { color: '#d4d8e8' } : { color: '#3a3e4a' }) }}>
             {href === '/chat' && hayChatsSinLeer && (
-              <span className="absolute top-2 right-1/4 w-2 h-2 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
+              <span className="absolute top-1.5 right-4 w-2 h-2 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
             )}
-            <Icon size={20} />
-            {label}
+            <Icon size={19} />
+            <span className="whitespace-nowrap">{label}</span>
           </Link>
         ))}
         <button onClick={() => setShowProfile(true)}
-          className="flex-1 flex flex-col items-center py-3 gap-1 text-xs"
-          style={{ color: '#3a3e4a' }}>
-          <User size={20} />
+          className="flex-shrink-0 flex flex-col items-center justify-center py-2.5 gap-1 text-[10px]"
+          style={{ width: '64px', color: '#3a3e4a' }}>
+          <User size={19} />
           Perfil
         </button>
       </nav>

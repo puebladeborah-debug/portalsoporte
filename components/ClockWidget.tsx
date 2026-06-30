@@ -309,7 +309,7 @@ export default function ClockWidget() {
       </div>
 
       {/* ── Mobile: barra compacta al inicio del contenido ──────────────────── */}
-      <div className="md:hidden flex items-center gap-3 px-3 py-2 rounded-xl mb-4"
+      <div className="md:hidden flex items-center gap-3 mx-4 px-3 py-2 rounded-xl mb-4"
         style={{ background: 'rgba(5,5,10,0.7)', border: '1px solid rgba(180,185,210,0.1)' }}>
         <div className="flex items-baseline gap-0.5">
           <span style={{ ...chrome, fontSize: '1.8rem', lineHeight: 1 }}>{hh}</span>

@@ -36,6 +36,13 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--silver-dim); }
 
+/* Evita que algo se desborde horizontalmente y rompa el layout en celular */
+html, body { overflow-x: hidden; max-width: 100vw; }
+
+/* Oculta la barra de scroll mientras se sigue pudiendo deslizar (navegación) */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* ── Luz azul corriendo alrededor de las tarjetas de categoría ─────────── */
 @keyframes catBeamSpin {
   from { transform: translate(-50%, -50%) rotate(0deg); }
