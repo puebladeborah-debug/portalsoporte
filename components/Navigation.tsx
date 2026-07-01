@@ -100,15 +100,21 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))' }}>
-      <div className="w-80 rounded-2xl overflow-hidden mx-4"
-        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.8)' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full max-w-sm rounded-2xl overflow-hidden flex flex-col"
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.8)', maxHeight: '92vh' }}>
 
-        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
+        {/* Encabezado fijo — siempre visible con el botón X */}
+        <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
           <User size={15} style={{ color: S.silver }} />
           <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>Mi Cuenta</p>
           <button onClick={onClose} style={{ color: S.silverDim }}><X size={16} /></button>
         </div>
+
+        {/* Cuerpo con scroll — el header con X queda siempre visible arriba */}
+        <div className="overflow-y-auto flex-1" style={{ scrollbarWidth: 'thin' }}>
 
         {/* Tab selector */}
         <div className="flex gap-2 px-5 pt-4 pb-0">
@@ -299,6 +305,8 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
             </p>
           </div>
         )}
+
+        </div>{/* fin scroll */}
       </div>
     </div>
   )
