@@ -332,7 +332,7 @@ export default function Navigation() {
         style={{ background: 'var(--th-nav)', borderBottom: `1px solid ${S.borderLight}`, backdropFilter: 'blur(20px)', boxShadow: '0 1px 30px rgba(0,0,0,0.4)' }}>
 
         <Link href="/" className="flex items-center gap-3 mr-4 flex-shrink-0">
-          <Image src="/logo.jpg" alt="Club Sinergetico" width={56} height={56} className="rounded-xl" />
+          <Image src="/logo.jpg" alt="Club Sinergetico" width={56} height={56} className="rounded-xl logo-blend" />
           <div className="hidden lg:block">
             <p className="text-base font-black tracking-widest uppercase whitespace-nowrap"
               style={{ background: 'linear-gradient(135deg,#d4d8e8,#8890a8,#d4d8e8)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>

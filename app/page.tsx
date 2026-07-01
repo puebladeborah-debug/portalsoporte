@@ -56,7 +56,7 @@ export default function HomePage() {
           alt="Club Sinergetico Soporte"
           width={120}
           height={120}
-          className="rounded-xl"
+          className="rounded-xl logo-blend"
           style={{ boxShadow: '0 0 30px rgba(180,185,210,0.15)' }}
         />
         <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-center mt-3"
@@ -71,7 +71,7 @@ export default function HomePage() {
 
         {/* Header móvil con logo pequeño */}
         <div className="flex md:hidden items-center gap-3 mb-4">
-          <Image src="/logo.jpg" alt="Logo" width={44} height={44} className="rounded-lg"
+          <Image src="/logo.jpg" alt="Logo" width={44} height={44} className="rounded-lg logo-blend"
             style={{ boxShadow: '0 0 14px rgba(180,185,210,0.2)' }} />
           <div>
             <h1 className="text-lg font-bold"
