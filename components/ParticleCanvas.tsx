@@ -32,23 +32,39 @@ type Rocket = {
 }
 
 function spawnRocket(w: number, h: number, now: number): Rocket {
-  // Entra desde un borde aleatorio
-  const edge = Math.floor(Math.random() * 4)
-  let x = 0, y = 0, vx = 0, vy = 0
-  const speed = 2.5 + Math.random() * 1.5
+  // Garantiza que el cohete atraviese toda la pantalla de borde a borde,
+  // pasando siempre por la zona central visible (no solo por la esquina superior).
+  const speed = 3 + Math.random() * 2
 
-  if (edge === 0) { x = -60; y = Math.random() * h; vx = speed; vy = (Math.random() - 0.5) * speed * 0.5 }
-  else if (edge === 1) { x = w + 60; y = Math.random() * h; vx = -speed; vy = (Math.random() - 0.5) * speed * 0.5 }
-  else if (edge === 2) { y = -60; x = Math.random() * w; vy = speed; vx = (Math.random() - 0.5) * speed * 0.5 }
-  else { y = h + 60; x = Math.random() * w; vy = -speed; vx = (Math.random() - 0.5) * speed * 0.5 }
+  // Punto de entrada en un borde aleatorio
+  const edge = Math.floor(Math.random() * 4)
+  let startX = 0, startY = 0
+
+  if (edge === 0)      { startX = -60;    startY = h * (0.1 + Math.random() * 0.8) }  // izquierda
+  else if (edge === 1) { startX = w + 60; startY = h * (0.1 + Math.random() * 0.8) }  // derecha
+  else if (edge === 2) { startY = -60;    startX = w * (0.1 + Math.random() * 0.8) }  // arriba
+  else                 { startY = h + 60; startX = w * (0.1 + Math.random() * 0.8) }  // abajo
+
+  // El destino es el borde opuesto, en la zona central (30%-70%) para que pase por el medio
+  let endX = 0, endY = 0
+  if (edge === 0)      { endX = w + 60;   endY = h * (0.2 + Math.random() * 0.6) }
+  else if (edge === 1) { endX = -60;      endY = h * (0.2 + Math.random() * 0.6) }
+  else if (edge === 2) { endY = h + 60;   endX = w * (0.2 + Math.random() * 0.6) }
+  else                 { endY = -60;      endX = w * (0.2 + Math.random() * 0.6) }
+
+  // Velocidad en la dirección del vector entrada→salida normalizado
+  const dx = endX - startX, dy = endY - startY
+  const len = Math.sqrt(dx * dx + dy * dy)
+  const vx = (dx / len) * speed
+  const vy = (dy / len) * speed
 
   return {
-    x, y, vx, vy,
+    x: startX, y: startY, vx, vy,
     angle: Math.atan2(vy, vx),
-    size: 22 + Math.random() * 10,
+    size: 36 + Math.random() * 16,
     trail: [],
     active: true,
-    nextLaunch: now + 20000 + Math.random() * 15000,
+    nextLaunch: now + 18000 + Math.random() * 12000,
   }
 }
 
@@ -58,15 +74,21 @@ function drawRocket(ctx: CanvasRenderingContext2D, r: Rocket, isLight: boolean) 
   ctx.rotate(r.angle + Math.PI / 2) // nose apunta en dirección del movimiento
 
   const s = r.size
-  const bodyColor  = isLight ? '#1a1a2a' : '#d4d8e8'
-  const noseColor  = isLight ? '#2a2a3a' : '#b0b4c8'
-  const windowCol  = isLight ? '#4a8fd4' : '#6ab0ff'
-  const finColor   = isLight ? '#111122' : '#aab0c0'
-  const flameOuter = 'rgba(255,140,30,0.85)'
-  const flameInner = 'rgba(255,240,80,0.95)'
+  const bodyColor  = isLight ? '#060614' : '#d4d8e8'
+  const noseColor  = isLight ? '#0f0f28' : '#b0b4c8'
+  const windowCol  = isLight ? '#0a5abf' : '#6ab0ff'
+  const finColor   = isLight ? '#03030e' : '#aab0c0'
+  const flameOuter = isLight ? 'rgba(240,60,0,1.0)'  : 'rgba(255,140,30,0.9)'
+  const flameInner = isLight ? 'rgba(255,220,0,1.0)' : 'rgba(255,255,100,1.0)'
 
-  // Llama (atrás del cohete)
-  const flameLen = s * 1.2 + Math.random() * s * 0.5
+  // Sombra del cohete para que resalte sobre el fondo blanco
+  if (isLight) {
+    ctx.shadowColor = 'rgba(0,0,80,0.35)'
+    ctx.shadowBlur  = 14
+  }
+
+  // Llama (atrás del cohete) — más larga
+  const flameLen = s * 1.6 + Math.random() * s * 0.7
   const grad = ctx.createRadialGradient(0, s * 0.35, 0, 0, s * 0.35 + flameLen * 0.5, flameLen)
   grad.addColorStop(0, flameInner)
   grad.addColorStop(0.4, flameOuter)
@@ -167,9 +189,13 @@ export default function ParticleCanvas() {
       ctx!.clearRect(0, 0, w, h)
 
       // Detecta tema en tiempo real
-      const isLight = document.documentElement.dataset.theme === 'white'
-      const pColor  = isLight ? '20,20,30'    : '212,216,232'
-      const lColor  = isLight ? '20,20,40'    : '180,185,210'
+      const isLight    = document.documentElement.dataset.theme === 'white'
+      const pColor     = isLight ? '15,15,25'    : '212,216,232'
+      const lColor     = isLight ? '15,15,30'    : '180,185,210'
+      // En tema blanco: partículas más oscuras y opacas, líneas más visibles
+      const alphaBoost = isLight ? 1.9 : 1.0
+      const lineBoost  = isLight ? 3.8 : 1.0
+      const sizeBoost  = isLight ? 1.6 : 1.0
 
       updatePhase(now)
       const phase     = phaseRef.current
@@ -201,12 +227,13 @@ export default function ParticleCanvas() {
           const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y
           const dist = Math.sqrt(dx * dx + dy * dy)
           if (dist < maxDist) {
-            const alpha = (1 - dist / maxDist) * (phase === 'formed' ? 0.35 : 0.12)
+            const baseAlpha = (1 - dist / maxDist) * (phase === 'formed' ? 0.35 : 0.18)
+            const alpha = Math.min(baseAlpha * lineBoost, 0.85)
             ctx!.beginPath()
             ctx!.moveTo(particles[i].x, particles[i].y)
             ctx!.lineTo(particles[j].x, particles[j].y)
             ctx!.strokeStyle = `rgba(${lColor},${alpha})`
-            ctx!.lineWidth = phase === 'formed' ? 0.8 : 0.4
+            ctx!.lineWidth = phase === 'formed' ? 1.2 : 0.8
             ctx!.stroke()
           }
         }
@@ -214,17 +241,17 @@ export default function ParticleCanvas() {
 
       // Dibujar partículas (estrellas)
       particles.forEach(p => {
-        const a = phase === 'formed' ? 0.9 : p.alpha
+        const a = Math.min((phase === 'formed' ? 0.95 : p.alpha) * alphaBoost, 0.95)
+        const sz = p.size * sizeBoost
         ctx!.beginPath()
-        ctx!.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+        ctx!.arc(p.x, p.y, sz, 0, Math.PI * 2)
         ctx!.fillStyle = `rgba(${pColor},${a})`
         ctx!.fill()
-        if (phase === 'formed') {
-          ctx!.beginPath()
-          ctx!.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2)
-          ctx!.fillStyle = `rgba(${pColor},0.05)`
-          ctx!.fill()
-        }
+        // Halo suave alrededor de cada estrella (más grande en blanco)
+        ctx!.beginPath()
+        ctx!.arc(p.x, p.y, sz * (isLight ? 4 : 3), 0, Math.PI * 2)
+        ctx!.fillStyle = `rgba(${pColor},${isLight ? 0.12 : 0.05})`
+        ctx!.fill()
       })
 
       // ── Cohete ──────────────────────────────────────────────────────────
@@ -249,8 +276,8 @@ export default function ParticleCanvas() {
           ctx!.beginPath()
           ctx!.arc(d.x, d.y, d.r, 0, Math.PI * 2)
           ctx!.fillStyle = isLight
-            ? `rgba(80,80,100,${d.alpha * 0.5})`
-            : `rgba(180,160,120,${d.alpha})`
+            ? `rgba(20,20,60,${Math.min(d.alpha * 2.2, 0.75)})`
+            : `rgba(200,170,100,${d.alpha * 1.3})`
           ctx!.fill()
         })
 
