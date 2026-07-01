@@ -122,7 +122,7 @@ export default function HomePage() {
           />
           {results.length > 0 && (
             <div className="absolute top-full mt-1 left-0 right-0 z-10 overflow-hidden"
-              style={{ background: '#0e0e12', border: `1px solid ${S.borderActive}`, borderRadius: '12px', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}>
+              style={{ background: 'var(--th-card)', border: `1px solid ${S.borderActive}`, borderRadius: '12px', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}>
               {results.map((article) => (
                 <Link key={article.id} href={`/manual/${article.id}`}
                   className="flex items-center gap-3 px-4 py-2.5 transition-all"
@@ -143,7 +143,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-2 mb-3">
           <Link href="/agenda"
             className="flex items-center gap-2.5 p-2 rounded-xl transition-all duration-200"
-            style={{ background: 'linear-gradient(135deg,#1a1a24,#0e0e16)', border: `1px solid ${S.borderActive}` }}>
+            style={{ background: 'var(--th-card)', border: `1px solid ${S.borderActive}` }}>
             <div className="p-1.5 rounded-lg" style={{ background: 'rgba(180,185,210,0.1)' }}>
               <CalendarClock size={16} style={{ color: S.silverBright }} />
             </div>

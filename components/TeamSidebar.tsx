@@ -297,7 +297,7 @@ export default function TeamSidebar() {
       {/* Mobile toggle button */}
       <button onClick={() => setOpen(open ? null : 'mobile')}
         className="md:hidden fixed bottom-20 right-4 z-40 p-3 rounded-2xl shadow-lg"
-        style={{ background: '#0e0e14', border: '1px solid rgba(180,185,210,0.2)', color: S.silverBright }}>
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', color: S.silverBright }}>
         <Users size={20} />
       </button>
 
@@ -314,7 +314,7 @@ export default function TeamSidebar() {
               <p className="text-lg font-bold mt-2" style={{ color: S.silverBright }}>{qrMember.name.split(' · ')[0]}</p>
               <p className="text-xs" style={{ color: S.silverDim }}>{qrMember.role} · {TODAY}</p>
             </div>
-            <div className="p-3 rounded-2xl" style={{ background: '#0e0e18', border: `1px solid ${qrStatus === 'completo' ? 'rgba(100,200,120,0.15)' : 'rgba(220,150,50,0.15)'}` }}>
+            <div className="p-3 rounded-2xl" style={{ background: 'var(--th-inner)', border: `1px solid ${qrStatus === 'completo' ? 'rgba(100,200,120,0.15)' : 'rgba(220,150,50,0.15)'}` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={qrUrl} alt="QR asistencia" width={210} height={210} />
             </div>
@@ -588,7 +588,7 @@ export default function TeamSidebar() {
 
       {/* SIDEBAR */}
       <aside className="hidden md:flex flex-col flex-shrink-0 overflow-y-auto"
-        style={{ width: '220px', background: 'rgba(6,6,10,0.95)', borderLeft: '1px solid rgba(180,185,210,0.07)', backdropFilter: 'blur(16px)', height: 'calc(100vh - 112px)', position: 'sticky', top: '112px' }}>
+        style={{ width: '220px', background: 'var(--th-nav)', borderLeft: '1px solid rgba(180,185,210,0.07)', backdropFilter: 'blur(16px)', height: 'calc(100vh - 112px)', position: 'sticky', top: '112px' }}>
         <div className="px-3 py-4 flex-1">
 
           {/* Header */}

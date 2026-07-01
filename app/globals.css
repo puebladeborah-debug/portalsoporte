@@ -117,6 +117,47 @@ html[data-theme="white"] {
 }
 
 
+/* ── Estilos exclusivos del tema Blanco ─────────────────────────────────── */
+/* Reemplaza bordes por sombras suaves, añade jerarquía visual y redondeo */
+
+html[data-theme="white"] body {
+  background: #f5f5fa;
+}
+
+/* Tarjetas con sombra en lugar de borde oscuro */
+html[data-theme="white"] [style*="var(--th-card)"] {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+/* Header de navegación limpio */
+html[data-theme="white"] header {
+  box-shadow: 0 1px 20px rgba(0,0,0,0.08) !important;
+}
+
+/* Barra de navegación inferior en celular */
+html[data-theme="white"] nav {
+  box-shadow: 0 -1px 20px rgba(0,0,0,0.08) !important;
+}
+
+/* Sidebar derecho (EQUIPO) con sombra lateral */
+html[data-theme="white"] aside {
+  box-shadow: -2px 0 20px rgba(0,0,0,0.07) !important;
+  border-left: 1px solid rgba(0,0,0,0.06) !important;
+}
+
+/* Botones flotantes visibles */
+html[data-theme="white"] [style*="var(--th-inner)"] {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* Scrollbar clara */
+html[data-theme="white"] ::-webkit-scrollbar-thumb {
+  background: #c8cad8;
+}
+html[data-theme="white"] ::-webkit-scrollbar-track {
+  background: #f0f0f8;
+}
+
 @theme inline {
   --color-background: var(--bg-base);
   --color-foreground: var(--white);

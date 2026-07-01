@@ -126,10 +126,10 @@ export default function QuickResponses() {
         onClick={() => setOpen(true)}
         className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all z-30 md:bottom-5"
         style={{
-          background: 'linear-gradient(135deg,#1a1a2e,#0e0e18)',
-          border: '1px solid rgba(180,185,210,0.25)',
+          background: 'var(--th-card)',
+          border: `1px solid ${S.borderLight}`,
           color: S.silverBright,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.7), 0 0 0 1px rgba(180,185,210,0.08)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
         }}>
         <MessageSquare size={14} />
         Respuestas Rápidas
