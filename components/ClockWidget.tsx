@@ -202,6 +202,15 @@ export default function ClockWidget() {
   const glowDim = chromeDim
   const glowSecond = chromeSecond
 
+  // Colores de texto secundario según tema
+  const dimDate  = isLight ? 'rgba(5,6,14,0.55)'  : 'rgba(180,185,210,0.38)'
+  const dimLabel = isLight ? 'rgba(5,6,14,0.48)'  : 'rgba(180,185,210,0.35)'
+  const dimCount = isLight ? 'rgba(5,6,14,0.60)'  : 'rgba(180,185,210,0.45)'
+  const barBg    = isLight ? 'rgba(5,6,14,0.10)'  : 'rgba(180,185,210,0.07)'
+  const gripCol  = isLight ? 'rgba(5,6,14,0.35)'  : 'rgba(180,185,210,0.55)'
+  const gripBg   = isLight ? 'rgba(5,6,14,0.05)'  : 'rgba(180,185,210,0.07)'
+  const gripBord = isLight ? '1px solid rgba(5,6,14,0.08)' : '1px solid rgba(180,185,210,0.1)'
+
   return (
     <>
       {/* ── Desktop: reloj compacto, arrastrable desde cualquier punto ───────── */}
@@ -235,17 +244,17 @@ export default function ClockWidget() {
             ].join(', '),
           }}>
 
-          {/* Agarradera visual (todo el reloj se puede arrastrar, esto es solo el indicador) */}
+          {/* Agarradera visual */}
           <div className="flex items-center justify-center py-1"
-            style={{ background: 'rgba(180,185,210,0.07)', borderBottom: '1px solid rgba(180,185,210,0.1)' }}>
-            <GripHorizontal size={13} style={{ color: 'rgba(180,185,210,0.55)' }} />
+            style={{ background: gripBg, borderBottom: gripBord }}>
+            <GripHorizontal size={13} style={{ color: gripCol }} />
           </div>
 
           <div className="px-2.5 pt-2 pb-2">
 
             {/* Fecha */}
             <p className="text-[7px] tracking-[0.2em] mb-0.5"
-              style={{ color: 'rgba(180,185,210,0.38)', fontFamily: '"Courier New", monospace' }}>
+              style={{ color: dimDate, fontFamily: '"Courier New", monospace' }}>
               {dia} · {fecha}
             </p>
 
@@ -269,15 +278,15 @@ export default function ClockWidget() {
             {totalTasks > 0 && (
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[8px] tracking-widest" style={{ color: 'rgba(180,185,210,0.35)',
+                  <span className="text-[8px] tracking-widests" style={{ color: dimLabel,
                     fontFamily: '"Courier New",monospace' }}>RUTA</span>
                   <span className="text-[8px] tabular-nums font-mono"
-                    style={{ color: pendingCount === 0 ? '#5cb87a' : 'rgba(180,185,210,0.45)' }}>
+                    style={{ color: pendingCount === 0 ? '#5cb87a' : dimCount }}>
                     {doneTasks}/{totalTasks}
                   </span>
                 </div>
                 <div className="h-0.5 w-full rounded-full overflow-hidden"
-                  style={{ background: 'rgba(180,185,210,0.07)' }}>
+                  style={{ background: barBg }}>
                   <div className="h-full rounded-full transition-all duration-700"
                     style={{
                       width: `${pct}%`,

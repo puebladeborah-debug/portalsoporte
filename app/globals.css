@@ -136,8 +136,8 @@ html[data-theme="white"] .logo-blend {
 
 /* ── Reloj: fondo gris platinado en tema Blanco (negro en temas oscuros) ── */
 html[data-theme="white"] .clock-bg {
-  background: rgba(210,214,228,0.88) !important;
-  box-shadow: 0 0 0 1px rgba(140,148,180,0.25), 0 4px 24px rgba(100,110,140,0.18) !important;
+  background: rgba(222,223,226,0.93) !important;
+  box-shadow: 0 0 0 1px rgba(180,182,188,0.35), 0 4px 20px rgba(0,0,0,0.10) !important;
 }
 
 /* ── Estilos exclusivos del tema Blanco ─────────────────────────────────── */
