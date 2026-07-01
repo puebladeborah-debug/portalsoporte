@@ -4,7 +4,27 @@ const SHEET_ID  = '1IkFQJW8kMcwQ9hwl0ixalQFUyribvDYDahbrBOFQf_g'
 const SHEET_TAB = 'Registro de atención'
 const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`
 
-/* ── CSV parser minimal ─────────────────────────────────────────────────── */
+// ── Columnas verificadas con inspeccion directa del CSV ─────────────────────
+// Col 0: # (índice)
+// Col 1: Nombre
+// Col 3: País
+// Col 5: Fecha inscripción  (DD/MM/YYYY)
+// Col 8: Acceso a plataforma
+// Col 9: Tipo de Membresía
+// Col 10: Vencimiento Skool (DD/MM/YYYY)
+// Col 26: FIN DEL ACCESO    (DD/MM/YYYY)
+// Col 28: Renovación
+const C = {
+  nombre: 1,
+  pais:   3,
+  fechaIns: 5,
+  acceso: 8,
+  skool:  10,
+  fin:    26,
+  renov:  28,
+}
+
+/* ── CSV parser ─────────────────────────────────────────────────────────────── */
 function parseCSV(raw: string): string[][] {
   const rows: string[][] = []
   let cur = '', inQ = false, row: string[] = []
@@ -26,12 +46,17 @@ function parseCSV(raw: string): string[][] {
   return rows
 }
 
-/* ── Parsear fecha DD/MM/YYYY ────────────────────────────────────────────── */
+/* ── Parsear fecha DD/MM/YYYY o D/M/YYYY ──────────────────────────────────── */
 function parseDate(s: string): Date | null {
-  if (!s) return null
-  const [d, m, y] = s.split('/').map(Number)
-  if (!d || !m || !y || y < 2000) return null
-  return new Date(y, m - 1, d)
+  if (!s || s.includes('#') || s.includes('N/A')) return null
+  // Formato DD/MM/YYYY o D/M/YYYY
+  const parts = s.split('/')
+  if (parts.length !== 3) return null
+  const d = Number(parts[0]), m = Number(parts[1]), y = Number(parts[2])
+  if (!d || !m || !y || y < 2000 || y > 2100 || m > 12 || d > 31) return null
+  const date = new Date(y, m - 1, d)
+  if (isNaN(date.getTime())) return null
+  return date
 }
 
 function daysDiff(d: Date): number {
@@ -41,39 +66,15 @@ function daysDiff(d: Date): number {
 /* ── Handler ─────────────────────────────────────────────────────────────── */
 export async function GET() {
   try {
-    const res = await fetch(CSV_URL, { next: { revalidate: 300 } }) // caché 5 min
+    const res = await fetch(CSV_URL, { cache: 'no-store' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const raw  = await res.text()
     const rows = parseCSV(raw)
 
     if (rows.length < 2) return NextResponse.json({ error: 'Sin datos' }, { status: 400 })
 
-    // Identificar columnas por encabezado (dinámico + fallback por posición)
-    const header = rows[0].map(h => h.toLowerCase().trim())
-    const col = (name: string, fallback = -1) => {
-      const idx = header.findIndex(h => h.includes(name.toLowerCase()))
-      return idx >= 0 ? idx : fallback
-    }
-    // Búsqueda exhaustiva para FIN DEL ACCESO (puede estar en col 26-30)
-    const cFin = (() => {
-      for (let i = 20; i < Math.min(header.length, 40); i++) {
-        if (header[i].includes('fin del acceso') || header[i].includes('fin de acceso')) return i
-      }
-      return 28 // fallback comprobado
-    })()
-
-    const cPais     = col('pais',     4)
-    const cAcceso   = col('acceso a plataforma', 8)
-    const cSkool    = (() => { // Vencimiento Skool: primera col vacía tras "tipo de membresia"
-      const base = col('tipo de membresia', 9)
-      return base + 1 // suele ser la siguiente col vacía
-    })()
-    const cFechaIns = (() => { // fecha inscripción: col vacía inmediatamente antes de Pais
-      return cPais > 0 ? cPais + 1 : 5 // columna justo después de País
-    })()
-    const cRenov    = col('renovaci', 28) // "Renovación" puede tener distintos acentos
-
     const today = new Date()
+    today.setHours(0, 0, 0, 0)
     const thisY = today.getFullYear()
     const thisM = today.getMonth()
 
@@ -85,51 +86,43 @@ export async function GET() {
 
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i]
-      if (!r[1]?.trim()) continue // sin Nombre = fila vacía
+      const nombre = (r[C.nombre] || '').trim()
+      if (!nombre) continue
       total++
 
       // País
-      const pais = (r[cPais] || '').toLowerCase()
+      const pais = (r[C.pais] || '').toLowerCase()
       if (pais.includes('méx') || pais.includes('mex')) mexico++
-      else if (pais.includes('estados unidos') || pais.includes('usa') || pais.includes('+1')) usa++
+      else if (pais.includes('estados unidos') || pais.includes('+1')) usa++
       else if (pais.trim()) latam++
 
       // Acceso a plataforma
-      const acceso = (r[cAcceso] || '').toLowerCase()
-      if (acceso === 'si' || acceso === 'sí' || acceso === 'renovación' || acceso === 'renovacion') conAcceso++
+      const acceso = (r[C.acceso] || '').toLowerCase().trim()
+      if (acceso === 'si' || acceso === 'sí' || acceso.startsWith('renov')) conAcceso++
       else sinAcceso++
 
-      // Skool (col 10)
-      const skoolStr = r[cSkool] || ''
-      if (skoolStr) {
-        const skoolDate = parseDate(skoolStr)
-        if (skoolDate) {
-          if (skoolDate >= today) skoolActivo++
-          else skoolVencido++
-        }
+      // Vencimiento Skool
+      const skoolDate = parseDate(r[C.skool] || '')
+      if (skoolDate) {
+        if (skoolDate >= today) skoolActivo++
+        else skoolVencido++
       }
 
-      // FIN DEL ACCESO → próximos a vencer / vencidos
-      const finStr = cFin >= 0 ? (r[cFin] || '') : ''
-      if (finStr) {
-        const fin = parseDate(finStr)
-        if (fin) {
-          const diff = daysDiff(fin)
-          if (diff < 0) vencidos++
-          else if (diff <= 30) proxVencer++
-        }
+      // FIN DEL ACCESO
+      const fin = parseDate(r[C.fin] || '')
+      if (fin) {
+        const diff = daysDiff(fin)
+        if (diff < 0)      vencidos++
+        else if (diff <= 30) proxVencer++
       }
 
-      // Renovación
-      const renov = cRenov >= 0 ? (r[cRenov] || '') : ''
-      if (renov && renov !== '0' && renov.trim() !== '') renovados++
+      // Renovación (col 28): cualquier valor no vacío ni "0" significa renovado
+      const renov = (r[C.renov] || '').trim()
+      if (renov && renov !== '0' && !renov.startsWith('#')) renovados++
 
-      // Nuevos este mes (fecha inscripción)
-      const insStr = r[cFechaIns] || ''
-      if (insStr) {
-        const ins = parseDate(insStr)
-        if (ins && ins.getFullYear() === thisY && ins.getMonth() === thisM) nuevosEsteMes++
-      }
+      // Nuevos este mes (fecha de inscripción col 5)
+      const ins = parseDate(r[C.fechaIns] || '')
+      if (ins && ins.getFullYear() === thisY && ins.getMonth() === thisM) nuevosEsteMes++
     }
 
     return NextResponse.json({
