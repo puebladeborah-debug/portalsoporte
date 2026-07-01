@@ -61,6 +61,8 @@ export type TeamMember = {
   horario?: HorarioSemanal
   // Perfil personal
   perfilCompleto?: boolean
+  reglamentoFirmado?: boolean
+  reglamentoFirmadoAt?: string
   telefonoPersonal?: string
   telefonoTrabajo?: string
   direccion?: string

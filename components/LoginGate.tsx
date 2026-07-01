@@ -4,7 +4,7 @@ import { useState, useEffect, createContext, useContext } from 'react'
 import Image from 'next/image'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { login, getSession, setSession, clearSession, TeamMember, Session, getMembers, hasSignedReglamento } from '@/lib/teamStore'
+import { login, getSession, setSession, clearSession, TeamMember, Session, getMembers } from '@/lib/teamStore'
 import ReglamentoGate from './ReglamentoGate'
 import ProfileSetupGate from './ProfileSetupGate'
 
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const members = await getMembers()
         const m = members.find((x: TeamMember) => x.id === s.memberId) ?? null
         setMember(m)
-        if (!hasSignedReglamento(s.memberId)) {
+        if (!m?.reglamentoFirmado) {
           setNeedsSignature(true)
         } else if (!m?.perfilCompleto && !m?.isAdmin) {
           setNeedsProfile(true)

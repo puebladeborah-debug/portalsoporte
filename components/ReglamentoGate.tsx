@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { PenLine, MessageSquare, RotateCcw, CheckCircle2, AlertCircle, FileText } from 'lucide-react'
-import { saveSignature, ReglamentoSignature, getMembers } from '@/lib/teamStore'
+import { saveSignature, ReglamentoSignature, getMembers, saveMembers } from '@/lib/teamStore'
 
 const S = {
   bg: '#040406',
@@ -223,6 +223,15 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
       data,
     }
     saveSignature(sig)
+    // Persistir en Firestore para que no se pida de nuevo en otros dispositivos ni al reiniciar sesión
+    getMembers().then(members => {
+      const updated = members.map(m =>
+        m.id === memberId
+          ? { ...m, reglamentoFirmado: true, reglamentoFirmadoAt: new Date().toISOString() }
+          : m
+      )
+      saveMembers(updated)
+    })
     setSigned(true)
     setTimeout(onDone, 2000)
   }
