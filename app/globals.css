@@ -117,16 +117,21 @@ html[data-theme="white"] {
 }
 
 
-/* ── Logo difuminado — en tema Blanco se funde con el fondo ─────────────── */
-/* En temas oscuros el logo se ve normal; en Blanco sus bordes desaparecen   */
+/* ── Logo mimetizado en tema Blanco ─────────────────────────────────────── */
+/* invert() convierte el fondo negro en blanco (desaparece sobre fondo blanco)
+   y los elementos plateados quedan como gris oscuro visible.
+   multiply hace que el blanco del fondo invertido sea transparente.          */
 html[data-theme="white"] .logo-blend {
-  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%,
-    black 38%, rgba(0,0,0,0.85) 52%, rgba(0,0,0,0.5) 65%, transparent 82%);
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%,
-    black 38%, rgba(0,0,0,0.85) 52%, rgba(0,0,0,0.5) 65%, transparent 82%);
+  filter: invert(1) brightness(0.78) contrast(1.15) grayscale(0.15);
+  mix-blend-mode: multiply;
+  opacity: 0.82;
   box-shadow: none !important;
-  border-radius: 0 !important;   /* el mask ya define la forma */
-  mix-blend-mode: multiply;      /* píxeles oscuros del logo se mezclan con blanco */
+  border-radius: 12px !important;
+  /* Bordes suaves para que no haya corte abrupto */
+  -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%,
+    black 55%, rgba(0,0,0,0.7) 72%, transparent 88%);
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%,
+    black 55%, rgba(0,0,0,0.7) 72%, transparent 88%);
 }
 
 /* ── Estilos exclusivos del tema Blanco ─────────────────────────────────── */
