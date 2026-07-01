@@ -84,10 +84,10 @@ function NuevoContactoModal({ members, myId, onClose, onCreate }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)' }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-sm rounded-2xl overflow-hidden"
-        style={{ background: '#09090f', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '88vh' }}>
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '88vh' }}>
 
         <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
           <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>Nuevo contacto de cliente</p>
@@ -99,7 +99,7 @@ function NuevoContactoModal({ members, myId, onClose, onCreate }: {
             <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Nombre del cliente</p>
             <input value={clienteNombre} onChange={e => setClienteNombre(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -107,13 +107,13 @@ function NuevoContactoModal({ members, myId, onClose, onCreate }: {
               <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Fecha</p>
               <input type="date" value={fecha} onChange={e => setFecha(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
             </div>
             <div>
               <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Hora</p>
               <input type="time" value={hora} onChange={e => setHora(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
             </div>
           </div>
 
@@ -136,10 +136,10 @@ function NuevoContactoModal({ members, myId, onClose, onCreate }: {
             <div className="flex gap-2.5">
               <input value={lada} onChange={e => setLada(e.target.value)} placeholder="Lada"
                 className="w-20 flex-shrink-0 px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               <input value={telefono} onChange={e => setTelefono(e.target.value)} type="tel" placeholder="Número de teléfono"
                 className="flex-1 px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
             </div>
           )}
 
@@ -247,7 +247,7 @@ function ContactoCard({ c, members, puedeCompletar, onComplete }: {
               <textarea value={resolucion} onChange={e => setResolucion(e.target.value)}
                 placeholder="¿Cómo se resolvió el contacto?" rows={2}
                 className="w-full px-3 py-2 rounded-xl outline-none text-xs resize-none"
-                style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               <div className="flex gap-2">
                 <button onClick={() => setShowResolver(false)}
                   className="flex-1 py-1.5 rounded-lg text-[11px]" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>

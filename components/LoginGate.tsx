@@ -219,7 +219,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
                 placeholder="tu_usuario"
                 className="w-full px-4 py-3 rounded-xl outline-none text-sm"
-                style={{ background: '#0a0a14', border: `1px solid ${error ? 'rgba(220,80,80,0.4)' : S.border}`, color: S.silverBright }}
+                style={{ background: 'var(--th-input)', border: `1px solid ${error ? 'rgba(220,80,80,0.4)' : S.border}`, color: S.silverBright }}
                 autoCapitalize="none"
                 autoCorrect="off"
                 autoComplete="username"
@@ -238,7 +238,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}
                   placeholder="••••••••"
                   className="w-full px-4 py-3 rounded-xl outline-none text-sm pr-12"
-                  style={{ background: '#0a0a14', border: `1px solid ${error ? 'rgba(220,80,80,0.4)' : S.border}`, color: S.silverBright }}
+                  style={{ background: 'var(--th-input)', border: `1px solid ${error ? 'rgba(220,80,80,0.4)' : S.border}`, color: S.silverBright }}
                   autoComplete="current-password"
                 />
                 <button onClick={() => setShowPw(!showPw)} type="button"

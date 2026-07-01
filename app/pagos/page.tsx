@@ -375,7 +375,7 @@ function CopyField({ label, value, icon }: { label: string; value: string; icon:
   }
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl"
-      style={{ background: '#08080e', border: `1px solid ${S.border}` }}>
+      style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }}>
       <div className="flex items-start gap-2.5 min-w-0 flex-1">
         <span className="mt-0.5 flex-shrink-0" style={{ color: S.silverDim }}>{icon}</span>
         <div className="min-w-0">
@@ -429,7 +429,7 @@ function LinkRow({ item }: { item: LinkItem }) {
   }
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-      style={{ background: '#08080e', border: `1px solid ${S.border}` }}>
+      style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }}>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium truncate" style={{ color: item.url ? S.silver : S.silverDim }}>
           {item.nombre}
@@ -566,11 +566,11 @@ function BuscadorModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4"
-      style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)' }}
+      style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
 
       <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col"
-        style={{ background: '#09090f', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '80vh' }}>
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '80vh' }}>
 
         {/* Barra de búsqueda */}
         <div className="flex items-center gap-3 px-4 py-3"
@@ -629,7 +629,7 @@ function BuscadorModal({ onClose }: { onClose: () => void }) {
                       <ChevronRight size={10} style={{ color: S.silverDim }} />
                       <span className="text-[9px]" style={{ color: S.silverDim }}>{r.subseccion}</span>
                     </div>
-                    <div className="flex items-center gap-3 px-3 py-2.5" style={{ background: '#08080e' }}>
+                    <div className="flex items-center gap-3 px-3 py-2.5" style={{ background: 'var(--th-inner)' }}>
                       <p className="flex-1 text-xs font-medium truncate" style={{ color: r.url ? S.silver : S.silverDim }}>
                         {r.nombre}
                       </p>
@@ -751,14 +751,14 @@ function Calculadora({ nombre, multiplicador, accentColor, presets }: {
               <input type="number" value={contado} onChange={e => setContado(e.target.value)}
                 placeholder="ej. 9997"
                 className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: '#08080e', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}`, color: S.silverBright }} />
             </div>
             <div>
               <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Total abonos recibidos ($)</p>
               <input type="number" value={abonos} onChange={e => setAbonos(e.target.value)}
                 placeholder="ej. 3000"
                 className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: '#08080e', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}`, color: S.silverBright }} />
             </div>
           </div>
 

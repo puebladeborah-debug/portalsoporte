@@ -305,7 +305,7 @@ export default function TeamSidebar() {
       {qrUrl && qrMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.9)' }}>
           <div className="rounded-2xl p-6 flex flex-col items-center gap-4 max-w-xs w-full mx-4"
-            style={{ background: '#08080e', border: `1px solid ${qrStatus === 'completo' ? 'rgba(100,200,120,0.3)' : 'rgba(220,150,50,0.3)'}`, boxShadow: '0 0 60px rgba(0,0,0,0.9)' }}>
+            style={{ background: 'var(--th-inner)', border: `1px solid ${qrStatus === 'completo' ? 'rgba(100,200,120,0.3)' : 'rgba(220,150,50,0.3)'}`, boxShadow: '0 0 60px rgba(0,0,0,0.9)' }}>
             <div className="text-center">
               <span className="text-xs tracking-widest uppercase px-3 py-1 rounded-full"
                 style={{ background: qrStatus === 'completo' ? 'rgba(100,200,120,0.1)' : 'rgba(220,150,50,0.1)', color: qrStatus === 'completo' ? '#70c080' : '#d4a050', border: `1px solid ${qrStatus === 'completo' ? 'rgba(100,200,120,0.2)' : 'rgba(220,150,50,0.2)'}` }}>
@@ -337,7 +337,7 @@ export default function TeamSidebar() {
       {preQRMember && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-sm mx-4 rounded-t-3xl md:rounded-2xl flex flex-col"
-            style={{ background: '#080810', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.95)', maxHeight: '90vh' }}>
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.95)', maxHeight: '90vh' }}>
 
             <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0"
               style={{ borderBottom: `1px solid ${S.border}` }}>
@@ -361,7 +361,7 @@ export default function TeamSidebar() {
                 <p className="text-[9px] tracking-widets uppercase mb-1.5" style={{ color: S.silverDim }}>Hora de registro *</p>
                 <input type="time" value={preQRForm.hora} onChange={e => pqr('hora', e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                  style={{ background: '#0a0a14', border: `1px solid ${preQRForm.hora ? 'rgba(180,185,210,0.25)' : S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${preQRForm.hora ? 'rgba(180,185,210,0.25)' : S.border}`, color: S.silverBright }} />
               </div>
 
               {/* Contadores de canales */}
@@ -388,7 +388,7 @@ export default function TeamSidebar() {
                         onChange={e => pqr(ch.key, e.target.value)}
                         placeholder="0"
                         className="w-full px-3 py-2 rounded-xl outline-none text-sm text-center"
-                        style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                        style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
                     </div>
                   ))}
                 </div>
@@ -403,7 +403,7 @@ export default function TeamSidebar() {
                   placeholder={'Una tarea por línea\nEj: Respondí disputas atrasadas\nEj: Apoyé en onboarding'}
                   rows={3}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-xs resize-none"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }}
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }}
                 />
               </div>
             </div>
@@ -461,7 +461,7 @@ export default function TeamSidebar() {
       {editingMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-sm mx-4 rounded-2xl overflow-hidden flex flex-col"
-            style={{ background: '#080810', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.9)', maxHeight: '88vh' }}>
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.9)', maxHeight: '88vh' }}>
 
             {/* Header fijo */}
             <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
@@ -488,7 +488,7 @@ export default function TeamSidebar() {
                     onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                    style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }}
+                    style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }}
                   />
                 </div>
               ))}
@@ -532,12 +532,12 @@ export default function TeamSidebar() {
                         <input type="time" value={h?.entrada || ''} disabled={!h?.activo}
                           onChange={e => setEditHorario(prev => ({ ...prev, [dia]: { ...prev[dia]!, entrada: e.target.value } }))}
                           className="flex-1 px-2 py-1 rounded-lg outline-none text-xs"
-                          style={{ background: h?.activo ? '#0a0a14' : 'rgba(180,185,210,0.02)', border: `1px solid ${S.border}`, color: h?.activo ? S.silverBright : S.silverDim, opacity: h?.activo ? 1 : 0.4 }} />
+                          style={{ background: h?.activo ? 'var(--th-input)' : 'rgba(180,185,210,0.02)', border: `1px solid ${S.border}`, color: h?.activo ? S.silverBright : S.silverDim, opacity: h?.activo ? 1 : 0.4 }} />
                         <span style={{ color: S.silverDim, fontSize: '10px' }}>–</span>
                         <input type="time" value={h?.salida || ''} disabled={!h?.activo}
                           onChange={e => setEditHorario(prev => ({ ...prev, [dia]: { ...prev[dia]!, salida: e.target.value } }))}
                           className="flex-1 px-2 py-1 rounded-lg outline-none text-xs"
-                          style={{ background: h?.activo ? '#0a0a14' : 'rgba(180,185,210,0.02)', border: `1px solid ${S.border}`, color: h?.activo ? S.silverBright : S.silverDim, opacity: h?.activo ? 1 : 0.4 }} />
+                          style={{ background: h?.activo ? 'var(--th-input)' : 'rgba(180,185,210,0.02)', border: `1px solid ${S.border}`, color: h?.activo ? S.silverBright : S.silverDim, opacity: h?.activo ? 1 : 0.4 }} />
                       </div>
                     )
                   })}
@@ -557,7 +557,7 @@ export default function TeamSidebar() {
                   rows={5}
                   placeholder={'Tarea 1\nTarea 2\nTarea 3'}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }}
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }}
                 />
                 <p className="text-[9px] mt-1" style={{ color: S.silverDim }}>
                   Cada tarea en una línea separada
@@ -624,12 +624,12 @@ export default function TeamSidebar() {
                 <input key={i} value={f.v} onChange={e => f.s(e.target.value)} placeholder={f.ph}
                   type={(f as { t?: string }).t || 'text'}
                   className="w-full text-xs p-2 rounded-lg outline-none mb-1.5"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               ))}
               <textarea value={newTasks} onChange={e => setNewTasks(e.target.value)}
                 placeholder={'Tarea 1\nTarea 2'} rows={3}
                 className="w-full text-xs p-2 rounded-lg outline-none resize-none mb-1.5"
-                style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               <div className="flex gap-1.5">
                 <button onClick={() => setShowAddForm(false)} className="flex-1 py-1.5 rounded-lg text-[10px]"
                   style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>Cancelar</button>
@@ -806,7 +806,7 @@ export default function TeamSidebar() {
                               <textarea value={newExtraText} onChange={e => setNewExtraText(e.target.value)}
                                 placeholder="Tarea extra de hoy..." rows={2}
                                 className="w-full text-xs p-1.5 rounded outline-none resize-none mb-1.5"
-                                style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
                               <div className="flex gap-1.5">
                                 <button onClick={() => setShowExtraForm(null)} className="flex-1 py-1 rounded text-[10px]"
                                   style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>Cancelar</button>

@@ -225,7 +225,7 @@ function NewConvModal({
               onChange={e => setGroupName(e.target.value)}
               placeholder="Nombre del grupo (opcional)"
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }}
+              style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }}
             />
           </div>
         )}

@@ -119,7 +119,7 @@ export default function NoticesPanel() {
 
           {/* Panel */}
           <div className="fixed top-24 right-2 w-80 max-h-[80vh] z-50 rounded-2xl overflow-hidden flex flex-col"
-            style={{ background: '#080810', border: `1px solid ${S.borderActive}`, boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}>
+            style={{ background: 'var(--th-inner)', border: `1px solid ${S.borderActive}`, boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}>
 
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0"
@@ -149,7 +149,7 @@ export default function NoticesPanel() {
                   placeholder="Escribe el aviso para el equipo..."
                   rows={3}
                   className="w-full text-xs p-2 rounded-lg resize-none outline-none mb-2"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }}
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }}
                 />
                 <div className="flex items-center gap-2">
                   <button onClick={() => setPriority('normal')}

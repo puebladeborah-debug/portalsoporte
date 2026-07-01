@@ -16,62 +16,104 @@
   --glow: rgba(180, 185, 210, 0.08);
   --glow-strong: rgba(180, 185, 210, 0.18);
 
-  --th-bg:           #060608;
-  --th-card:         #0c0c14;
-  --th-border:       #1a1a28;
-  --th-border-light: rgba(180,185,210,0.18);
-  --th-border-active:rgba(180,185,210,0.25);
-  --th-silver:       #b8bcc8;
-  --th-bright:       #d4d8e8;
-  --th-dim:          #3a3e4a;
+  --th-bg:            #060608;
+  --th-card:          #0c0c14;
+  --th-border:        #1a1a28;
+  --th-border-light:  rgba(180,185,210,0.18);
+  --th-border-active: rgba(180,185,210,0.25);
+  --th-silver:        #b8bcc8;
+  --th-bright:        #d4d8e8;
+  --th-dim:           #3a3e4a;
+  --th-inner:         #08080e;
+  --th-input:         #0a0a14;
+  --th-nav:           rgba(6,6,8,0.92);
+  --th-nav-bottom:    rgba(6,6,8,0.96);
+  --th-overlay-alpha: 0.82;
 }
 
 /* Azul Nocturno */
 html[data-theme="blue"] {
-  --th-bg:           #020810;
-  --th-card:         #060e1c;
-  --th-border:       #102030;
-  --th-border-light: rgba(80,140,230,0.18);
-  --th-border-active:rgba(80,140,230,0.28);
-  --th-silver:       #7aaad8;
-  --th-bright:       #b8d4f8;
-  --th-dim:          #1c3060;
+  --th-bg:            #020810;
+  --th-card:          #060e1c;
+  --th-border:        #102030;
+  --th-border-light:  rgba(80,140,230,0.18);
+  --th-border-active: rgba(80,140,230,0.28);
+  --th-silver:        #7aaad8;
+  --th-bright:        #b8d4f8;
+  --th-dim:           #1c3060;
+  --th-inner:         #040c18;
+  --th-input:         #060e20;
+  --th-nav:           rgba(2,8,16,0.93);
+  --th-nav-bottom:    rgba(2,8,16,0.97);
+  --th-overlay-alpha: 0.84;
 }
 
 /* Púrpura */
 html[data-theme="purple"] {
-  --th-bg:           #060410;
-  --th-card:         #0c0818;
-  --th-border:       #1e1032;
-  --th-border-light: rgba(160,100,230,0.18);
-  --th-border-active:rgba(160,100,230,0.28);
-  --th-silver:       #b090d8;
-  --th-bright:       #d8c0f8;
-  --th-dim:          #3a1e58;
+  --th-bg:            #060410;
+  --th-card:          #0c0818;
+  --th-border:        #1e1032;
+  --th-border-light:  rgba(160,100,230,0.18);
+  --th-border-active: rgba(160,100,230,0.28);
+  --th-silver:        #b090d8;
+  --th-bright:        #d8c0f8;
+  --th-dim:           #3a1e58;
+  --th-inner:         #04020e;
+  --th-input:         #080616;
+  --th-nav:           rgba(6,4,16,0.93);
+  --th-nav-bottom:    rgba(6,4,16,0.97);
+  --th-overlay-alpha: 0.84;
 }
 
 /* Esmeralda */
 html[data-theme="green"] {
-  --th-bg:           #030908;
-  --th-card:         #060f0c;
-  --th-border:       #0f2018;
-  --th-border-light: rgba(60,180,120,0.18);
-  --th-border-active:rgba(60,180,120,0.28);
-  --th-silver:       #70c0a0;
-  --th-bright:       #a8e0c8;
-  --th-dim:          #1a3828;
+  --th-bg:            #030908;
+  --th-card:          #060f0c;
+  --th-border:        #0f2018;
+  --th-border-light:  rgba(60,180,120,0.18);
+  --th-border-active: rgba(60,180,120,0.28);
+  --th-silver:        #70c0a0;
+  --th-bright:        #a8e0c8;
+  --th-dim:           #1a3828;
+  --th-inner:         #010806;
+  --th-input:         #030d08;
+  --th-nav:           rgba(3,9,8,0.93);
+  --th-nav-bottom:    rgba(3,9,8,0.97);
+  --th-overlay-alpha: 0.84;
 }
 
 /* Ámbar */
 html[data-theme="amber"] {
-  --th-bg:           #080602;
-  --th-card:         #100c04;
-  --th-border:       #221806;
-  --th-border-light: rgba(210,165,55,0.18);
-  --th-border-active:rgba(210,165,55,0.28);
-  --th-silver:       #c8a840;
-  --th-bright:       #e8cc70;
-  --th-dim:          #402c08;
+  --th-bg:            #080602;
+  --th-card:          #100c04;
+  --th-border:        #221806;
+  --th-border-light:  rgba(210,165,55,0.18);
+  --th-border-active: rgba(210,165,55,0.28);
+  --th-silver:        #c8a840;
+  --th-bright:        #e8cc70;
+  --th-dim:           #402c08;
+  --th-inner:         #060400;
+  --th-input:         #0a0800;
+  --th-nav:           rgba(8,6,2,0.93);
+  --th-nav-bottom:    rgba(8,6,2,0.97);
+  --th-overlay-alpha: 0.84;
+}
+
+/* Blanco — el color del texto lo maneja ThemeProvider.tsx con JS (--th-bright/silver/dim/border se sobreescriben inline) */
+html[data-theme="white"] {
+  --th-bg:            #ffffff;
+  --th-card:          #f8f8fc;
+  --th-border:        #e0e2ee;
+  --th-border-light:  rgba(80,80,160,0.12);
+  --th-border-active: rgba(80,80,160,0.28);
+  --th-silver:        #3a3e58;
+  --th-bright:        #0f1228;
+  --th-dim:           #9094b0;
+  --th-inner:         #eeeef8;
+  --th-input:         #ffffff;
+  --th-nav:           rgba(255,255,255,0.94);
+  --th-nav-bottom:    rgba(255,255,255,0.97);
+  --th-overlay-alpha: 0.40;
 }
 
 

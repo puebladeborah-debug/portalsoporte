@@ -427,7 +427,7 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
                     placeholder="Tu nombre completo"
                     className="w-full px-3 py-2 rounded-xl outline-none text-xs"
                     style={{
-                      background: '#05050a',
+                      background: 'var(--th-inner)',
                       border: `1px solid ${nombreCompleto.trim().length >= 3 ? 'rgba(100,200,120,0.3)' : S.border}`,
                       color: S.silverBright,
                     }}
@@ -443,7 +443,7 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
                     placeholder="Tu ciudad"
                     className="w-full px-3 py-2 rounded-xl outline-none text-xs"
                     style={{
-                      background: '#05050a',
+                      background: 'var(--th-inner)',
                       border: `1px solid ${ciudad.trim().length >= 2 ? 'rgba(100,200,120,0.3)' : S.border}`,
                       color: S.silverBright,
                     }}

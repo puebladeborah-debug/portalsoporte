@@ -281,9 +281,9 @@ export default function IncidenciasAdminPage() {
       {/* ── Modal: Confirm delete ────────────────────────────────────────────── */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.85)' }}>
+          style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))' }}>
           <div className="w-80 rounded-2xl overflow-hidden mx-4"
-            style={{ background: '#080810', border: '1px solid rgba(220,70,70,0.25)' }}>
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(220,70,70,0.25)' }}>
             <div className="px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
               <p className="text-sm font-bold" style={{ color: S.silverBright }}>¿Eliminar esta incidencia?</p>
               <p className="text-xs mt-1" style={{ color: S.silverDim }}>Esta acción no se puede deshacer.</p>
@@ -310,7 +310,7 @@ export default function IncidenciasAdminPage() {
           style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden"
             style={{
-              background: '#080810',
+              background: 'var(--th-inner)',
               border: '1px solid rgba(180,185,210,0.15)',
               boxShadow: '0 0 80px rgba(0,0,0,0.95)',
               maxHeight: '90vh',
@@ -340,7 +340,7 @@ export default function IncidenciasAdminPage() {
                 </label>
                 <input type="date" value={form.fecha} onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
 
               {/* Colaborador */}
@@ -364,7 +364,7 @@ export default function IncidenciasAdminPage() {
                 <input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))}
                   placeholder="Se llena automático al seleccionar colaborador"
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
 
               {/* Tipo */}
@@ -408,7 +408,7 @@ export default function IncidenciasAdminPage() {
                   placeholder="Describe qué pasó, cuándo y cómo ocurrió..."
                   rows={3}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-                  style={{ background: '#0a0a14', border: `1px solid ${!form.descripcion ? 'rgba(220,70,70,0.3)' : S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${!form.descripcion ? 'rgba(220,70,70,0.3)' : S.border}`, color: S.silverBright }} />
               </div>
 
               {/* Acuerdo previo */}
@@ -420,7 +420,7 @@ export default function IncidenciasAdminPage() {
                   placeholder="¿Qué regla o acuerdo del reglamento se incumplió?"
                   rows={2}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
 
               {/* Acción correctiva */}
@@ -432,7 +432,7 @@ export default function IncidenciasAdminPage() {
                   placeholder="¿Qué acción toma el colaborador para corregir esto?"
                   rows={2}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
 
               {/* Fecha límite */}
@@ -442,7 +442,7 @@ export default function IncidenciasAdminPage() {
                 </label>
                 <input type="date" value={form.fechaLimite} onChange={e => setForm(f => ({ ...f, fechaLimite: e.target.value }))}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
 
               {/* Observaciones */}
@@ -454,7 +454,7 @@ export default function IncidenciasAdminPage() {
                   placeholder="Notas adicionales, contexto o seguimiento..."
                   rows={2}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
             </div>
 

@@ -149,10 +149,10 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)' }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-md rounded-2xl overflow-hidden"
-        style={{ background: '#09090f', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '88vh' }}>
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '88vh' }}>
 
         <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
           <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>
@@ -167,7 +167,7 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
             <input value={nombre} onChange={e => setNombre(e.target.value)}
               placeholder="Nombre del cliente o caso"
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           </div>
 
           <div>
@@ -175,7 +175,7 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
             <input value={vendedor} onChange={e => setVendedor(e.target.value)}
               placeholder="Nombre del vendedor"
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           </div>
 
           <div>
@@ -198,7 +198,7 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
             <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Fecha</p>
             <input type="date" value={fecha} onChange={e => setFecha(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           </div>
 
           <div>
@@ -206,7 +206,7 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
             <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3}
               placeholder="Detalles de la situación…"
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           </div>
 
           <div>
@@ -214,7 +214,7 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
             <textarea value={resolucion} onChange={e => setResolucion(e.target.value)} rows={3}
               placeholder="¿Cómo se resolvió o qué sigue?"
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           </div>
 
           {/* Botón Reembolso */}
@@ -236,7 +236,7 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
                   <input type="number" value={montoReembolso} onChange={e => setMontoReembolso(e.target.value)}
                     placeholder="ej. 1500"
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                    style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                    style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
                 </div>
                 <div>
                   <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Moneda</p>
@@ -498,7 +498,7 @@ function Estadisticas({ casos }: { casos: Caso[] }) {
           <div className="space-y-2">
             {stats.tablaVendedoresReembolso.map((v, i) => (
               <div key={v.nombre} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                style={{ background: '#08080e', border: `1px solid ${S.border}` }}>
+                style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }}>
                 <span className="w-5 text-[11px] font-bold text-center flex-shrink-0" style={{ color: i === 0 ? '#dcaa50' : S.silverDim }}>{i + 1}</span>
                 <p className="flex-1 text-xs font-medium truncate" style={{ color: S.silver }}>{v.nombre}</p>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
@@ -523,7 +523,7 @@ function Estadisticas({ casos }: { casos: Caso[] }) {
           <div className="space-y-2">
             {stats.tablaDeptosReembolso.map((d, i) => (
               <div key={d.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                style={{ background: '#08080e', border: `1px solid ${S.border}` }}>
+                style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }}>
                 <span className="w-5 text-[11px] font-bold text-center flex-shrink-0" style={{ color: i === 0 ? '#dcaa50' : S.silverDim }}>{i + 1}</span>
                 <span style={{ color: d.color }}>{d.icon}</span>
                 <p className="flex-1 text-xs font-medium truncate" style={{ color: S.silver }}>{d.label}</p>

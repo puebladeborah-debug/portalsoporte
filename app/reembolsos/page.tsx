@@ -127,13 +127,13 @@ function ReembolsoModal({ reembolso, onClose, onSaved, addReembolso, updateReemb
     onSaved()
   }
 
-  const inputStyle = { background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }
+  const inputStyle = { background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)' }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-md rounded-2xl overflow-hidden"
-        style={{ background: '#09090f', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '90vh' }}>
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '90vh' }}>
 
         <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
           <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>
@@ -427,7 +427,7 @@ function PlataformaMensual({ plataforma, registros }: { plataforma: string; regi
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${S.border}` }}>
       <button onClick={() => setOpen(o => !o)} className="w-full flex items-center gap-3 px-3 py-2.5"
-        style={{ background: '#08080e' }}>
+        style={{ background: 'var(--th-inner)' }}>
         <p className="flex-1 text-left text-xs font-semibold" style={{ color: S.silver }}>{plataforma}</p>
         <span className="text-[11px] font-bold" style={{ color: S.silverDim }}>{registros.length} caso{registros.length !== 1 ? 's' : ''}</span>
         {open ? <ChevronUp size={14} style={{ color: S.silverDim }} /> : <ChevronDown size={14} style={{ color: S.silverDim }} />}
@@ -557,7 +557,7 @@ function Estadisticas({ todos }: { todos: Reembolso[] }) {
           <div className="space-y-2">
             {stats.tablaPlataformas.map((p, i) => (
               <div key={p.plataforma} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                style={{ background: '#08080e', border: `1px solid ${S.border}` }}>
+                style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }}>
                 <span className="w-5 text-[11px] font-bold text-center flex-shrink-0" style={{ color: i === 0 ? '#dcaa50' : S.silverDim }}>{i + 1}</span>
                 <p className="flex-1 text-xs font-medium truncate" style={{ color: S.silver }}>{p.plataforma}</p>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"

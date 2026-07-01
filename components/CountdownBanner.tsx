@@ -274,7 +274,7 @@ export default function CountdownBanner() {
                 <input value={form.titulo} onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
                   placeholder="Ej: Lanzamiento de campaña, Junta anual..."
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
 
               {/* Fechas */}
@@ -284,14 +284,14 @@ export default function CountdownBanner() {
                   <input type="datetime-local" value={form.fechaInicio}
                     onChange={e => setForm(f => ({ ...f, fechaInicio: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-xs"
-                    style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                    style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
                 </div>
                 <div>
                   <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Fecha fin *</p>
                   <input type="datetime-local" value={form.fechaFin}
                     onChange={e => setForm(f => ({ ...f, fechaFin: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-xs"
-                    style={{ background: '#0a0a14', border: `1px solid !form.fechaFin ? 'rgba(220,70,70,0.4)' : ${S.border}`, color: S.silverBright }} />
+                    style={{ background: 'var(--th-input)', border: `1px solid !form.fechaFin ? 'rgba(220,70,70,0.4)' : ${S.border}`, color: S.silverBright }} />
                 </div>
               </div>
 

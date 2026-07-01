@@ -138,7 +138,7 @@ export default function QuickResponses() {
       {/* Panel modal */}
       {open && (
         <div className="fixed inset-0 z-[400] flex items-end md:items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.85)' }}
+          style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))' }}
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}>
 
           <div className="w-full max-w-lg mx-0 md:mx-4 rounded-t-3xl md:rounded-2xl flex flex-col"

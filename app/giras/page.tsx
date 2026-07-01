@@ -78,12 +78,12 @@ function CatRow({ label, color, data, onChange }: {
         <input value={data.desde} onChange={e => data.activo && onChange({ ...data, desde: e.target.value })}
           placeholder="Del" type="number" min="0"
           className="w-14 px-2 py-1 rounded-lg outline-none text-[10px] text-center"
-          style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+          style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
         <span className="text-[10px]" style={{ color: S.silverDim }}>–</span>
         <input value={data.hasta} onChange={e => data.activo && onChange({ ...data, hasta: e.target.value })}
           placeholder="Al" type="number" min="0"
           className="w-14 px-2 py-1 rounded-lg outline-none text-[10px] text-center"
-          style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+          style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
       </div>
     </div>
   )
@@ -118,7 +118,7 @@ function RecepcionDocumentosPanel({ titulo, data, onChange }: {
               onChange={e => onChange({ ...data, [key]: parseInt(e.target.value) || 0 })}
               placeholder="0"
               className="w-full px-2 py-2 rounded-lg outline-none text-sm text-center font-bold"
-              style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           </div>
         ))}
       </div>
@@ -453,7 +453,7 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
       {showEditHorarios && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-xs mx-4 rounded-2xl overflow-hidden"
-            style={{ background: '#080810', border: '1px solid rgba(96,165,250,0.3)', boxShadow: '0 0 60px rgba(0,0,0,0.95)' }}>
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(96,165,250,0.3)', boxShadow: '0 0 60px rgba(0,0,0,0.95)' }}>
 
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
               <Clock size={15} style={{ color: '#60a5fa' }} />
@@ -471,7 +471,7 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
                 </p>
                 <input type="time" value={editH1} onChange={e => setEditH1(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                  style={{ background: '#0a0a14', border: `1px solid rgba(96,165,250,0.35)`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid rgba(96,165,250,0.35)`, color: S.silverBright }} />
               </div>
 
               {/* Horario 2 — toggle explícito */}
@@ -500,7 +500,7 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
                   </div>
                   <input type="time" value={editH2} onChange={e => setEditH2(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                    style={{ background: '#0a0a14', border: `1px solid rgba(96,165,250,0.35)`, color: S.silverBright }} />
+                    style={{ background: 'var(--th-input)', border: `1px solid rgba(96,165,250,0.35)`, color: S.silverBright }} />
                   <p className="text-[9px] mt-1.5" style={{ color: S.silverDim }}>
                     Al guardar con 2do horario, aparecerá una segunda sección para cada miembro del equipo.
                   </p>
@@ -679,7 +679,7 @@ export default function GirasPage() {
       {confirmDel && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-80 mx-4 rounded-2xl overflow-hidden"
-            style={{ background: '#080810', border: '1px solid rgba(220,70,70,0.25)' }}>
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(220,70,70,0.25)' }}>
             <div className="px-5 py-4">
               <p className="text-sm font-bold mb-1" style={{ color: S.silverBright }}>¿Eliminar este evento?</p>
               <p className="text-xs" style={{ color: S.silverDim }}>Se borrarán también todos los registros del equipo para este evento.</p>
@@ -701,7 +701,7 @@ export default function GirasPage() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-sm mx-4 rounded-t-3xl md:rounded-2xl overflow-hidden"
-            style={{ background: '#080810', border: '1px solid rgba(96,165,250,0.25)', boxShadow: '0 0 60px rgba(0,0,0,0.95)' }}>
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(96,165,250,0.25)', boxShadow: '0 0 60px rgba(0,0,0,0.95)' }}>
 
             <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
               <MapPin size={15} style={{ color: '#60a5fa' }} />
@@ -715,26 +715,26 @@ export default function GirasPage() {
                 <input value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                   placeholder="Ej: Gira Ciudad de México, Show Guadalajara..."
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
               <div>
                 <p className="text-[9px] tracking-widets uppercase mb-1.5" style={{ color: S.silverDim }}>Fecha *</p>
                 <input type="date" value={form.fecha} onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[9px] tracking-widets uppercase mb-1.5" style={{ color: S.silverDim }}>Horario 1 *</p>
                   <input type="time" value={form.horario1} onChange={e => setForm(f => ({ ...f, horario1: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                    style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                    style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
                 </div>
                 <div>
                   <p className="text-[9px] tracking-widets uppercase mb-1.5" style={{ color: S.silverDim }}>Horario 2 (opcional)</p>
                   <input type="time" value={form.horario2} onChange={e => setForm(f => ({ ...f, horario2: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                    style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                    style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
                 </div>
               </div>
               <div className="flex gap-3 pt-1">

@@ -235,7 +235,7 @@ export default function GuardiasPage() {
 
         {/* Calendar */}
         <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${S.border}` }}>
-          <div className="grid grid-cols-7" style={{ borderBottom: `1px solid ${S.border}`, background: '#08080e' }}>
+          <div className="grid grid-cols-7" style={{ borderBottom: `1px solid ${S.border}`, background: 'var(--th-inner)' }}>
             {DIAS_COL.map(d => (
               <div key={d} className="py-2 text-center text-[10px] font-bold tracking-widest uppercase"
                 style={{ color: S.silverDim }}>
@@ -327,7 +327,7 @@ export default function GuardiasPage() {
           style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-md mx-0 md:mx-4 rounded-t-3xl md:rounded-2xl overflow-hidden"
             style={{
-              background: '#080810',
+              background: 'var(--th-inner)',
               border: '1px solid rgba(136,144,210,0.25)',
               boxShadow: '0 0 60px rgba(0,0,0,0.95)',
               maxHeight: '90vh',
@@ -370,7 +370,7 @@ export default function GuardiasPage() {
                     <input type="time" value={editEntrada}
                       onChange={e => setEditEntrada(e.target.value)}
                       className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                      style={{ background: '#0a0a14', border: `1px solid ${editEntrada ? 'rgba(136,144,210,0.4)' : S.border}`, color: S.silverBright }} />
+                      style={{ background: 'var(--th-input)', border: `1px solid ${editEntrada ? 'rgba(136,144,210,0.4)' : S.border}`, color: S.silverBright }} />
                   </div>
                   <div>
                     <p className="text-[9px] mb-1.5 tracking-widets uppercase" style={{ color: S.silverDim }}>
@@ -379,7 +379,7 @@ export default function GuardiasPage() {
                     <input type="time" value={editSalida}
                       onChange={e => setEditSalida(e.target.value)}
                       className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                      style={{ background: '#0a0a14', border: `1px solid ${editSalida ? 'rgba(136,144,210,0.4)' : S.border}`, color: S.silverBright }} />
+                      style={{ background: 'var(--th-input)', border: `1px solid ${editSalida ? 'rgba(136,144,210,0.4)' : S.border}`, color: S.silverBright }} />
                   </div>
                 </div>
               </div>
@@ -466,7 +466,7 @@ export default function GuardiasPage() {
                 <input value={editNota} onChange={e => setEditNota(e.target.value)}
                   placeholder="Ej: Cobertura especial, junta, evento..."
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-xs"
-                  style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
             </div>
 
@@ -499,7 +499,7 @@ export default function GuardiasPage() {
           style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-md mx-0 md:mx-4 rounded-t-3xl md:rounded-2xl overflow-hidden"
             style={{
-              background: '#080810',
+              background: 'var(--th-inner)',
               border: '1px solid rgba(136,144,210,0.25)',
               boxShadow: '0 0 60px rgba(0,0,0,0.95)',
               maxHeight: '90vh',

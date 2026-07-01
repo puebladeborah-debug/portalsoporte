@@ -138,7 +138,7 @@ function VistaDetalle({ doc, onClose }: { doc: Documento; onClose: () => void })
                     <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>
                       {campo.label}
                     </p>
-                    <div style={{ background: '#080810', border: `1px solid ${S.border}`, borderRadius: '0.75rem', height: campo.altura === 'grande' ? '4rem' : '2.25rem' }} />
+                    <div style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}`, borderRadius: '0.75rem', height: campo.altura === 'grande' ? '4rem' : '2.25rem' }} />
                   </div>
                 ))}
               </div>
@@ -149,7 +149,7 @@ function VistaDetalle({ doc, onClose }: { doc: Documento; onClose: () => void })
                 <div className="space-y-4">
                   {['Firma del Colaborador', 'Firma del Líder / Supervisor'].map(firma => (
                     <div key={firma}>
-                      <div className="h-12 rounded-xl mb-1.5" style={{ background: '#080810', border: `1px solid ${S.border}` }} />
+                      <div className="h-12 rounded-xl mb-1.5" style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }} />
                       <p className="text-[11px]" style={{ color: S.silverDim }}>{firma}</p>
                     </div>
                   ))}
@@ -180,14 +180,14 @@ function VistaDetalle({ doc, onClose }: { doc: Documento; onClose: () => void })
                       <p className="text-[10px] tracking-widest uppercase mb-1" style={{ color: S.silverDim }}>
                         {campo}
                       </p>
-                      <div className="h-9 rounded-xl" style={{ background: '#080810', border: `1px solid ${S.border}` }} />
+                      <div className="h-9 rounded-xl" style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }} />
                     </div>
                   ))}
                   <div>
                     <p className="text-[10px] tracking-widest uppercase mb-1" style={{ color: S.silverDim }}>
                       Firma
                     </p>
-                    <div className="h-16 rounded-xl" style={{ background: '#080810', border: `1px solid ${S.border}` }} />
+                    <div className="h-16 rounded-xl" style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }} />
                   </div>
                 </div>
               </div>

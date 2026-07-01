@@ -138,7 +138,7 @@ export default function ProfileSetupGate({ memberId, memberName, onDone }: Props
                     placeholder={field.placeholder}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
                     style={{
-                      background: '#05050a',
+                      background: 'var(--th-inner)',
                       border: `1px solid ${form[field.key] ? 'rgba(180,185,210,0.25)' : S.border}`,
                       color: S.silverBright,
                     }}
@@ -170,7 +170,7 @@ export default function ProfileSetupGate({ memberId, memberName, onDone }: Props
                     placeholder={field.placeholder}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
                     style={{
-                      background: '#05050a',
+                      background: 'var(--th-inner)',
                       border: `1px solid ${form[field.key] ? 'rgba(180,185,210,0.25)' : S.border}`,
                       color: S.silverBright,
                     }}
@@ -214,7 +214,7 @@ export default function ProfileSetupGate({ memberId, memberName, onDone }: Props
                   placeholder="Escribe tus alergias conocidas, o escribe 'Ninguna'"
                   rows={3}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-                  style={{ background: '#05050a', border: `1px solid ${S.border}`, color: S.silverBright }}
+                  style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}`, color: S.silverBright }}
                 />
               </div>
             </>

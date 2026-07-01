@@ -219,29 +219,29 @@ function TabLlamadas({ uid }: { uid: string }) {
         <input value={contacto} onChange={e => setContacto(e.target.value)}
           placeholder="¿Con quién es la llamada?"
           className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-          style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+          style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
         <div className="flex gap-2.5">
           <input value={lada} onChange={e => setLada(e.target.value)}
             placeholder="Lada"
             className="w-20 flex-shrink-0 px-3 py-2.5 rounded-xl outline-none text-sm"
-            style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+            style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           <input value={telefono} onChange={e => setTelefono(e.target.value)}
             type="tel" placeholder="Número de teléfono"
             className="flex-1 px-3 py-2.5 rounded-xl outline-none text-sm"
-            style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+            style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
         </div>
         <div className="grid grid-cols-2 gap-2.5">
           <input type="date" value={fecha} onChange={e => setFecha(e.target.value)}
             className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-            style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+            style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
           <input type="time" value={hora} onChange={e => setHora(e.target.value)}
             className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-            style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+            style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
         </div>
         <textarea value={notas} onChange={e => setNotas(e.target.value)}
           placeholder="Notas (opcional)" rows={2}
           className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
-          style={{ background: '#0a0a14', border: `1px solid ${S.border}`, color: S.silverBright }} />
+          style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
         <button onClick={crear} disabled={!contacto.trim() || !fecha || !hora}
           className="w-full flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-xl"
           style={{
