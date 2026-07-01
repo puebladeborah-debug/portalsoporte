@@ -13,9 +13,14 @@ import { auth } from '@/lib/firebase'
 import { sendPasswordResetEmail } from 'firebase/auth'
 
 const S = {
-  bg: '#08080e', card: '#0e0e14', border: '#1a1a24',
-  silver: '#b8bcc8', silverBright: '#d4d8e8', silverDim: '#3a3e4a',
-  borderActive: 'rgba(180,185,210,0.18)',
+  bg:           'var(--th-bg)',
+  card:         'var(--th-card)',
+  border:       'var(--th-border)',
+  borderLight:  'var(--th-border-light)',
+  borderActive: 'var(--th-border-active)',
+  silver:       'var(--th-silver)',
+  silverBright: 'var(--th-bright)',
+  silverDim:    'var(--th-dim)',
 }
 
 const ALL_PERMISSIONS: { key: Permission; label: string }[] = [

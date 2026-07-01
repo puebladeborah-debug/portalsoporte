@@ -16,8 +16,14 @@ import {
 } from '@/lib/teamStore'
 
 const S = {
-  bg: '#060608', card: '#0e0e12', border: '#1e1e28',
-  silver: '#b8bcc8', silverBright: '#d4d8e8', silverDim: '#3a3e4a',
+  bg:           'var(--th-bg)',
+  card:         'var(--th-card)',
+  border:       'var(--th-border)',
+  borderLight:  'var(--th-border-light)',
+  borderActive: 'var(--th-border-active)',
+  silver:       'var(--th-silver)',
+  silverBright: 'var(--th-bright)',
+  silverDim:    'var(--th-dim)',
 }
 
 const CAT_COLORS = {

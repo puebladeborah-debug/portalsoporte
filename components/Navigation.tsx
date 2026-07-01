@@ -11,10 +11,20 @@ import { getMembers, saveMembers, getIncidenciasByMember, Incidencia, TipoIncide
 import { auth } from '@/lib/firebase'
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
+import { useThemeCtx, THEMES } from './ThemeProvider'
 
 type ConvMeta = { id: string; participantIds: string[]; unreadCount?: Record<string, number> }
 
-const S = { silver: '#b8bcc8', silverBright: '#d4d8e8', silverDim: '#3a3e4a', border: '#1a1a24' }
+const S = {
+  bg:           'var(--th-bg)',
+  card:         'var(--th-card)',
+  border:       'var(--th-border)',
+  borderLight:  'var(--th-border-light)',
+  borderActive: 'var(--th-border-active)',
+  silver:       'var(--th-silver)',
+  silverBright: 'var(--th-bright)',
+  silverDim:    'var(--th-dim)',
+}
 
 const navItems = [
   { href: '/', label: 'Inicio', icon: Home },
@@ -39,6 +49,7 @@ const TIPO_COLOR: Record<TipoIncidencia, { text: string; icon: React.ReactNode }
 
 function ProfileModal({ onClose }: { onClose: () => void }) {
   const { session, member, refresh } = useAuth()
+  const { theme, setTheme } = useThemeCtx()
   const [tab, setTab] = useState<'perfil' | 'incidencias'>('perfil')
   const [editName, setEditName] = useState(member?.name.split(' · ').pop() || '')
   const [currentPw, setCurrentPw] = useState('')
@@ -168,6 +179,25 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
               </div>
             </>
           )}
+
+          {/* Selector de color */}
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Color del portal</p>
+            <div className="flex gap-2">
+              {THEMES.map(t => (
+                <button key={t.id} onClick={() => setTheme(t.id)} title={t.label}
+                  className="flex-1 flex flex-col items-center gap-1.5 py-2 rounded-xl transition-all text-[9px] font-semibold"
+                  style={theme === t.id
+                    ? { border: `2px solid ${t.color}`, background: `${t.bg}88`, color: t.color }
+                    : { border: '1px solid rgba(180,185,210,0.1)', background: 'transparent', color: S.silverDim }
+                  }>
+                  <span className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ background: t.color, boxShadow: theme === t.id ? `0 0 8px ${t.color}` : 'none' }} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="pt-1 flex flex-col gap-2">
             {msg && <p className="text-xs text-center" style={{ color: '#70c080' }}>{msg}</p>}
