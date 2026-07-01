@@ -176,25 +176,26 @@ export default function ClockWidget() {
 
   // Modo Blanco: letras gris oscuro con luz suave hacia afuera
   // Modo Oscuro: letras blancas con brillo neón (igual que antes)
+  // Igual que el logo en modo blanco: negro que se difumina hacia afuera
   const chrome = {
     fontFamily: F, fontWeight: 900, letterSpacing: '0.03em',
-    color: isLight ? '#28304a' : '#ffffff',
+    color: isLight ? '#05060e' : '#ffffff',
     textShadow: isLight
-      ? '0 0 6px rgba(60,75,120,0.45), 0 0 18px rgba(60,75,120,0.22), 0 0 38px rgba(60,75,120,0.10)'
+      ? '0 0 2px rgba(0,0,0,0.7), 0 0 10px rgba(0,0,0,0.25), 0 0 28px rgba(0,0,0,0.10)'
       : '0 0 4px #fff, 0 0 12px rgba(255,255,255,0.95), 0 0 28px rgba(255,255,255,0.7), 0 0 55px rgba(255,255,255,0.35)',
   }
   const chromeDim = {
     fontFamily: F, fontWeight: 900, letterSpacing: '0.03em',
-    color: isLight ? 'rgba(80,95,140,0.55)' : 'rgba(255,255,255,0.4)',
+    color: isLight ? 'rgba(5,6,14,0.38)' : 'rgba(255,255,255,0.4)',
     textShadow: isLight
-      ? '0 0 4px rgba(60,75,120,0.2)'
+      ? '0 0 6px rgba(0,0,0,0.12)'
       : '0 0 5px rgba(255,255,255,0.5)',
   }
   const chromeSecond = {
     fontFamily: F, fontWeight: 900, letterSpacing: '0.03em',
-    color: isLight ? 'rgba(50,65,105,0.80)' : 'rgba(255,255,255,0.78)',
+    color: isLight ? 'rgba(5,6,14,0.65)' : 'rgba(255,255,255,0.78)',
     textShadow: isLight
-      ? '0 0 5px rgba(60,75,120,0.35), 0 0 14px rgba(60,75,120,0.15)'
+      ? '0 0 3px rgba(0,0,0,0.35), 0 0 12px rgba(0,0,0,0.12)'
       : '0 0 5px rgba(255,255,255,0.9), 0 0 14px rgba(255,255,255,0.5)',
   }
   const glow = chrome
