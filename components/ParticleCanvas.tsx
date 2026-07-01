@@ -78,8 +78,8 @@ function drawRocket(ctx: CanvasRenderingContext2D, r: Rocket, isLight: boolean) 
   const noseColor  = isLight ? '#0f0f28' : '#b0b4c8'
   const windowCol  = isLight ? '#0a5abf' : '#6ab0ff'
   const finColor   = isLight ? '#03030e' : '#aab0c0'
-  const flameOuter = isLight ? 'rgba(240,60,0,1.0)'  : 'rgba(255,140,30,0.9)'
-  const flameInner = isLight ? 'rgba(255,220,0,1.0)' : 'rgba(255,255,100,1.0)'
+  const flameOuter = isLight ? 'rgba(160,165,180,0.95)' : 'rgba(180,185,210,0.9)'
+  const flameInner = isLight ? 'rgba(230,235,255,1.0)'  : 'rgba(240,245,255,1.0)'
 
   // Sombra del cohete para que resalte sobre el fondo blanco
   if (isLight) {
@@ -92,7 +92,7 @@ function drawRocket(ctx: CanvasRenderingContext2D, r: Rocket, isLight: boolean) 
   const grad = ctx.createRadialGradient(0, s * 0.35, 0, 0, s * 0.35 + flameLen * 0.5, flameLen)
   grad.addColorStop(0, flameInner)
   grad.addColorStop(0.4, flameOuter)
-  grad.addColorStop(1, 'rgba(255,80,0,0)')
+  grad.addColorStop(1, 'rgba(180,185,210,0)')
   ctx.beginPath()
   ctx.moveTo(-s * 0.18, s * 0.35)
   ctx.quadraticCurveTo(-s * 0.3, s * 0.35 + flameLen * 0.6, 0, s * 0.35 + flameLen)
@@ -276,8 +276,8 @@ export default function ParticleCanvas() {
           ctx!.beginPath()
           ctx!.arc(d.x, d.y, d.r, 0, Math.PI * 2)
           ctx!.fillStyle = isLight
-            ? `rgba(20,20,60,${Math.min(d.alpha * 2.2, 0.75)})`
-            : `rgba(200,170,100,${d.alpha * 1.3})`
+            ? `rgba(100,105,130,${Math.min(d.alpha * 2.2, 0.7)})`
+            : `rgba(190,195,220,${d.alpha * 1.3})`
           ctx!.fill()
         })
 
