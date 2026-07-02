@@ -318,7 +318,10 @@ export async function GET() {
     // ── 4b. SHEET renovaciones privado (cuenta de servicio) ─────────────────────
     const saToken = await getServiceAccountToken()
     const debug = {
-      saTokenOk: !!saToken,
+      saTokenOk:  !!saToken,
+      hasEmail:   !!process.env.GOOGLE_SA_EMAIL,
+      hasKey:     !!process.env.GOOGLE_SA_KEY,
+      keyLength:  (process.env.GOOGLE_SA_KEY || '').length,
       tabs: {} as Record<string, number>,
       renovadosCRM: renovados,
     }
