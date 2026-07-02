@@ -252,19 +252,13 @@ export async function GET() {
       if (ins && ins.getFullYear() === thisY && ins.getMonth() === thisM) nuevosEsteMes++
     }
 
-    // ── 4b. SHEET renovaciones: pestañas MX, USA, LATAM ────────────────────────
-    // Col F (índice 5) = fecha de compra. Vigente = entre hoy y hace 1 año.
+    // ── 4b. SHEET renovaciones: contar TODAS las personas de MX, USA, LATAM ────
     for (const tab of RENOV_TABS) {
       try {
-        const rows = await fetchRange(SHEET_RENOV, `'${tab}'!A:F`)
+        const rows = await fetchRange(SHEET_RENOV, `'${tab}'!A:A`)
+        // Contar todas las filas con datos (excluir encabezado)
         rows.slice(1).forEach(r => {
-          const fechaStr = (r[5] || '').toString().trim()  // col F = índice 5
-          if (!fechaStr) return
-          const fechaCompra = parseDate(fechaStr)
-          if (!fechaCompra) return
-          // Vigente si la compra fue hace ≤ 1 año Y no es fecha futura
-          const diasDesdeCompra = Math.floor((today.getTime() - fechaCompra.getTime()) / 86_400_000)
-          if (diasDesdeCompra >= 0 && diasDesdeCompra <= 365) renovados++
+          if ((r[0] || '').toString().trim()) renovados++
         })
       } catch { /* pestaña no encontrada */ }
     }
