@@ -211,8 +211,9 @@ export async function GET() {
       else
         sinAcceso++
 
-      // Renovados — col H (evento) contiene la palabra RENOVACION en mayúsculas
-      if (c.evento.includes('RENOVACION')) renovados++
+      // Renovados — col H (evento) contiene "renovacion" en cualquier combinación de
+      // mayúsculas/minúsculas y con o sin acento (RENOVACIÓN, renovacion, Renovación…)
+      if (c.evento.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().includes('renovacion')) renovados++
 
       // BGI, MAS y BLACK — col H (EVENTO) contiene esa palabra en mayúsculas
       if (c.evento.includes('BGI'))   bgi++
