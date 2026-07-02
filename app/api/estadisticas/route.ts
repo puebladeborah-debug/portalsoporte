@@ -210,8 +210,8 @@ export async function GET() {
       else
         sinAcceso++
 
-      // Renovados — col H (evento) dice "renovación"
-      if (c.evento.toLowerCase().includes('renov')) renovados++
+      // Renovados — col H (evento) contiene la palabra RENOVACION en mayúsculas
+      if (c.evento.includes('RENOVACION')) renovados++
 
       // BGI y MAS — cualquier contacto cuya col H (EVENTO) contenga esa palabra en mayúsculas
       if (c.evento.includes('BGI')) bgi++
