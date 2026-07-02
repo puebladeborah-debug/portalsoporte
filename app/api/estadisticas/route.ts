@@ -1,21 +1,84 @@
 import { NextResponse } from 'next/server'
+import { createSign }   from 'crypto'
 
 // ── Mismos IDs y tabs que el CRM ──────────────────────────────────────────────
-const API_KEY    = 'AIzaSyAcHd53OR2vn5Wk1o3p_wwmMe3TwLfOk5Y'
-const SHEET1     = '1IkFQJW8kMcwQ9hwl0ixalQFUyribvDYDahbrBOFQf_g'
-const SHEET2     = '11TZWXznYDiu4ETuFNBN9_31pPPPrFy8bAzxdDqsihhA'
-const SHEET_RENOV = '1CLqpMo0meN5CJlsZ7vNrlOBcX02Hdvq0VQ273ycfyhg'  // renovaciones
-const RENOV_TABS  = ['MX', 'USA', 'LATAM']                            // pestañas a leer
+const API_KEY     = 'AIzaSyAcHd53OR2vn5Wk1o3p_wwmMe3TwLfOk5Y'
+const SHEET1      = '1IkFQJW8kMcwQ9hwl0ixalQFUyribvDYDahbrBOFQf_g'
+const SHEET2      = '11TZWXznYDiu4ETuFNBN9_31pPPPrFy8bAzxdDqsihhA'
+const SHEET_RENOV = '1CLqpMo0meN5CJlsZ7vNrlOBcX02Hdvq0VQ273ycfyhg'
+const RENOV_TABS  = ['MX', 'USA', 'LATAM']
 const SKOOL_TABS  = ['WB MX JS','WB MX MDL','WB LATAM','WB USA','PRESENCIALES','BLACKS','BGI','MAS','MBA','BECAS','CLUB SINERGETICO LITE','RENOVACIONES','MEMBRESIA EXPIRADA','REVOCADOS']
 
-// ── Fetch Google Sheets ───────────────────────────────────────────────────────
+// ── Autenticación con cuenta de servicio (para sheets privados) ───────────────
+let _cachedToken: { token: string; exp: number } | null = null
+
+async function getServiceAccountToken(): Promise<string | null> {
+  const email = process.env.GOOGLE_SA_EMAIL
+  const rawKey = process.env.GOOGLE_SA_KEY
+  if (!email || !rawKey) return null
+
+  // Reusar token si aún es válido (caduca en 1h, renovamos con 5min de margen)
+  if (_cachedToken && Date.now() < _cachedToken.exp) return _cachedToken.token
+
+  try {
+    const privateKey = rawKey.replace(/\\n/g, '\n')
+    const now = Math.floor(Date.now() / 1000)
+    const header  = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url')
+    const payload = Buffer.from(JSON.stringify({
+      iss:   email,
+      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+      aud:   'https://oauth2.googleapis.com/token',
+      exp:   now + 3600,
+      iat:   now,
+    })).toString('base64url')
+
+    const sign = createSign('RSA-SHA256')
+    sign.update(`${header}.${payload}`)
+    const signature = sign.sign(privateKey, 'base64url')
+    const jwt = `${header}.${payload}.${signature}`
+
+    const res  = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: jwt,
+      }),
+    })
+    const data = await res.json()
+    if (!data.access_token) return null
+
+    _cachedToken = { token: data.access_token, exp: (now + 3300) * 1000 }
+    return data.access_token
+  } catch (e) {
+    console.error('Service account auth error:', e)
+    return null
+  }
+}
+
+// ── Fetch con API key pública (sheets compartidos con todos) ──────────────────
 async function fetchRange(sheetId: string, range: string): Promise<string[][]> {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?key=${API_KEY}`
-  const res = await fetch(url, { cache: 'no-store' })
+  const res  = await fetch(url, { cache: 'no-store' })
   const data = await res.json()
   if (data.error) {
     if (data.error.code === 404 || data.error.code === 400) return []
     throw new Error(data.error.message)
+  }
+  return data.values || []
+}
+
+// ── Fetch con cuenta de servicio (sheets privados) ────────────────────────────
+async function fetchRangeAuth(token: string, sheetId: string, range: string): Promise<string[][]> {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}`
+  const res  = await fetch(url, {
+    cache: 'no-store',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const data = await res.json()
+  if (data.error) {
+    if (data.error.code === 404 || data.error.code === 400) return []
+    return []
   }
   return data.values || []
 }
@@ -252,15 +315,17 @@ export async function GET() {
       if (ins && ins.getFullYear() === thisY && ins.getMonth() === thisM) nuevosEsteMes++
     }
 
-    // ── 4b. SHEET renovaciones: contar TODAS las personas de MX, USA, LATAM ────
-    for (const tab of RENOV_TABS) {
-      try {
-        const rows = await fetchRange(SHEET_RENOV, `'${tab}'!A:A`)
-        // Contar todas las filas con datos (excluir encabezado)
-        rows.slice(1).forEach(r => {
-          if ((r[0] || '').toString().trim()) renovados++
-        })
-      } catch { /* pestaña no encontrada */ }
+    // ── 4b. SHEET renovaciones privado (cuenta de servicio) ─────────────────────
+    const saToken = await getServiceAccountToken()
+    if (saToken) {
+      for (const tab of RENOV_TABS) {
+        try {
+          const rows = await fetchRangeAuth(saToken, SHEET_RENOV, `'${tab}'!A:A`)
+          rows.slice(1).forEach(r => {
+            if ((r[0] || '').toString().trim()) renovados++
+          })
+        } catch { /* pestaña no encontrada */ }
+      }
     }
 
     return NextResponse.json({
