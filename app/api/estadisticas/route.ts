@@ -23,12 +23,19 @@ async function getServiceAccountToken(): Promise<string | null> {
   if (_cachedToken && Date.now() < _cachedToken.exp) return _cachedToken.token
 
   try {
-    // Normalizar la llave: soporta \n literal (JSON) y saltos de línea reales (Vercel)
-    const privateKey = rawKey
-      .replace(/\\n/g, '\n')   // \n literal → salto real
-      .replace(/\r\n/g, '\n')  // Windows
-      .replace(/\r/g, '\n')    // Mac antiguo
+    // Normalizar la llave — maneja todos los formatos comunes de pegado en Vercel
+    let privateKey = rawKey
       .trim()
+      .replace(/^["']|["']$/g, '')   // quitar comillas externas si se copió con ellas
+      .replace(/\\n/g, '\n')          // \n literal → salto real
+      .replace(/\r\n/g, '\n')         // Windows
+      .replace(/\r/g, '\n')           // Mac antiguo
+
+    // Si no tiene cabecera PEM, no hay nada que hacer
+    if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+      _saError = 'KEY_MISSING_HEADER: la llave no tiene -----BEGIN PRIVATE KEY-----'
+      return null
+    }
     const now = Math.floor(Date.now() / 1000)
     const header  = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url')
     const payload = Buffer.from(JSON.stringify({
