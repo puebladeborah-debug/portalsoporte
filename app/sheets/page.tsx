@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Plus, X, Copy, Check, ExternalLink, Trash2, Pencil, Sheet as SheetIcon } from 'lucide-react'
+import { Plus, X, Copy, Check, ExternalLink, Trash2, Pencil, Sheet as SheetIcon, Lock } from 'lucide-react'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
+import { useAuth } from '@/components/LoginGate'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -15,10 +16,11 @@ const S = {
   silverDim:    'var(--th-dim)',
 }
 
-type SheetLink = { id: string; nombre: string; url: string; createdAt: string }
+type SheetLink = {
+  id: string; nombre: string; url: string
+  createdAt: string; privado?: boolean
+}
 
-// Enlaces que ya existían antes de crear esta sección — se cargan una sola
-// vez si la colección llega vacía, para no perder lo que ya se tenía.
 const SEED: { nombre: string; url: string }[] = [
   { nombre: 'LINKS', url: 'https://docs.google.com/spreadsheets/d/1ClJSoO4s4vc-a1DQr-cvnBX9gVv_tYm7FS8EWc4FmOE/edit?gid=822020124#gid=822020124' },
   { nombre: 'ATENCIÓN Y SEGUIMIENTO', url: 'https://docs.google.com/spreadsheets/d/1IkFQJW8kMcwQ9hwl0ixalQFUyribvDYDahbrBOFQf_g/edit' },
@@ -53,14 +55,16 @@ function CopyButton({ value }: { value: string }) {
   )
 }
 
-function SheetModal({ item, onClose, onSave, onDelete }: {
+function SheetModal({ item, onClose, onSave, onDelete, esAdmin }: {
   item: SheetLink | null
   onClose: () => void
-  onSave: (nombre: string, url: string) => Promise<void>
+  onSave: (nombre: string, url: string, privado: boolean) => Promise<void>
   onDelete?: () => Promise<void>
+  esAdmin: boolean
 }) {
   const [nombre, setNombre] = useState(item?.nombre || '')
   const [url, setUrl] = useState(item?.url || '')
+  const [privado, setPrivado] = useState(item?.privado ?? false)
   const [saving, setSaving] = useState(false)
 
   const inputStyle = { background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }
@@ -68,12 +72,13 @@ function SheetModal({ item, onClose, onSave, onDelete }: {
   async function save() {
     if (!nombre.trim() || !url.trim()) return
     setSaving(true)
-    await onSave(nombre.trim(), url.trim())
+    await onSave(nombre.trim(), url.trim(), privado)
     setSaving(false)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-md rounded-2xl overflow-hidden"
         style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)' }}>
@@ -96,8 +101,37 @@ function SheetModal({ item, onClose, onSave, onDelete }: {
             <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Enlace</p>
             <input value={url} onChange={e => setUrl(e.target.value)}
               placeholder="https://docs.google.com/spreadsheets/..."
-              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm break-all" style={inputStyle} />
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
           </div>
+
+          {/* Opción privado — solo visible para admin */}
+          {esAdmin && (
+            <button onClick={() => setPrivado(p => !p)}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-left"
+              style={{
+                background: privado ? 'rgba(220,80,80,0.08)' : 'rgba(180,185,210,0.05)',
+                border: `1px solid ${privado ? 'rgba(220,80,80,0.3)' : S.border}`,
+              }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: privado ? 'rgba(220,80,80,0.15)' : 'rgba(180,185,210,0.08)' }}>
+                <Lock size={14} style={{ color: privado ? '#e07070' : S.silverDim }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold" style={{ color: privado ? '#e07070' : S.silverBright }}>
+                  {privado ? 'Privado — solo tú lo ves' : 'Visible para todos'}
+                </p>
+                <p className="text-[11px] mt-0.5" style={{ color: S.silverDim }}>
+                  {privado ? 'El resto del equipo no verá este sheet' : 'Toca para hacerlo privado'}
+                </p>
+              </div>
+              {/* Toggle visual */}
+              <div className="flex-shrink-0 w-10 h-5 rounded-full relative transition-all"
+                style={{ background: privado ? 'rgba(220,80,80,0.5)' : 'rgba(180,185,210,0.2)' }}>
+                <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
+                  style={{ left: privado ? '22px' : '2px' }} />
+              </div>
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2 px-5 py-4" style={{ borderTop: `1px solid ${S.border}` }}>
@@ -120,6 +154,9 @@ function SheetModal({ item, onClose, onSave, onDelete }: {
 }
 
 export default function SheetsPage() {
+  const { member } = useAuth()
+  const esAdmin = member?.isAdmin ?? false
+
   const { data, loading, add, update, remove } = useFirestoreCollection<SheetLink>('sheets_links')
   const [modal, setModal] = useState<'new' | SheetLink | null>(null)
   const seeded = useRef(false)
@@ -127,10 +164,15 @@ export default function SheetsPage() {
   useEffect(() => {
     if (loading || seeded.current || data.length > 0) return
     seeded.current = true
-    SEED.forEach(s => add({ ...s, createdAt: new Date().toISOString() }))
+    SEED.forEach(s => add({ ...s, createdAt: new Date().toISOString(), privado: false }))
   }, [loading, data.length, add])
 
-  const items = [...data].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  const allItems = [...data].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  // Los no-admin no ven los privados
+  const items = esAdmin ? allItems : allItems.filter(i => !i.privado)
+
+  const publicos = items.filter(i => !i.privado)
+  const privados = esAdmin ? items.filter(i => i.privado) : []
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>
@@ -138,7 +180,11 @@ export default function SheetsPage() {
 
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: S.silverBright }}>Sheets</h1>
-          <p className="text-sm mt-1" style={{ color: S.silverDim }}>Enlaces a las hojas de Google Sheets del equipo</p>
+          <p className="text-sm mt-1" style={{ color: S.silverDim }}>
+            {esAdmin
+              ? `${publicos.length} públicos · ${privados.length} privados`
+              : 'Enlaces a las hojas de Google Sheets del equipo'}
+          </p>
         </div>
 
         <button onClick={() => setModal('new')}
@@ -155,33 +201,39 @@ export default function SheetsPage() {
             <p className="text-sm">Sin sheets guardados todavía</p>
           </div>
         ) : (
-          <div className="space-y-2.5">
-            {items.map(item => (
-              <div key={item.id} className="rounded-xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.border}` }}>
-                <div className="flex items-center gap-2 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>{item.nombre}</p>
-                    <a href={item.url} target="_blank" rel="noopener noreferrer"
-                      className="text-[11px] truncate block mt-0.5 hover:underline"
-                      style={{ color: S.silverDim }}>
-                      {item.url}
-                    </a>
-                  </div>
-                  <CopyButton value={item.url} />
-                  <a href={item.url} target="_blank" rel="noopener noreferrer"
-                    className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                    style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
-                    <ExternalLink size={14} />
-                  </a>
-                  <button onClick={() => setModal(item)}
-                    className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                    style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
-                    <Pencil size={13} />
-                  </button>
+          <>
+            {/* Sheets privados — solo visibles para admin */}
+            {esAdmin && privados.length > 0 && (
+              <div className="mb-5">
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <Lock size={11} style={{ color: '#e07070' }} />
+                  <p className="text-[10px] tracking-widest uppercase font-bold" style={{ color: '#e07070' }}>
+                    Solo tú · Privados ({privados.length})
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {privados.map(item => (
+                    <SheetCard key={item.id} item={item} onEdit={() => setModal(item)} privado />
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* Sheets públicos */}
+            {publicos.length > 0 && (
+              <div>
+                {esAdmin && privados.length > 0 && (
+                  <p className="text-[10px] tracking-widest uppercase font-bold mb-2 px-1"
+                    style={{ color: S.silverDim }}>Visibles para todos ({publicos.length})</p>
+                )}
+                <div className="space-y-2.5">
+                  {publicos.map(item => (
+                    <SheetCard key={item.id} item={item} onEdit={() => setModal(item)} privado={false} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -189,11 +241,12 @@ export default function SheetsPage() {
         <SheetModal
           item={modal === 'new' ? null : modal}
           onClose={() => setModal(null)}
-          onSave={async (nombre, url) => {
+          esAdmin={esAdmin}
+          onSave={async (nombre, url, privado) => {
             if (modal === 'new') {
-              await add({ nombre, url, createdAt: new Date().toISOString() })
+              await add({ nombre, url, createdAt: new Date().toISOString(), privado })
             } else {
-              await update(modal.id, { nombre, url })
+              await update(modal.id, { nombre, url, privado })
             }
             setModal(null)
           }}
@@ -203,6 +256,41 @@ export default function SheetsPage() {
           } : undefined}
         />
       )}
+    </div>
+  )
+}
+
+function SheetCard({ item, onEdit, privado }: { item: SheetLink; onEdit: () => void; privado: boolean }) {
+  return (
+    <div className="rounded-xl overflow-hidden"
+      style={{
+        background: S.card,
+        border: `1px solid ${privado ? 'rgba(220,80,80,0.2)' : S.border}`,
+      }}>
+      <div className="flex items-center gap-2 px-4 py-3">
+        {privado && (
+          <Lock size={12} className="flex-shrink-0" style={{ color: '#e07070' }} />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>{item.nombre}</p>
+          <a href={item.url} target="_blank" rel="noopener noreferrer"
+            className="text-[11px] truncate block mt-0.5 hover:underline"
+            style={{ color: S.silverDim }}>
+            {item.url}
+          </a>
+        </div>
+        <CopyButton value={item.url} />
+        <a href={item.url} target="_blank" rel="noopener noreferrer"
+          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+          style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
+          <ExternalLink size={14} />
+        </a>
+        <button onClick={onEdit}
+          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+          style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
+          <Pencil size={13} />
+        </button>
+      </div>
     </div>
   )
 }
