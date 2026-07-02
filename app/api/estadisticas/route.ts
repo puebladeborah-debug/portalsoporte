@@ -12,12 +12,14 @@ const SKOOL_TABS  = ['WB MX JS','WB MX MDL','WB LATAM','WB USA','PRESENCIALES','
 // ── Autenticación con cuenta de servicio (para sheets privados) ───────────────
 let _cachedToken: { token: string; exp: number } | null = null
 
+let _saError = ''
+
 async function getServiceAccountToken(): Promise<string | null> {
   const email = process.env.GOOGLE_SA_EMAIL
   const rawKey = process.env.GOOGLE_SA_KEY
-  if (!email || !rawKey) return null
+  if (!email) { _saError = 'NO_EMAIL'; return null }
+  if (!rawKey) { _saError = 'NO_KEY';   return null }
 
-  // Reusar token si aún es válido (caduca en 1h, renovamos con 5min de margen)
   if (_cachedToken && Date.now() < _cachedToken.exp) return _cachedToken.token
 
   try {
@@ -46,12 +48,15 @@ async function getServiceAccountToken(): Promise<string | null> {
       }),
     })
     const data = await res.json()
-    if (!data.access_token) return null
-
+    if (!data.access_token) {
+      _saError = `TOKEN_FAIL: ${JSON.stringify(data)}`
+      return null
+    }
+    _saError = ''
     _cachedToken = { token: data.access_token, exp: (now + 3300) * 1000 }
     return data.access_token
   } catch (e) {
-    console.error('Service account auth error:', e)
+    _saError = `EXCEPTION: ${String(e)}`
     return null
   }
 }
@@ -318,10 +323,8 @@ export async function GET() {
     // ── 4b. SHEET renovaciones privado (cuenta de servicio) ─────────────────────
     const saToken = await getServiceAccountToken()
     const debug = {
-      saTokenOk:  !!saToken,
-      hasEmail:   !!process.env.GOOGLE_SA_EMAIL,
-      hasKey:     !!process.env.GOOGLE_SA_KEY,
-      keyLength:  (process.env.GOOGLE_SA_KEY || '').length,
+      saTokenOk: !!saToken,
+      saError:   _saError,
       tabs: {} as Record<string, number>,
       renovadosCRM: renovados,
     }
