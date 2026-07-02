@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 
 // ── Mismos IDs y tabs que el CRM ──────────────────────────────────────────────
-const API_KEY   = 'AIzaSyAcHd53OR2vn5Wk1o3p_wwmMe3TwLfOk5Y'
-const SHEET1    = '1IkFQJW8kMcwQ9hwl0ixalQFUyribvDYDahbrBOFQf_g'
-const SHEET2    = '11TZWXznYDiu4ETuFNBN9_31pPPPrFy8bAzxdDqsihhA'
-const SKOOL_TABS = ['WB MX JS','WB MX MDL','WB LATAM','WB USA','PRESENCIALES','BLACKS','BGI','MAS','MBA','BECAS','CLUB SINERGETICO LITE','RENOVACIONES','MEMBRESIA EXPIRADA','REVOCADOS']
+const API_KEY    = 'AIzaSyAcHd53OR2vn5Wk1o3p_wwmMe3TwLfOk5Y'
+const SHEET1     = '1IkFQJW8kMcwQ9hwl0ixalQFUyribvDYDahbrBOFQf_g'
+const SHEET2     = '11TZWXznYDiu4ETuFNBN9_31pPPPrFy8bAzxdDqsihhA'
+const SHEET_RENOV = '1CLqpMo0meN5CJlsZ7vNrlOBcX02Hdvq0VQ273ycfyhg'  // renovaciones
+const RENOV_TABS  = ['MX', 'USA', 'LATAM']                            // pestañas a leer
+const SKOOL_TABS  = ['WB MX JS','WB MX MDL','WB LATAM','WB USA','PRESENCIALES','BLACKS','BGI','MAS','MBA','BECAS','CLUB SINERGETICO LITE','RENOVACIONES','MEMBRESIA EXPIRADA','REVOCADOS']
 
 // ── Fetch Google Sheets ───────────────────────────────────────────────────────
 async function fetchRange(sheetId: string, range: string): Promise<string[][]> {
@@ -248,6 +250,23 @@ export async function GET() {
       // Nuevos este mes — col F (inscripcion) MM/DD/YY formato USA
       const ins = parseDate(c.inscripcion)
       if (ins && ins.getFullYear() === thisY && ins.getMonth() === thisM) nuevosEsteMes++
+    }
+
+    // ── 4b. SHEET renovaciones: pestañas MX, USA, LATAM ────────────────────────
+    // Col F (índice 5) = fecha de compra. Vigente = entre hoy y hace 1 año.
+    for (const tab of RENOV_TABS) {
+      try {
+        const rows = await fetchRange(SHEET_RENOV, `'${tab}'!A:F`)
+        rows.slice(1).forEach(r => {
+          const fechaStr = (r[5] || '').toString().trim()  // col F = índice 5
+          if (!fechaStr) return
+          const fechaCompra = parseDate(fechaStr)
+          if (!fechaCompra) return
+          // Vigente si la compra fue hace ≤ 1 año Y no es fecha futura
+          const diasDesdeCompra = Math.floor((today.getTime() - fechaCompra.getTime()) / 86_400_000)
+          if (diasDesdeCompra >= 0 && diasDesdeCompra <= 365) renovados++
+        })
+      } catch { /* pestaña no encontrada */ }
     }
 
     return NextResponse.json({
