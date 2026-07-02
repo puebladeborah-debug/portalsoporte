@@ -213,9 +213,9 @@ export async function GET() {
       // Renovados — col H (evento) dice "renovación"
       if (c.evento.toLowerCase().includes('renov')) renovados++
 
-      // BGI y MAS — por pestaña Skool de origen
-      if (c.skHoja === 'BGI') bgi++
-      if (c.skHoja === 'MAS') mas++
+      // BGI y MAS — cualquier contacto cuya col H (EVENTO) contenga esa palabra en mayúsculas
+      if (c.evento.includes('BGI')) bgi++
+      if (c.evento.includes('MAS')) mas++
 
       // Skool — usa la misma lógica parseSkoolDate del CRM
       const vRef  = c.memVence || c.skVence
