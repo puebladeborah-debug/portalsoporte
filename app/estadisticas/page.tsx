@@ -22,7 +22,8 @@ type Stats = {
   skool3: number; skool6: number; skool12: number
   proxVencer: number; vencidos: number
   renovados: number; nuevosEsteMes: number
-  bgi: number; mas: number
+  bgi: number; mas: number; black: number
+  conSkool: number
   actualizadoEn: string
 }
 
@@ -158,13 +159,22 @@ export default function EstadisticasPage() {
               </div>
             </div>
 
+            {/* Alumnos con Skool — activos + vencidos */}
+            <div>
+              <p className="text-[10px] tracking-widest uppercase mb-2 px-1" style={{ color: S.silverDim }}>Alumnos con Skool</p>
+              <StatCard label="Tienen Skool" value={stats.conSkool}
+                total={stats.total} sub="activos + vencidos"
+                icon={<Star size={18} />} color="#a78bfa" />
+            </div>
+
             {/* Tipo de membresía */}
             <div>
-              <p className="text-[10px] tracking-widests uppercase mb-2 px-1" style={{ color: S.silverDim }}>Tipo de evento / membresía</p>
+              <p className="text-[10px] tracking-widest uppercase mb-2 px-1" style={{ color: S.silverDim }}>Tipo de evento / membresía</p>
               <div className="space-y-2">
-                <MiniCard label="BGI" value={stats.bgi} color="#f59e0b" />
-                <MiniCard label="MAS" value={stats.mas} color="#a78bfa" />
+                <MiniCard label="BGI"       value={stats.bgi}      color="#f59e0b" />
+                <MiniCard label="MAS"       value={stats.mas}      color="#a78bfa" />
                 <MiniCard label="Renovados" value={stats.renovados} color="#34d399" />
+                <MiniCard label="BLACK"     value={stats.black}    color="#1a1a2a" />
               </div>
             </div>
 
@@ -172,8 +182,8 @@ export default function EstadisticasPage() {
             <div>
               <p className="text-[10px] tracking-widest uppercase mb-2 px-1" style={{ color: S.silverDim }}>Skool</p>
               <div className="grid grid-cols-2 gap-3 mb-3">
-                <StatCard label="Skool activo"  value={stats.skoolActivo}  total={stats.total} icon={<Star size={18} />} color="#a78bfa" />
-                <StatCard label="Sin Skool"     value={stats.skoolVencido} total={stats.total} icon={<Star size={18} />} color="#94a3b8" />
+                <StatCard label="Skool activo"  value={stats.skoolActivo}  total={stats.conSkool} icon={<Star size={18} />} color="#a78bfa" />
+                <StatCard label="Skool vencido" value={stats.skoolVencido} total={stats.conSkool} icon={<Star size={18} />} color="#94a3b8" />
               </div>
               <p className="text-[10px] tracking-widest uppercase mb-2 px-1" style={{ color: S.silverDim }}>Duración Skool</p>
               <div className="space-y-2">

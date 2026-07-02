@@ -192,7 +192,8 @@ export async function GET() {
     let skool3 = 0, skool6 = 0, skool12 = 0
     let proxVencer = 0, vencidos = 0
     let renovados = 0, nuevosEsteMes = 0
-    let bgi = 0, mas = 0
+    let bgi = 0, mas = 0, black = 0
+    let conSkool = 0   // tienen Skool (activos + vencidos, excluye los sin registro)
 
     for (const c of all) {
       total++
@@ -213,14 +214,16 @@ export async function GET() {
       // Renovados — col H (evento) contiene la palabra RENOVACION en mayúsculas
       if (c.evento.includes('RENOVACION')) renovados++
 
-      // BGI y MAS — cualquier contacto cuya col H (EVENTO) contenga esa palabra en mayúsculas
-      if (c.evento.includes('BGI')) bgi++
-      if (c.evento.includes('MAS')) mas++
+      // BGI, MAS y BLACK — col H (EVENTO) contiene esa palabra en mayúsculas
+      if (c.evento.includes('BGI'))   bgi++
+      if (c.evento.includes('MAS'))   mas++
+      if (c.evento.includes('BLACK')) black++
 
       // Skool — usa la misma lógica parseSkoolDate del CRM
       const vRef  = c.memVence || c.skVence
       const mRef  = c.memTipo  || c.skMem
       if (vRef) {
+        conSkool++ // tiene algún registro Skool (activo o vencido)
         const d = parseSkoolDate(vRef, c.inscripcion, mRef)
         const days = d ? daysUntil(d, today) : null
         if (days !== null) {
@@ -252,7 +255,8 @@ export async function GET() {
       skoolActivo, skoolVencido, skool3, skool6, skool12,
       proxVencer, vencidos,
       renovados, nuevosEsteMes,
-      bgi, mas,
+      bgi, mas, black,
+      conSkool,
       actualizadoEn: new Date().toISOString(),
     })
 
