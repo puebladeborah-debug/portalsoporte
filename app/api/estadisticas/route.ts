@@ -23,7 +23,12 @@ async function getServiceAccountToken(): Promise<string | null> {
   if (_cachedToken && Date.now() < _cachedToken.exp) return _cachedToken.token
 
   try {
-    const privateKey = rawKey.replace(/\\n/g, '\n')
+    // Normalizar la llave: soporta \n literal (JSON) y saltos de línea reales (Vercel)
+    const privateKey = rawKey
+      .replace(/\\n/g, '\n')   // \n literal → salto real
+      .replace(/\r\n/g, '\n')  // Windows
+      .replace(/\r/g, '\n')    // Mac antiguo
+      .trim()
     const now = Math.floor(Date.now() / 1000)
     const header  = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url')
     const payload = Buffer.from(JSON.stringify({
