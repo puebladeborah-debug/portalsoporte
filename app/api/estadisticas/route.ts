@@ -317,14 +317,23 @@ export async function GET() {
 
     // ── 4b. SHEET renovaciones privado (cuenta de servicio) ─────────────────────
     const saToken = await getServiceAccountToken()
+    const debug = {
+      saTokenOk: !!saToken,
+      tabs: {} as Record<string, number>,
+      renovadosCRM: renovados,
+    }
     if (saToken) {
       for (const tab of RENOV_TABS) {
         try {
           const rows = await fetchRangeAuth(saToken, SHEET_RENOV, `'${tab}'!A:A`)
+          let count = 0
           rows.slice(1).forEach(r => {
-            if ((r[0] || '').toString().trim()) renovados++
+            if ((r[0] || '').toString().trim()) { renovados++; count++ }
           })
-        } catch { /* pestaña no encontrada */ }
+          debug.tabs[tab] = count
+        } catch (e) {
+          debug.tabs[tab] = -1
+        }
       }
     }
 
@@ -336,6 +345,7 @@ export async function GET() {
       renovados, nuevosEsteMes,
       bgi, mas, black,
       conSkool,
+      debug,
       actualizadoEn: new Date().toISOString(),
     })
 
