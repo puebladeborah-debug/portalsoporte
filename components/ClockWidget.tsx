@@ -31,6 +31,10 @@ export default function ClockWidget() {
   const [totalTasks, setTotalTasks] = useState(0)
   const [horaSalida, setHoraSalida] = useState('')
   const [sidebarActive, setSidebarActive] = useState(false)
+  const [showQRAlert, setShowQRAlert] = useState(false)
+
+  // Controla que la alerta de QR se dispare solo UNA vez por día por persona
+  const alertFiredKey = useRef('')
 
   // ── Arrastrar y soltar el reloj a cualquier parte de la pantalla ──────────
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
@@ -124,6 +128,14 @@ export default function ClockWidget() {
     const start = new Date()
     setNow(start)
 
+    // Solicitar permiso de notificaciones del navegador
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {})
+    }
+    // Restaurar clave del día actual (evita re-mostrar si ya se disparó hoy)
+    const todayKey = `qr_alert_${session!.memberId}_${new Date().toISOString().slice(0,10)}`
+    if (localStorage.getItem(todayKey)) alertFiredKey.current = todayKey
+
     // El perfil del miembro se carga una sola vez (no en cada tick) para no
     // golpear Firestore cada 2.5 segundos.
     getMembers().then(members => {
@@ -138,12 +150,90 @@ export default function ClockWidget() {
       setNow(t)
       setShowColon(c => !c)
       if (tick % 5 === 0) readTasks(t)
+
+      // ── Alerta QR: 20 minutos antes de la hora de salida ─────────────────
+      if (member) {
+        const horario = getHorarioHoy(member)
+        if (horario?.activo && horario.salida) {
+          const mLeft = minutesUntil(horario.salida, t)
+          // Clave única por persona+día para no repetir la alerta
+          const dayKey = `qr_alert_${session!.memberId}_${t.toISOString().slice(0,10)}`
+          if (mLeft === 20 && alertFiredKey.current !== dayKey) {
+            alertFiredKey.current = dayKey
+            localStorage.setItem(dayKey, '1')
+            // Notificación del navegador
+            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+              new Notification('⏰ Pasa asistencia con Deborah Puebla', {
+                body: 'En 20 minutos termina tu turno. Ve con Deborah Puebla a escanear el QR y registrar tu asistencia.',
+                icon: '/logo.jpg',
+                requireInteraction: true,
+              })
+            }
+            // Alerta en la app
+            setShowQRAlert(true)
+          }
+        }
+      }
     }, 500)
 
     return () => clearInterval(id)
   }, [session?.memberId]) // usar solo el ID estable, no el objeto completo
 
   if (!now) return null
+
+  // ── Modal alerta QR asistencia ─────────────────────────────────────────────
+  if (showQRAlert) return (
+    <>
+      {/* Modal encima de todo */}
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center"
+        style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(8px)' }}>
+        <div className="mx-4 rounded-3xl overflow-hidden text-center"
+          style={{ background: '#0c0c14', border: '1px solid rgba(220,170,60,0.5)', boxShadow: '0 0 80px rgba(220,170,60,0.25)', maxWidth: 380, width: '100%' }}>
+
+          {/* Header ámbar */}
+          <div className="px-6 py-5" style={{ background: 'rgba(220,170,60,0.1)', borderBottom: '1px solid rgba(220,170,60,0.2)' }}>
+            <div className="text-4xl mb-2">📋</div>
+            <p className="text-lg font-black" style={{ color: '#dcaa3c' }}>¡Es hora de pasar asistencia!</p>
+            <p className="text-sm mt-1" style={{ color: 'rgba(220,170,60,0.7)' }}>Tu turno termina en 20 minutos</p>
+          </div>
+
+          {/* Instrucciones */}
+          <div className="px-6 py-5 space-y-3 text-left">
+            {[
+              { n: '1', t: 'Ve con Deborah Puebla', d: 'Acude al área de la Directora de Soporte' },
+              { n: '2', t: 'Escanea el código QR',  d: 'El QR de asistencia estará disponible' },
+              { n: '3', t: 'Registra tu salida',     d: 'Completa el proceso de asistencia del día' },
+            ].map(s => (
+              <div key={s.n} className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 mt-0.5"
+                  style={{ background: 'rgba(220,170,60,0.2)', color: '#dcaa3c', border: '1px solid rgba(220,170,60,0.4)' }}>
+                  {s.n}
+                </span>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#d4d8e8' }}>{s.t}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: '#6a6e80' }}>{s.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Botones */}
+          <div className="px-6 pb-5 flex gap-2">
+            <Link href="/asistencia" onClick={() => setShowQRAlert(false)}
+              className="flex-1 py-3 rounded-xl text-sm font-bold text-center"
+              style={{ background: 'linear-gradient(135deg,rgba(220,170,60,0.25),rgba(220,170,60,0.1))', color: '#dcaa3c', border: '1px solid rgba(220,170,60,0.4)' }}>
+              Ver asistencia
+            </Link>
+            <button onClick={() => setShowQRAlert(false)}
+              className="flex-1 py-3 rounded-xl text-sm font-bold"
+              style={{ background: 'rgba(180,185,210,0.08)', color: '#b8bcc8', border: '1px solid rgba(180,185,210,0.15)' }}>
+              Entendido
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
 
   const hh = pad(now.getHours())
   const mm = pad(now.getMinutes())
