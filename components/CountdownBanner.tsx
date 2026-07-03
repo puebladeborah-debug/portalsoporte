@@ -153,7 +153,7 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
       )}
 
       {/* Fechas */}
-      <p className="text-[8px] mt-2 opacity-50" style={{ color: c.text }}>
+      <p className="text-xs mt-2 font-semibold opacity-90" style={{ color: c.text }}>
         {new Date(ev.fechaInicio).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric' })}
         {' – '}
         {new Date(ev.fechaFin).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric' })}
