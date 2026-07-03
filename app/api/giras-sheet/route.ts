@@ -41,12 +41,15 @@ export async function GET() {
     const rows: string[][] = data.values || []
     const today = new Date(); today.setHours(0,0,0,0)
 
+    // Debug: mostrar las primeras 5 filas para verificar estructura
+    const debug = rows.slice(0, 6).map(r => r.slice(0, 5))
+
     const eventos = rows.slice(1)
       .map(r => {
-        const ciudad = (r[0] || '').toString().trim()
+        const ciudad   = (r[0] || '').toString().trim()
         const fechaRaw = (r[1] || '').toString().trim()
-        const direccion = (r[3] || '').toString().trim()
-        const hotel     = (r[4] || '').toString().trim()
+        const direccion= (r[3] || '').toString().trim()
+        const hotel    = (r[4] || '').toString().trim()
         if (!ciudad || !fechaRaw) return null
         const fecha = parseFechaSheet(fechaRaw)
         if (!fecha) return null
@@ -54,12 +57,10 @@ export async function GET() {
         return { ciudad, fecha, lugar }
       })
       .filter(Boolean)
-      // Solo eventos futuros
       .filter(e => new Date(e!.fecha + 'T12:00:00') >= today)
-      // Ordenar por fecha
       .sort((a, b) => a!.fecha.localeCompare(b!.fecha))
 
-    return NextResponse.json({ eventos })
+    return NextResponse.json({ eventos, debug, totalRows: rows.length })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
