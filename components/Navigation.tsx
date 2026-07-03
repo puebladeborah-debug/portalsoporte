@@ -330,33 +330,33 @@ export default function Navigation() {
     <>
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
 
-      <header className="hidden md:flex fixed top-0 left-0 right-0 h-24 items-center px-4 gap-1 z-50"
+      <header className="hidden md:flex fixed top-0 left-0 right-0 h-16 items-center px-3 gap-0.5 z-50"
         style={{ background: 'var(--th-nav)', borderBottom: `1px solid ${S.borderLight}`, backdropFilter: 'blur(20px)', boxShadow: '0 1px 30px rgba(0,0,0,0.4)' }}>
 
-        <Link href="/" className="flex items-center gap-3 mr-4 flex-shrink-0">
-          <Image src="/logo.jpg" alt="Club Sinergetico" width={56} height={56} className="rounded-xl logo-blend" />
-          <div className="hidden lg:block">
-            <p className="text-base font-black tracking-widest uppercase whitespace-nowrap"
+        <Link href="/" className="flex items-center gap-2 mr-2 flex-shrink-0">
+          <Image src="/logo.jpg" alt="Club Sinergetico" width={36} height={36} className="rounded-lg logo-blend" />
+          <div className="hidden xl:block">
+            <p className="text-xs font-black tracking-widest uppercase whitespace-nowrap"
               style={{ background: 'linear-gradient(135deg,#d4d8e8,#8890a8,#d4d8e8)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
               Club Sinergetico
             </p>
-            <p className="text-xs tracking-[0.3em] uppercase" style={{ color: '#5a5e6a' }}>Soporte</p>
+            <p className="text-[9px] tracking-[0.2em] uppercase" style={{ color: '#5a5e6a' }}>Soporte</p>
           </div>
         </Link>
 
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar min-w-0 flex-1 h-full">
+        <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar min-w-0 flex-1 h-full">
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} title={label}
-              className="relative flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all duration-200 flex-shrink-0"
+              className="relative flex flex-col items-center justify-center w-11 h-11 rounded-lg transition-all duration-200 flex-shrink-0"
               style={pathname === href
                 ? { color: '#d4d8e8', background: 'rgba(180,185,210,0.1)', border: '1px solid rgba(180,185,210,0.2)' }
                 : { color: '#3a3e4a', border: '1px solid transparent' }
               }>
               {href === '/chat' && hayChatsSinLeer && (
-                <span className="absolute top-1.5 right-2.5 w-2.5 h-2.5 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
+                <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
               )}
-              <Icon size={24} />
-              <span className="text-[9px] mt-1 leading-none font-medium whitespace-nowrap">{label}</span>
+              <Icon size={17} />
+              <span className="text-[8px] mt-0.5 leading-none font-medium whitespace-nowrap">{label}</span>
             </Link>
           ))}
         </div>
