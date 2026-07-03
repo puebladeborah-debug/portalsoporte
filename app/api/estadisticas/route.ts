@@ -37,7 +37,10 @@ async function getServiceAccountToken(): Promise<string | null> {
       return null
     }
     const now = Math.floor(Date.now() / 1000)
-    const header  = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url')
+    const kid = process.env.GOOGLE_SA_KID || ''
+    const headerObj: Record<string,string> = { alg: 'RS256', typ: 'JWT' }
+    if (kid) headerObj.kid = kid
+    const header  = Buffer.from(JSON.stringify(headerObj)).toString('base64url')
     const payload = Buffer.from(JSON.stringify({
       iss:   email,
       scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
