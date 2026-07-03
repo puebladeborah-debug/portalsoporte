@@ -21,9 +21,9 @@
   --th-border:        #1a1a28;
   --th-border-light:  rgba(180,185,210,0.18);
   --th-border-active: rgba(180,185,210,0.25);
-  --th-silver:        #b8bcc8;
-  --th-bright:        #d4d8e8;
-  --th-dim:           #3a3e4a;
+  --th-silver:        #c8ccd8;
+  --th-bright:        #e4e8f4;
+  --th-dim:           #6a6e80;
   --th-inner:         #08080e;
   --th-input:         #0a0a14;
   --th-nav:           rgba(6,6,8,0.92);
@@ -106,9 +106,9 @@ html[data-theme="white"] {
   --th-border:        #e0e2ee;
   --th-border-light:  rgba(80,80,160,0.12);
   --th-border-active: rgba(80,80,160,0.28);
-  --th-silver:        #1e2240;
-  --th-bright:        #0a0c20;
-  --th-dim:           #4a4e70;
+  --th-silver:        #2c2f45;
+  --th-bright:        #0d0f1c;
+  --th-dim:           #525570;
   --th-inner:         #eeeef8;
   --th-input:         #ffffff;
   --th-nav:           rgba(255,255,255,0.94);
