@@ -265,12 +265,25 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
 
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: S.silverBright }}>{evento.nombre}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold" style={{ color: S.silverBright }}>{evento.nombre}</h1>
+              {evento.fromSheet && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                  style={{ background: 'rgba(96,165,250,0.12)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.25)' }}>
+                  📋 Sheet
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3 mt-1">
               <span className="flex items-center gap-1 text-xs" style={{ color: S.silverDim }}>
                 <Calendar size={12} /> {new Date(evento.fecha + 'T12:00:00').toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}
               </span>
             </div>
+            {evento.lugar && (
+              <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: S.silverDim }}>
+                <MapPin size={11} /> {evento.lugar}
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-2 mt-1.5">
               <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
                 style={{ background: 'rgba(96,165,250,0.1)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.3)' }}>
@@ -543,13 +556,51 @@ export default function GirasPage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ ...BLANK_EV })
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
+  const [loadingSheet, setLoadingSheet] = useState(false)
 
   const myGirasProfile = members.find(m => m.id === session?.memberId)
   const canManage = !!myGirasProfile?.isAdmin || !!myGirasProfile?.permissions.includes('giras')
 
+  // Carga eventos del sheet y los sincroniza con los guardados localmente
+  async function syncSheetEventos() {
+    setLoadingSheet(true)
+    try {
+      const res  = await fetch('/api/giras-sheet')
+      const data = await res.json()
+      if (!data.eventos) return
+      const stored = getGiraEventos()
+      let changed = false
+      for (const ev of data.eventos as { ciudad: string; fecha: string; lugar: string }[]) {
+        const key = `sheet_${ev.fecha}_${ev.ciudad.toLowerCase().replace(/\s+/g,'_')}`
+        const exists = stored.find(s => s.id === key)
+        if (!exists) {
+          // Crear el evento con horario vacío — el usuario lo configurará
+          saveGiraEvento({
+            id: key,
+            nombre: ev.ciudad,
+            fecha: ev.fecha,
+            horario1: '',
+            lugar: ev.lugar,
+            fromSheet: true,
+            createdBy: 'sheet',
+            createdAt: new Date().toISOString(),
+          })
+          changed = true
+        } else if (exists.lugar !== ev.lugar && ev.lugar) {
+          // Actualizar lugar si cambió en el sheet
+          saveGiraEvento({ ...exists, lugar: ev.lugar })
+          changed = true
+        }
+      }
+      if (changed || true) reload()
+    } catch { /* sin internet o error de fetch */ }
+    finally { setLoadingSheet(false) }
+  }
+
   useEffect(() => {
-    setEventos(getGiraEventos().sort((a, b) => a.fecha.localeCompare(b.fecha)))
     getMembers().then(setMembers)
+    reload()
+    syncSheetEventos()
   }, [])
 
   function reload() {
@@ -640,15 +691,31 @@ export default function GirasPage() {
                           {isPast && <span className="text-[9px] px-1.5 py-0.5 rounded-full"
                             style={{ background: 'rgba(180,185,210,0.08)', color: S.silverDim }}>Pasado</span>}
                         </div>
-                        <p className="font-bold text-sm" style={{ color: S.silverBright }}>{ev.nombre}</p>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className="font-bold text-sm" style={{ color: S.silverBright }}>{ev.nombre}</p>
+                          {ev.fromSheet && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
+                              style={{ background: 'rgba(96,165,250,0.12)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.25)' }}>
+                              📋 Sheet
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs mt-0.5" style={{ color: S.silverDim }}>
                           {fecha.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                         </p>
+                        {ev.lugar && (
+                          <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: S.silverDim }}>
+                            <MapPin size={9} /> {ev.lugar}
+                          </p>
+                        )}
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[10px] flex items-center gap-1"
-                            style={{ color: '#60a5fa' }}>
-                            <Clock size={10} /> {ev.horario1}
-                          </span>
+                          {ev.horario1 ? (
+                            <span className="text-[10px] flex items-center gap-1" style={{ color: '#60a5fa' }}>
+                              <Clock size={10} /> {ev.horario1}
+                            </span>
+                          ) : canManage && (
+                            <span className="text-[10px]" style={{ color: S.silverDim }}>Sin horario — toca para configurar</span>
+                          )}
                           {ev.horario2 && (
                             <span className="text-[10px] flex items-center gap-1" style={{ color: '#60a5fa' }}>
                               <Clock size={10} /> {ev.horario2}

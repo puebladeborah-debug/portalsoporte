@@ -515,6 +515,8 @@ export type GiraEvento = {
   fecha: string
   horario1: string
   horario2?: string
+  lugar?: string       // venue/hotel del sheet
+  fromSheet?: boolean  // true = cargado automáticamente del sheet
   createdBy: string
   createdAt: string
   // Recepción de documentos — hojas recibidas por horario
