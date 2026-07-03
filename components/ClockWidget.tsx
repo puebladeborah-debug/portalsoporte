@@ -158,7 +158,7 @@ export default function ClockWidget() {
           const mLeft = minutesUntil(horario.salida, t)
           // Clave única por persona+día para no repetir la alerta
           const dayKey = `qr_alert_${session!.memberId}_${t.toISOString().slice(0,10)}`
-          if (mLeft === 20 && alertFiredKey.current !== dayKey) {
+          if (mLeft <= 20 && mLeft > 0 && alertFiredKey.current !== dayKey) {
             alertFiredKey.current = dayKey
             localStorage.setItem(dayKey, '1')
             // Notificación del navegador
