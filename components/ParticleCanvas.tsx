@@ -74,10 +74,10 @@ function drawRocket(ctx: CanvasRenderingContext2D, r: Rocket, isLight: boolean) 
   ctx.rotate(r.angle + Math.PI / 2) // nose apunta en dirección del movimiento
 
   const s = r.size
-  const bodyColor  = isLight ? '#060614' : '#d4d8e8'
-  const noseColor  = isLight ? '#0f0f28' : '#b0b4c8'
+  const bodyColor  = isLight ? '#a8aec0' : '#d4d8e8'
+  const noseColor  = isLight ? '#c0c6d8' : '#b0b4c8'
   const windowCol  = isLight ? '#0a5abf' : '#6ab0ff'
-  const finColor   = isLight ? '#03030e' : '#aab0c0'
+  const finColor   = isLight ? '#90969e' : '#aab0c0'
   const flameOuter = isLight ? 'rgba(160,165,180,0.95)' : 'rgba(180,185,210,0.9)'
   const flameInner = isLight ? 'rgba(230,235,255,1.0)'  : 'rgba(240,245,255,1.0)'
 
