@@ -163,8 +163,8 @@ export default function ClockWidget() {
             localStorage.setItem(dayKey, '1')
             // Notificación del navegador
             if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-              new Notification('⏰ Pasa asistencia con Deborah Puebla', {
-                body: 'En 20 minutos termina tu turno. Ve con Deborah Puebla a escanear el QR y registrar tu asistencia.',
+              new Notification('⏰ Pasa asistencia con DLP', {
+                body: 'En 20 minutos termina tu turno. Ve con DLP a escanear el QR y registrar tu asistencia.',
                 icon: '/logo.jpg',
                 requireInteraction: true,
               })
@@ -200,7 +200,7 @@ export default function ClockWidget() {
           {/* Instrucciones */}
           <div className="px-6 py-5 space-y-3 text-left">
             {[
-              { n: '1', t: 'Ve con Deborah Puebla', d: 'Acude al área de la Directora de Soporte' },
+              { n: '1', t: 'Ve con DLP', d: 'Acude al área de la Directora de Soporte' },
               { n: '2', t: 'Escanea el código QR',  d: 'El QR de asistencia estará disponible' },
               { n: '3', t: 'Registra tu salida',     d: 'Completa el proceso de asistencia del día' },
             ].map(s => (
