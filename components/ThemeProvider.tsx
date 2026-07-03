@@ -45,12 +45,16 @@ function tintWith(hex: string, f: number): string {
 
 function applyWhiteAccent(hex: string) {
   const root = document.documentElement
-  root.style.setProperty('--th-bright',        darken(hex, 0.75))   // texto oscuro (títulos)
-  root.style.setProperty('--th-silver',         darken(hex, 0.90))   // texto medio (cuerpo)
-  root.style.setProperty('--th-dim',            tintWith(hex, 0.35)) // texto sutil (labels)
-  root.style.setProperty('--th-border',         tintWith(hex, 0.25)) // borde
-  root.style.setProperty('--th-border-light',   tintWith(hex, 0.15)) // borde suave
-  root.style.setProperty('--th-border-active',  `${hex}55`)          // borde activo
+  // Títulos: versión oscura del acento elegido
+  root.style.setProperty('--th-bright',        darken(hex, 0.72))
+  // Cuerpo: gris oscuro plateado fijo — legible sin esfuerzo
+  root.style.setProperty('--th-silver',        '#2c2f45')
+  // Secundario / labels: gris medio oscuro fijo — visible incluso con lentes
+  root.style.setProperty('--th-dim',           '#52556e')
+  // Bordes: sutil tinte del acento
+  root.style.setProperty('--th-border',        tintWith(hex, 0.22))
+  root.style.setProperty('--th-border-light',  tintWith(hex, 0.12))
+  root.style.setProperty('--th-border-active', `${hex}55`)
 }
 
 function clearWhiteAccent() {
