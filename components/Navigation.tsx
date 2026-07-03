@@ -32,7 +32,7 @@ const navItems = [
   { href: '/acuerdos', label: 'Acuerdos', icon: ScrollText },
   { href: '/pagos', label: 'Pagos', icon: CreditCard },
   { href: '/sheets', label: 'Sheets', icon: Sheet },
-  { href: '/tutoriales', label: 'Tutoriales', icon: PlayCircle },
+  { href: '/tutoriales', label: 'Videos', icon: PlayCircle },
   { href: '/estadisticas', label: 'Stats', icon: BarChart3 },
   { href: '/incidencias', label: 'Incidencias', icon: FileWarning },
   { href: '/reembolsos', label: 'Reembolsos', icon: Banknote },
@@ -349,8 +349,8 @@ export default function Navigation() {
             <Link key={href} href={href} title={label}
               className="relative flex flex-col items-center justify-center w-[54px] h-[54px] rounded-xl transition-all duration-200 flex-shrink-0"
               style={pathname === href
-                ? { color: '#d4d8e8', background: 'rgba(180,185,210,0.1)', border: '1px solid rgba(180,185,210,0.2)' }
-                : { color: '#3a3e4a', border: '1px solid transparent' }
+                ? { color: 'var(--th-bright)', background: 'rgba(180,185,210,0.1)', border: '1px solid rgba(180,185,210,0.2)' }
+                : { color: 'var(--th-silver)', border: '1px solid transparent' }
               }>
               {href === '/chat' && hayChatsSinLeer && (
                 <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
