@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             <Navigation />
             <ClockWidget />
-            <main className="pt-4 pb-24 md:pt-24 md:pb-8 min-h-screen" style={{ background: 'var(--th-bg)' }}>
+            <main className="pt-4 pb-24 md:pt-[96px] md:pb-8 min-h-screen" style={{ background: 'var(--th-bg)' }}>
               {children}
             </main>
           </AuthProvider>
