@@ -335,27 +335,14 @@ export async function GET() {
       if (ins && ins.getFullYear() === thisY && ins.getMonth() === thisM) nuevosEsteMes++
     }
 
-    // ── 4b. SHEET renovaciones privado (cuenta de servicio) ─────────────────────
-    const saToken = await getServiceAccountToken()
-    const debug = {
-      saTokenOk: !!saToken,
-      saError:   _saError,
-      tabs: {} as Record<string, number>,
-      renovadosCRM: renovados,
-    }
-    if (saToken) {
-      for (const tab of RENOV_TABS) {
-        try {
-          const rows = await fetchRangeAuth(saToken, SHEET_RENOV, `'${tab}'!A:A`)
-          let count = 0
-          rows.slice(1).forEach(r => {
-            if ((r[0] || '').toString().trim()) { renovados++; count++ }
-          })
-          debug.tabs[tab] = count
-        } catch (e) {
-          debug.tabs[tab] = -1
-        }
-      }
+    // ── 4b. SHEET renovaciones (público con enlace — API key normal) ────────────
+    for (const tab of RENOV_TABS) {
+      try {
+        const rows = await fetchRange(SHEET_RENOV, `'${tab}'!A:A`)
+        rows.slice(1).forEach(r => {
+          if ((r[0] || '').toString().trim()) renovados++
+        })
+      } catch { /* pestaña no encontrada */ }
     }
 
     return NextResponse.json({
@@ -366,7 +353,6 @@ export async function GET() {
       renovados, nuevosEsteMes,
       bgi, mas, black,
       conSkool,
-      debug,
       actualizadoEn: new Date().toISOString(),
     })
 
