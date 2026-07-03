@@ -186,7 +186,7 @@ export default function ClockWidget() {
   }
   const chromeDim = {
     fontFamily: F, fontWeight: 900, letterSpacing: '0.03em',
-    color: isLight ? 'rgba(5,6,14,0.38)' : 'rgba(255,255,255,0.4)',
+    color: isLight ? 'rgba(5,6,14,0.70)' : 'rgba(255,255,255,0.4)',
     textShadow: isLight
       ? '0 0 6px rgba(0,0,0,0.12)'
       : '0 0 5px rgba(255,255,255,0.5)',
@@ -203,13 +203,13 @@ export default function ClockWidget() {
   const glowSecond = chromeSecond
 
   // Colores de texto secundario según tema
-  const dimDate  = isLight ? 'rgba(5,6,14,0.55)'  : 'rgba(180,185,210,0.38)'
-  const dimLabel = isLight ? 'rgba(5,6,14,0.48)'  : 'rgba(180,185,210,0.35)'
-  const dimCount = isLight ? 'rgba(5,6,14,0.60)'  : 'rgba(180,185,210,0.45)'
-  const barBg    = isLight ? 'rgba(5,6,14,0.10)'  : 'rgba(180,185,210,0.07)'
-  const gripCol  = isLight ? 'rgba(5,6,14,0.35)'  : 'rgba(180,185,210,0.55)'
-  const gripBg   = isLight ? 'rgba(5,6,14,0.05)'  : 'rgba(180,185,210,0.07)'
-  const gripBord = isLight ? '1px solid rgba(5,6,14,0.08)' : '1px solid rgba(180,185,210,0.1)'
+  const dimDate  = isLight ? 'rgba(5,6,14,0.80)'  : 'rgba(180,185,210,0.38)'
+  const dimLabel = isLight ? 'rgba(5,6,14,0.75)'  : 'rgba(180,185,210,0.35)'
+  const dimCount = isLight ? 'rgba(5,6,14,0.80)'  : 'rgba(180,185,210,0.45)'
+  const barBg    = isLight ? 'rgba(5,6,14,0.14)'  : 'rgba(180,185,210,0.07)'
+  const gripCol  = isLight ? 'rgba(5,6,14,0.60)'  : 'rgba(180,185,210,0.55)'
+  const gripBg   = isLight ? 'rgba(5,6,14,0.06)'  : 'rgba(180,185,210,0.07)'
+  const gripBord = isLight ? '1px solid rgba(5,6,14,0.14)' : '1px solid rgba(180,185,210,0.1)'
 
   return (
     <>

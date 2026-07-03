@@ -106,9 +106,9 @@ html[data-theme="white"] {
   --th-border:        #e0e2ee;
   --th-border-light:  rgba(80,80,160,0.12);
   --th-border-active: rgba(80,80,160,0.28);
-  --th-silver:        #3a3e58;
-  --th-bright:        #0f1228;
-  --th-dim:           #9094b0;
+  --th-silver:        #1e2240;
+  --th-bright:        #0a0c20;
+  --th-dim:           #4a4e70;
   --th-inner:         #eeeef8;
   --th-input:         #ffffff;
   --th-nav:           rgba(255,255,255,0.94);
