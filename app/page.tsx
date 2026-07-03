@@ -74,8 +74,7 @@ export default function HomePage() {
           <Image src="/logo.jpg" alt="Logo" width={44} height={44} className="rounded-lg logo-blend"
             style={{ boxShadow: '0 0 14px rgba(180,185,210,0.2)' }} />
           <div>
-            <h1 className="text-lg font-bold"
-              style={{ background: 'linear-gradient(135deg,#f0f2ff,#b8bcc8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h1 className="text-lg font-bold" style={{ color: S.silverBright }}>
               Bienvenida, DLP
             </h1>
             <p className="text-[10px] tracking-[0.2em] uppercase" style={{ color: S.silverDim }}>Portal de Soporte</p>
@@ -85,8 +84,7 @@ export default function HomePage() {
         {/* Header escritorio */}
         <div className="hidden md:flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-xl font-bold"
-              style={{ background: 'linear-gradient(135deg,#f0f2ff 0%,#b8bcc8 60%,#f0f2ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h1 className="text-xl font-bold" style={{ color: S.silverBright }}>
               Bienvenida, DLP
             </h1>
             <p className="text-[10px] tracking-[0.25em] uppercase mt-0.5" style={{ color: S.silverDim }}>
@@ -117,7 +115,7 @@ export default function HomePage() {
             style={{
               background: S.card, borderRadius: '12px',
               border: `1px solid ${query ? S.borderActive : S.border}`,
-              color: '#d4d8e8',
+              color: S.silverBright,
             }}
           />
           {results.length > 0 && (
@@ -130,7 +128,7 @@ export default function HomePage() {
                   onClick={() => { setQuery(''); setResults([]) }}>
                   <BookOpen size={13} style={{ color: S.silver, flexShrink: 0 }} />
                   <div>
-                    <p className="text-xs font-medium" style={{ color: '#d4d8e8' }}>{article.title}</p>
+                    <p className="text-xs font-medium" style={{ color: S.silverBright }}>{article.title}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: S.silverDim }}>{article.tags.slice(0, 3).join(' · ')}</p>
                   </div>
                 </Link>
@@ -193,7 +191,7 @@ export default function HomePage() {
                   : <span className="text-lg flex-shrink-0">{cat.icon}</span>
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-xs" style={{ color: '#d4d8e8' }}>{cat.name}</p>
+                  <p className="font-semibold text-xs" style={{ color: S.silverBright }}>{cat.name}</p>
                   <p className="text-[10px] mt-0.5 truncate" style={{ color: S.silverDim }}>{cat.description}</p>
                 </div>
                 <ChevronRight size={13} style={{ color: S.silverDim, flexShrink: 0 }} />
