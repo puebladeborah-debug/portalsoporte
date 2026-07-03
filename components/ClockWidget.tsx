@@ -132,9 +132,7 @@ export default function ClockWidget() {
     if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
       Notification.requestPermission().catch(() => {})
     }
-    // Restaurar clave del día actual (evita re-mostrar si ya se disparó hoy)
-    const todayKey = `qr_alert_${session!.memberId}_${new Date().toISOString().slice(0,10)}`
-    if (localStorage.getItem(todayKey)) alertFiredKey.current = todayKey
+    // NO restaurar del localStorage: si recarga la página y aún faltan ≤20 min → vuelve a mostrar
 
     // El perfil del miembro se carga una sola vez (no en cada tick) para no
     // golpear Firestore cada 2.5 segundos.
