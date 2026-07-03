@@ -33,7 +33,7 @@ function parseFechaSheet(raw: string): string | null {
 
 export async function GET() {
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(TAB + '!A:E')}?key=${API_KEY}`
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent("'" + TAB + "'!A:E")}?key=${API_KEY}`
     const res  = await fetch(url, { cache: 'no-store' })
     const data = await res.json()
     if (data.error) return NextResponse.json({ error: data.error.message }, { status: 400 })
