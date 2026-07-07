@@ -33,6 +33,7 @@ type Conversation = {
   lastMessage: string | null
   lastMessageAt: string | null
   unreadCount?: Record<string, number>
+  lastMessageViewOnce?: boolean
 }
 
 type Message = {
@@ -335,7 +336,7 @@ function ConvItem({
         </div>
         <p className="text-[11px] truncate mt-0.5"
           style={{ color: unread > 0 ? S.silverBright : conv.lastMessage ? '#5a5e6a' : S.silverDim, fontWeight: unread > 0 ? 600 : 400 }}>
-          {conv.lastMessage === '👁 Vista única'
+          {conv.lastMessageViewOnce
             ? '👁 Vista única'
             : (conv.lastMessage ?? subtitle)}
         </p>
@@ -518,7 +519,12 @@ function ChatArea({
     }
     // En vista única nunca se guarda el contenido real en el preview de la conversación
     const lastMsgPreview = viewOnceMode ? '👁 Vista única' : content
-    await updateConv(conv.id, { lastMessage: lastMsgPreview, lastMessageAt: createdAt, unreadCount: nuevoUnread })
+    await updateConv(conv.id, {
+      lastMessage: lastMsgPreview,
+      lastMessageAt: createdAt,
+      unreadCount: nuevoUnread,
+      lastMessageViewOnce: viewOnceMode,
+    })
 
     setSending(false)
     inputRef.current?.focus()
@@ -595,7 +601,11 @@ function ChatArea({
                 showTime={showTime}
                 isGroup={isGroup}
                 onDelete={isMine && member?.isAdmin ? () => removeMessage(msg.id) : undefined}
-                onViewOnce={() => removeMessage(msg.id)}
+                onViewOnce={async () => {
+                  await removeMessage(msg.id)
+                  // Limpiar el preview de la conversación tras ser vista
+                  await updateConv(conv.id, { lastMessage: null, lastMessageViewOnce: false })
+                }}
               />
             </div>
           )
