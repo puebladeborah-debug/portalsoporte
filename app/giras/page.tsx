@@ -203,7 +203,7 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
     await addAviso({
       author: session?.memberName ?? 'DLP',
       role: 'Soporte',
-      message: `📋 ¡Hojas listas! Recoge tus hojas del evento "${evento.nombre}" — acude con DLP.`,
+      message: `📋 Hojas Listas — ${evento.nombre}`,
       timestamp: new Date().toISOString(),
       priority: 'urgente',
       type: 'hojas_listas',
