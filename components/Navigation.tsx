@@ -343,6 +343,10 @@ export default function Navigation() {
   })
   const hayChatsSinLeer = misConvs.some(c => (c.unreadCount?.[session?.memberId || ''] || 0) > 0)
 
+  // Alerta activa de Hojas Listas en Giras
+  const { data: avisos } = useFirestoreCollection<{ id: string; type?: string }>('avisos_equipo')
+  const hayAlertaGiras = avisos.some(a => a.type === 'hojas_listas')
+
   return (
     <>
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
@@ -371,6 +375,9 @@ export default function Navigation() {
               }>
               {href === '/chat' && hayChatsSinLeer && (
                 <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
+              )}
+              {href === '/giras' && hayAlertaGiras && (
+                <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full animate-pulse" style={{ background: '#fbbf24', boxShadow: '0 0 6px rgba(251,191,36,0.8)' }} />
               )}
               <Icon size={22} />
               <span className="text-[9px] mt-1 leading-none font-medium whitespace-nowrap">{label}</span>
@@ -424,6 +431,9 @@ export default function Navigation() {
             style={{ width: '64px', ...(pathname === href ? { color: '#d4d8e8' } : { color: '#3a3e4a' }) }}>
             {href === '/chat' && hayChatsSinLeer && (
               <span className="absolute top-1.5 right-4 w-2 h-2 rounded-full" style={{ background: '#dc4646', boxShadow: '0 0 6px rgba(220,70,70,0.7)' }} />
+            )}
+            {href === '/giras' && hayAlertaGiras && (
+              <span className="absolute top-1.5 right-4 w-2 h-2 rounded-full animate-pulse" style={{ background: '#fbbf24', boxShadow: '0 0 6px rgba(251,191,36,0.8)' }} />
             )}
             <Icon size={19} />
             <span className="whitespace-nowrap">{label}</span>
