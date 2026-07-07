@@ -335,7 +335,9 @@ function ConvItem({
         </div>
         <p className="text-[11px] truncate mt-0.5"
           style={{ color: unread > 0 ? S.silverBright : conv.lastMessage ? '#5a5e6a' : S.silverDim, fontWeight: unread > 0 ? 600 : 400 }}>
-          {conv.lastMessage ?? subtitle}
+          {conv.lastMessage === '👁 Vista única'
+            ? '👁 Vista única'
+            : (conv.lastMessage ?? subtitle)}
         </p>
       </div>
     </button>
@@ -514,7 +516,9 @@ function ChatArea({
     for (const pid of conv.participantIds) {
       nuevoUnread[pid] = pid === myId ? 0 : (nuevoUnread[pid] || 0) + 1
     }
-    await updateConv(conv.id, { lastMessage: content, lastMessageAt: createdAt, unreadCount: nuevoUnread })
+    // En vista única nunca se guarda el contenido real en el preview de la conversación
+    const lastMsgPreview = viewOnceMode ? '👁 Vista única' : content
+    await updateConv(conv.id, { lastMessage: lastMsgPreview, lastMessageAt: createdAt, unreadCount: nuevoUnread })
 
     setSending(false)
     inputRef.current?.focus()
