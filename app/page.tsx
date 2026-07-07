@@ -12,6 +12,7 @@ import ClockWidget from '@/components/ClockWidget'
 import QuickResponses from '@/components/QuickResponses'
 import CountdownBanner from '@/components/CountdownBanner'
 import ContactarCliente from '@/components/ContactarCliente'
+import { useAuth } from '@/components/LoginGate'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -25,6 +26,11 @@ const S = {
 }
 
 export default function HomePage() {
+  const { session } = useAuth()
+  // Extrae el primer nombre: "DLP · Deborah" → "Deborah", "Samuel Díaz" → "Samuel"
+  const firstName = session?.memberName.split(' · ').pop()?.split(' ')[0] || ''
+  const greeting  = `Bienvenid@, ${firstName}`
+
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<typeof articles>([])
 
@@ -75,7 +81,7 @@ export default function HomePage() {
             style={{ boxShadow: '0 0 14px rgba(180,185,210,0.2)' }} />
           <div>
             <h1 className="text-lg font-bold" style={{ color: S.silverBright }}>
-              Bienvenida, DLP
+              {greeting}
             </h1>
             <p className="text-[10px] tracking-[0.2em] uppercase" style={{ color: S.silverDim }}>Portal de Soporte</p>
           </div>
@@ -85,7 +91,7 @@ export default function HomePage() {
         <div className="hidden md:flex items-center justify-between mb-3">
           <div>
             <h1 className="text-xl font-bold" style={{ color: S.silverBright }}>
-              Bienvenida, DLP
+              {greeting}
             </h1>
             <p className="text-[10px] tracking-[0.25em] uppercase mt-0.5" style={{ color: S.silverDim }}>
               Portal de Soporte · Club Sinergetico
