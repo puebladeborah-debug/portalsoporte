@@ -70,6 +70,7 @@ export type TeamMember = {
   contactoEmergenciaTelefono?: string
   alergias?: string
   tipoSangre?: string
+  genero?: 'M' | 'F'
 }
 
 export type AttendanceRecord = {

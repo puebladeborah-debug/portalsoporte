@@ -54,6 +54,7 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
   const { theme, accentColor, setTheme, setAccentColor } = useThemeCtx()
   const [tab, setTab] = useState<'perfil' | 'incidencias'>('perfil')
   const [editName, setEditName] = useState(member?.name.split(' · ').pop() || '')
+  const [editGenero, setEditGenero] = useState<'M' | 'F'>(member?.genero ?? 'F')
   const [currentPw, setCurrentPw] = useState('')
   const [editPw, setEditPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
@@ -91,7 +92,7 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
     const updated = members.map(m => {
       if (m.id !== session.memberId) return m
       const newName = m.id === 'dlp' ? `DLP · ${editName}` : editName
-      return { ...m, name: newName }
+      return { ...m, name: newName, genero: editGenero }
     })
     await saveMembers(updated)
     refresh()
@@ -152,6 +153,22 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
             <input value={editName} onChange={e => setEditName(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
               style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+          </div>
+
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Género</p>
+            <div className="flex gap-2">
+              {(['F', 'M'] as const).map(g => (
+                <button key={g} onClick={() => setEditGenero(g)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                  style={editGenero === g
+                    ? { background: 'rgba(180,185,210,0.15)', color: S.silverBright, border: `1px solid ${S.borderActive}` }
+                    : { background: 'transparent', color: S.silverDim, border: `1px solid ${S.border}` }
+                  }>
+                  {g === 'F' ? '♀ Femenino' : '♂ Masculino'}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>

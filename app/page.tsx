@@ -26,10 +26,10 @@ const S = {
 }
 
 export default function HomePage() {
-  const { session } = useAuth()
-  // Extrae el primer nombre: "DLP · Deborah" → "Deborah", "Samuel Díaz" → "Samuel"
+  const { session, member } = useAuth()
   const firstName = session?.memberName.split(' · ').pop()?.split(' ')[0] || ''
-  const greeting  = `Bienvenid@, ${firstName}`
+  const bienvenida = member?.genero === 'M' ? 'Bienvenido' : 'Bienvenida'
+  const greeting   = `${bienvenida}, ${firstName}`
 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<typeof articles>([])
