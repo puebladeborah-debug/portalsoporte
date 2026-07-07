@@ -757,8 +757,8 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* List */}
-        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+        {/* List — solo hace scroll cuando hay suficientes conversaciones para llenar el panel */}
+        <div className="overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
           {conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-12">
               <MessageCircle size={28} className="mb-3 opacity-20" style={{ color: S.silver }} />
