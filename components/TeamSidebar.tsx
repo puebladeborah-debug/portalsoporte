@@ -639,8 +639,8 @@ export default function TeamSidebar() {
             </div>
           )}
 
-          {/* Perfiles solo de visualización (sin tareas/funciones) */}
-          {members.some(m => EXEC_IDS.includes(m.id)) && (
+          {/* Perfiles ejecutivos — solo visibles para admin */}
+          {adminMode && members.some(m => EXEC_IDS.includes(m.id)) && (
             <div className="flex gap-1.5 mb-2.5">
               {members.filter(m => EXEC_IDS.includes(m.id)).map(m => (
                 <div key={m.id} className="relative flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl"
@@ -667,9 +667,9 @@ export default function TeamSidebar() {
             </div>
           )}
 
-          {/* Member list */}
+          {/* Member list — admin ve a todos, usuario normal solo se ve a sí mismo */}
           <div className="space-y-1.5">
-            {members.filter(m => !EXEC_IDS.includes(m.id)).map(member => {
+            {members.filter(m => !EXEC_IDS.includes(m.id) && (adminMode || m.id === myMember?.id)).map(member => {
               const done = doneCount(member)
               const total = member.tasks.length
               const isOpen = open === member.id
