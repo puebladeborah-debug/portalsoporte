@@ -5,7 +5,7 @@ import { useAuth } from '@/components/LoginGate'
 import { getMembers, TeamMember } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import {
-  MessageCircle, Plus, Users, User, Send, ArrowLeft, X, ChevronDown, Smile,
+  MessageCircle, Plus, Users, User, Send, ArrowLeft, X, ChevronDown, Smile, Trash2,
 } from 'lucide-react'
 
 const S = {
@@ -42,6 +42,8 @@ type Message = {
   senderName: string
   content: string
   createdAt: string
+  viewOnce?: boolean   // se borra después de que el destinatario lo lee
+  deleted?: boolean    // borrado por el remitente
 }
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
@@ -342,33 +344,108 @@ function ConvItem({
 
 /* ─── Message bubble ─────────────────────────────────────────────────────── */
 function MsgBubble({
-  msg, isMine, showName, showTime, isGroup,
+  msg, isMine, showName, showTime, isGroup, onDelete, onViewOnce,
 }: {
   msg: Message
   isMine: boolean
   showName: boolean
   showTime: boolean
   isGroup: boolean
+  onDelete?: () => void
+  onViewOnce?: () => void
 }) {
-  return (
+  const [showMenu, setShowMenu] = useState(false)
+  const [voRevealed, setVoRevealed] = useState(false)
+
+  // Mensaje borrado
+  if (msg.deleted) return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-1`}>
-      <div style={{ maxWidth: '72%' }}>
+      <p className="text-[11px] italic px-3 py-1.5 rounded-xl"
+        style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+        🗑 Mensaje borrado
+      </p>
+    </div>
+  )
+
+  // Vista única no revelada (solo para mensajes recibidos)
+  const isViewOnce = !!msg.viewOnce
+  const showViewOncePrompt = isViewOnce && !isMine && !voRevealed
+
+  function handleViewOnce() {
+    setVoRevealed(true)
+    // Borra el mensaje del destinatario después de 8 segundos
+    setTimeout(() => { onViewOnce?.() }, 8000)
+  }
+
+  return (
+    <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-1`}
+      onMouseLeave={() => setShowMenu(false)}>
+      <div style={{ maxWidth: '72%', position: 'relative' }}>
         {showName && !isMine && isGroup && (
           <p className="text-[10px] mb-1 px-1" style={{ color: S.silverDim }}>
             {msg.senderName.split(' · ').pop()}
           </p>
         )}
-        <div className="px-3.5 py-2 rounded-2xl"
-          style={{
-            background: isMine ? S.myMsg : S.otherMsg,
-            border: `1px solid ${isMine ? 'rgba(180,185,210,0.18)' : S.border}`,
-            borderBottomRightRadius: isMine ? '4px' : '16px',
-            borderBottomLeftRadius:  isMine ? '16px' : '4px',
-          }}>
-          <p className="text-sm leading-relaxed" style={{ color: S.silverBright, wordBreak: 'break-word' }}>
-            {msg.content}
-          </p>
+
+        <div className="flex items-center gap-1.5">
+          {/* Botón borrar — solo mensajes propios */}
+          {isMine && onDelete && (
+            <button
+              onMouseEnter={() => setShowMenu(true)}
+              onClick={() => { if (showMenu) onDelete() }}
+              className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all"
+              style={{
+                background: showMenu ? 'rgba(220,80,80,0.15)' : 'transparent',
+                color: '#e07070',
+                opacity: showMenu ? 1 : 0,
+              }}
+              title="Borrar mensaje">
+              <Trash2 size={12} />
+            </button>
+          )}
+
+          <div
+            className={`px-3.5 py-2 rounded-2xl cursor-pointer select-none ${isMine ? '' : ''}`}
+            onMouseEnter={() => isMine && setShowMenu(true)}
+            onClick={showViewOncePrompt ? handleViewOnce : undefined}
+            style={{
+              background: isViewOnce
+                ? (isMine ? 'rgba(159,122,234,0.15)' : 'rgba(159,122,234,0.1)')
+                : (isMine ? S.myMsg : S.otherMsg),
+              border: `1px solid ${isViewOnce ? 'rgba(159,122,234,0.3)' : (isMine ? 'rgba(180,185,210,0.18)' : S.border)}`,
+              borderBottomRightRadius: isMine ? '4px' : '16px',
+              borderBottomLeftRadius:  isMine ? '16px' : '4px',
+            }}>
+            {showViewOncePrompt ? (
+              <p className="text-sm flex items-center gap-1.5" style={{ color: '#9f7aea' }}>
+                👁 Toca para ver · <span className="text-[11px] opacity-70">vista única</span>
+              </p>
+            ) : (
+              <>
+                {isViewOnce && (
+                  <p className="text-[9px] mb-1 flex items-center gap-1" style={{ color: '#9f7aea', opacity: 0.8 }}>
+                    👁 {isMine ? 'Vista única' : voRevealed ? '⏳ Se borrará pronto' : ''}
+                  </p>
+                )}
+                <p className="text-sm leading-relaxed" style={{ color: S.silverBright, wordBreak: 'break-word' }}>
+                  {msg.content}
+                </p>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Mini menú flotante al hacer hover en mensajes propios */}
+        {isMine && showMenu && onDelete && (
+          <div className="absolute right-0 top-0 -translate-y-full pb-1 z-10">
+            <button onClick={onDelete}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+              style={{ background: 'rgba(220,80,80,0.12)', color: '#e07070', border: '1px solid rgba(220,80,80,0.25)' }}>
+              <Trash2 size={11} /> Borrar
+            </button>
+          </div>
+        )}
+
         {showTime && (
           <p className={`text-[10px] mt-1 px-1 ${isMine ? 'text-right' : 'text-left'}`}
             style={{ color: S.silverDim }}>
@@ -390,7 +467,7 @@ function ChatArea({
   onBack: () => void
   updateConv: (id: string, item: Partial<Conversation>) => Promise<void>
 }) {
-  const { data: rawMessages, add: addMessage } = useFirestoreCollection<Message>(
+  const { data: rawMessages, add: addMessage, remove: removeMessage, update: updateMessage } = useFirestoreCollection<Message>(
     'chat_mensajes',
     { where: ['conversationId', '==', conv.id] },
   )
@@ -398,6 +475,7 @@ function ChatArea({
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
+  const [viewOnceMode, setViewOnceMode] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const { member } = useAuth()
@@ -435,7 +513,9 @@ function ChatArea({
       senderName: member.name,
       content,
       createdAt,
+      ...(viewOnceMode ? { viewOnce: true } : {}),
     })
+    if (viewOnceMode) setViewOnceMode(false)
 
     const nuevoUnread: Record<string, number> = { ...(conv.unreadCount || {}) }
     for (const pid of conv.participantIds) {
@@ -517,6 +597,8 @@ function ChatArea({
                 showName={showName}
                 showTime={showTime}
                 isGroup={isGroup}
+                onDelete={isMine ? () => updateMessage(msg.id, { deleted: true, content: '' }) : undefined}
+                onViewOnce={() => removeMessage(msg.id)}
               />
             </div>
           )
@@ -530,6 +612,14 @@ function ChatArea({
         {showEmoji && (
           <EmojiPicker onPick={e => { pickEmoji(e); }} onClose={() => setShowEmoji(false)} />
         )}
+        {/* Indicador vista única */}
+        {viewOnceMode && (
+          <div className="flex items-center gap-1.5 mb-2 px-3 py-1.5 rounded-xl text-xs font-semibold"
+            style={{ background: 'rgba(159,122,234,0.12)', color: '#9f7aea', border: '1px solid rgba(159,122,234,0.3)' }}>
+            👁 Vista única activada — el destinatario solo podrá ver este mensaje una vez
+            <button onClick={() => setViewOnceMode(false)} style={{ marginLeft: 4, opacity: 0.6 }}>✕</button>
+          </div>
+        )}
         <div className="flex items-end gap-2">
           <button onClick={() => setShowEmoji(o => !o)}
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
@@ -539,6 +629,17 @@ function ChatArea({
               border: `1px solid ${showEmoji ? 'rgba(180,185,210,0.25)' : S.border}`,
             }}>
             <Smile size={18} />
+          </button>
+          {/* Botón vista única */}
+          <button onClick={() => setViewOnceMode(o => !o)}
+            title="Vista única"
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+            style={{
+              background: viewOnceMode ? 'rgba(159,122,234,0.2)' : 'rgba(180,185,210,0.05)',
+              color: viewOnceMode ? '#9f7aea' : S.silverDim,
+              border: `1px solid ${viewOnceMode ? 'rgba(159,122,234,0.4)' : S.border}`,
+            }}>
+            👁
           </button>
           <textarea
             ref={inputRef}
