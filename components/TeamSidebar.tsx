@@ -139,7 +139,7 @@ export default function TeamSidebar() {
     })))
     const base = serverUrl || window.location.origin
     const url = await QRCode.toDataURL(`${base}/asistencia?d=${payload}`, {
-      width: 260, margin: 2, color: { dark: '#d4d8e8', light: '#06060800' }, errorCorrectionLevel: 'M',
+      width: 260, margin: 2, color: { dark: '#000000', light: '#ffffff' }, errorCorrectionLevel: 'M',
     })
     setQrUrl(url); setQrMember(member); setQrStatus(status)
     setAttendance(prev => [...new Set([...prev, member.id])])
