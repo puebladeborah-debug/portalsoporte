@@ -27,7 +27,12 @@ const S = {
 
 export default function HomePage() {
   const { session, member } = useAuth()
-  const firstName = session?.memberName.split(' · ').pop()?.split(' ')[0] || ''
+  // Si el nombre tiene formato "DLP · Deborah" usa el prefijo (DLP),
+  // si es nombre normal "Samuel Díaz" usa el primer nombre
+  const memberName = session?.memberName || ''
+  const firstName  = memberName.includes(' · ')
+    ? memberName.split(' · ')[0]   // "DLP · Deborah" → "DLP"
+    : memberName.split(' ')[0]     // "Samuel Díaz" → "Samuel"
   const bienvenida = member?.genero === 'M' ? 'Bienvenido' : 'Bienvenida'
   const greeting   = `${bienvenida}, ${firstName}`
 
