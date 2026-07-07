@@ -215,6 +215,28 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
     setAlertaAck(true)
   }
 
+  async function desactivarHojasListas() {
+    // Limpia la alerta local de giras
+    clearGiraAlerta(evento.id)
+    setAlerta(null)
+    // Elimina el aviso de Firestore (el de tipo hojas_listas de este evento)
+    // useFirestoreCollection no expone remove directamente aquí,
+    // lo hacemos buscando en avisos y usando la API de Firestore directamente
+    try {
+      const { db } = await import('@/lib/firebase')
+      const { collection, query, where, getDocs, deleteDoc } = await import('firebase/firestore')
+      const q = query(
+        collection(db, 'avisos_equipo'),
+        where('type', '==', 'hojas_listas'),
+        where('eventoNombre', '==', evento.nombre)
+      )
+      const snap = await getDocs(q)
+      snap.forEach(doc => deleteDoc(doc.ref))
+    } catch (e) {
+      console.warn('Error limpiando aviso Firestore:', e)
+    }
+  }
+
   const isAdminLive = !!members.find(m => m.id === session?.memberId)?.isAdmin
   const showAlarmBanner = alerta && !alertaAck && !isAdminLive
 
@@ -326,12 +348,26 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
           </div>
 
           {/* Hojas Listas button */}
-          {canManage && (
+          {canManage && !alerta && (
             <button onClick={triggerHojasListas}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all"
-              style={{ background: alerta ? 'rgba(220,70,70,0.2)' : 'rgba(251,191,36,0.12)', color: alerta ? '#f87171' : '#fbbf24', border: `1px solid ${alerta ? 'rgba(220,70,70,0.4)' : 'rgba(251,191,36,0.35)'}` }}>
-              <Bell size={13} /> {alerta ? '🚨 Alerta activa' : 'Hojas Listas'}
+              style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.35)' }}>
+              <Bell size={13} /> Hojas Listas
             </button>
+          )}
+          {canManage && alerta && (
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
+                style={{ background: 'rgba(220,70,70,0.15)', color: '#f87171', border: '1px solid rgba(220,70,70,0.3)' }}>
+                <Bell size={12} /> 🚨 Alerta activa
+              </span>
+              <button onClick={desactivarHojasListas}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{ background: 'rgba(180,185,210,0.08)', color: S.silverDim, border: `1px solid ${S.border}` }}
+                title="Desactivar alerta">
+                <X size={12} /> Desactivar
+              </button>
+            </div>
           )}
         </div>
 
