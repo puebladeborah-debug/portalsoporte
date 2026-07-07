@@ -14,6 +14,8 @@ import {
   GiraEvento, GiraRegistro, GiraCatData, RecepcionDocumentos,
   getMembers, TeamMember,
 } from '@/lib/teamStore'
+import { useFirestoreCollection } from '@/lib/firestoreCollection'
+import type { AvisoEquipo } from '@/components/NoticesPanel'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -138,6 +140,7 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
 }) {
   const [registros, setRegistros] = useState<GiraRegistro[]>([])
   const [alerta, setAlerta] = useState<ReturnType<typeof getGiraAlerta>>(null)
+  const { add: addAviso } = useFirestoreCollection<AvisoEquipo>('avisos_equipo')
   const [showDisclaimer, setShowDisclaimer] = useState(true)
   const [alertaAck, setAlertaAck] = useState(false)
   const [showEditHorarios, setShowEditHorarios] = useState(false)
@@ -192,10 +195,20 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
     onEventoUpdate(updated)
   }
 
-  function triggerHojasListas() {
+  async function triggerHojasListas() {
     const a = { eventoId: evento.id, triggeredBy: session?.memberName ?? 'Admin', triggeredAt: new Date().toISOString() }
     setGiraAlerta(a)
     setAlerta(a)
+    // Notificación compartida para todo el equipo via Firestore
+    await addAviso({
+      author: session?.memberName ?? 'DLP',
+      role: 'Soporte',
+      message: `📋 ¡Hojas listas! Recoge tus hojas del evento "${evento.nombre}" — acude con DLP.`,
+      timestamp: new Date().toISOString(),
+      priority: 'urgente',
+      type: 'hojas_listas',
+      eventoNombre: evento.nombre,
+    })
   }
 
   function ackAlerta() {
