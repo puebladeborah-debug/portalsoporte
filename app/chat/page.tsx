@@ -17,9 +17,9 @@ const S = {
   silver:       'var(--th-silver)',
   silverBright: 'var(--th-bright)',
   silverDim:    'var(--th-dim)',
-  myMsg:    '#1a2a3a',
-  otherMsg: '#0e0e18',
-  panel:    '#080812',
+  myMsg:    'var(--th-inner)',
+  otherMsg: 'var(--th-card)',
+  panel:    'var(--th-inner)',
 }
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
@@ -193,7 +193,7 @@ function NewConvModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }}>
       <div className="w-80 mx-4 rounded-2xl overflow-hidden"
-        style={{ background: '#080812', border: `1px solid ${S.borderLight}`, boxShadow: '0 0 60px rgba(0,0,0,0.9)' }}>
+        style={{ background: 'var(--th-inner)', border: `1px solid ${S.borderLight}`, boxShadow: '0 0 60px rgba(0,0,0,0.9)' }}>
 
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4"
