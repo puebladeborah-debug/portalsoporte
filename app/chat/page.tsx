@@ -357,15 +357,8 @@ function MsgBubble({
   const [showMenu, setShowMenu] = useState(false)
   const [voRevealed, setVoRevealed] = useState(false)
 
-  // Mensaje borrado
-  if (msg.deleted) return (
-    <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-1`}>
-      <p className="text-[11px] italic px-3 py-1.5 rounded-xl"
-        style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
-        🗑 Mensaje borrado
-      </p>
-    </div>
-  )
+  // Mensajes marcados como borrados no se muestran (eliminación limpia, sin rastro)
+  if (msg.deleted) return null
 
   // Vista única no revelada (solo para mensajes recibidos)
   const isViewOnce = !!msg.viewOnce
@@ -597,7 +590,7 @@ function ChatArea({
                 showName={showName}
                 showTime={showTime}
                 isGroup={isGroup}
-                onDelete={isMine ? () => updateMessage(msg.id, { deleted: true, content: '' }) : undefined}
+                onDelete={isMine && member?.isAdmin ? () => removeMessage(msg.id) : undefined}
                 onViewOnce={() => removeMessage(msg.id)}
               />
             </div>
