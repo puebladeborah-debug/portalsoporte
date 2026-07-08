@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Settings, FileText, ChevronRight, Zap, CalendarCheck, AlertTriangle, Users } from 'lucide-react'
+import { Settings, FileText, ChevronRight, Zap, CalendarCheck, AlertTriangle, Users, TrendingUp } from 'lucide-react'
 import { categories, articles } from '@/lib/data'
 
 const S = {
@@ -40,6 +40,17 @@ export default function AdminPage() {
               <p className="text-xs" style={{ color: S.silverDim }}>Calendario, estadísticas y desempeño del equipo</p>
             </div>
             <ChevronRight size={16} style={{ color: '#70c080' }} />
+          </Link>
+
+          <Link href="/admin/kpis"
+            className="flex items-center gap-3 p-4 rounded-2xl transition-all"
+            style={{ background: 'rgba(122,176,240,0.06)', border: '1px solid rgba(122,176,240,0.2)' }}>
+            <TrendingUp size={20} style={{ color: '#7ab0f0' }} />
+            <div className="flex-1">
+              <p className="text-sm font-semibold" style={{ color: '#7ab0f0' }}>KPIs de Atención al Cliente</p>
+              <p className="text-xs" style={{ color: S.silverDim }}>Mensajes, resolución, devoluciones y bienestar del equipo</p>
+            </div>
+            <ChevronRight size={16} style={{ color: '#7ab0f0' }} />
           </Link>
 
           <Link href="/admin/incidencias"

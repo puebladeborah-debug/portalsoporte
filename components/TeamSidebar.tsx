@@ -3,14 +3,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   ChevronDown, ChevronRight, CheckCircle2, Circle, Users, Plus, X,
-  QrCode, Trash2, Pencil, Check, Zap, Bell, KeyRound,
+  QrCode, Trash2, Pencil, Check, Zap, Bell, KeyRound, Sun,
 } from 'lucide-react'
 import QRCode from 'qrcode'
-import { getMembers, saveMembers, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, saveReporteQR, EXEC_IDS } from '@/lib/teamStore'
+import { getMembers, saveMembers, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, EXEC_IDS } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from './LoginGate'
-import { auth } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
 import { sendPasswordResetEmail } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -85,13 +86,23 @@ export default function TeamSidebar() {
   const [editIsAdmin, setEditIsAdmin] = useState(false)
   const editScrollRef = useRef<HTMLDivElement>(null)
 
-  // Pre-QR report state
+  // Pre-QR report state (FIN de jornada)
   const [preQRMember, setPreQRMember] = useState<TeamMember | null>(null)
   const [preQRStatus, setPreQRStatus] = useState<'completo' | 'incompleto'>('completo')
-  const [preQRForm, setPreQRForm] = useState({ whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '', hora: '', tareasExtra: '' })
+  const EMPTY_FIN = { whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '', hora: '', tareasExtra: '', casosResueltos: '', casosPendientes: '', escaladoDLP: 'no', calidadPercibida: '3', devolucionesSolicitadas: '', devolucionesAutorizadas: '' }
+  const [preQRForm, setPreQRForm] = useState(EMPTY_FIN)
 
   function pqr(key: keyof typeof preQRForm, val: string) {
     setPreQRForm(prev => ({ ...prev, [key]: val }))
+  }
+
+  // INICIO de jornada state
+  const EMPTY_INI = { horaEntrada: '', energia: '3', whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '' }
+  const [inicioMember, setInicioMember] = useState<TeamMember | null>(null)
+  const [inicioForm, setInicioForm] = useState(EMPTY_INI)
+
+  function pif(key: keyof typeof inicioForm, val: string) {
+    setInicioForm(prev => ({ ...prev, [key]: val }))
   }
 
   useEffect(() => {
@@ -334,6 +345,129 @@ export default function TeamSidebar() {
       )}
 
       {/* ── Modal pre-QR: reporte de canales ──────────────────────────────── */}
+      {/* ── Modal INICIO DE JORNADA ─────────────────────────────────────── */}
+      {inicioMember && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
+          <div className="w-full max-w-sm mx-4 rounded-t-3xl md:rounded-2xl flex flex-col"
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(100,160,240,0.25)', boxShadow: '0 0 60px rgba(0,0,0,0.95)', maxHeight: '90vh' }}>
+
+            <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: `1px solid ${S.border}` }}>
+              <Sun size={15} style={{ color: '#7ab0f0' }} />
+              <div className="flex-1">
+                <p className="text-sm font-bold" style={{ color: S.silverBright }}>Inicio de Jornada</p>
+                <p className="text-[10px] mt-0.5" style={{ color: S.silverDim }}>
+                  {inicioMember.name.split(' · ').pop()} · {TODAY}
+                </p>
+              </div>
+              <button onClick={() => setInicioMember(null)} style={{ color: S.silverDim }}><X size={16} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* Hora de entrada */}
+              <div>
+                <p className="text-[9px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Hora de entrada *</p>
+                <input type="time" value={inicioForm.horaEntrada} onChange={e => pif('horaEntrada', e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
+                  style={{ background: 'var(--th-input)', border: `1px solid ${inicioForm.horaEntrada ? 'rgba(100,160,240,0.3)' : S.border}`, color: S.silverBright }} />
+              </div>
+
+              {/* Energía 1-5 */}
+              <div>
+                <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Nivel de energía al iniciar</p>
+                <div className="flex gap-2">
+                  {[1,2,3,4,5].map(n => (
+                    <button key={n} onClick={() => pif('energia', String(n))}
+                      className="flex-1 py-2 rounded-xl text-sm font-bold transition-all"
+                      style={{
+                        background: inicioForm.energia === String(n) ? 'rgba(100,160,240,0.2)' : 'rgba(180,185,210,0.04)',
+                        color: inicioForm.energia === String(n) ? '#7ab0f0' : S.silverDim,
+                        border: `1px solid ${inicioForm.energia === String(n) ? 'rgba(100,160,240,0.4)' : S.border}`,
+                      }}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[9px] mt-1 text-center" style={{ color: S.silverDim }}>1 = bajo · 5 = excelente</p>
+              </div>
+
+              {/* Pendientes por canal al inicio */}
+              <div>
+                <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Mensajes pendientes al iniciar (backlog)</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: 'whatsapp'        as const, label: 'WhatsApp',         emoji: '💬' },
+                    { key: 'zendesk'         as const, label: 'Zendesk',          emoji: '🎫' },
+                    { key: 'correo'          as const, label: 'Correo',           emoji: '📧' },
+                    { key: 'llamadas'        as const, label: 'Llamadas',         emoji: '📞' },
+                    { key: 'telegram'        as const, label: 'Telegram',         emoji: '✈️' },
+                    { key: 'instagram'       as const, label: 'Instagram',        emoji: '📸' },
+                    { key: 'facebook'        as const, label: 'Facebook',         emoji: '👤' },
+                    { key: 'whatsappViejito' as const, label: 'WA Viejito',       emoji: '📲' },
+                    { key: 'whatsappSoporte' as const, label: 'WA Soporte',       emoji: '💬' },
+                    { key: 'whatsappSkool'   as const, label: 'WA SKOOL',         emoji: '🎓' },
+                    { key: 'ghl'             as const, label: 'GHL',              emoji: '⚙️' },
+                  ].map(ch => (
+                    <div key={ch.key}>
+                      <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>{ch.emoji} {ch.label}</p>
+                      <input type="number" min="0" value={inicioForm[ch.key]}
+                        onChange={e => pif(ch.key, e.target.value)}
+                        placeholder="0"
+                        className="w-full px-3 py-2 rounded-xl outline-none text-sm text-center"
+                        style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 px-5 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${S.border}` }}>
+              <button onClick={() => setInicioMember(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm"
+                style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                Cancelar
+              </button>
+              <button
+                disabled={!inicioForm.horaEntrada}
+                onClick={async () => {
+                  const m = inicioMember
+                  await setDoc(doc(db, 'reportes_jornada', `${m.id}_${TODAY}_inicio`), {
+                    id: `${m.id}_${TODAY}_inicio`,
+                    memberId: m.id,
+                    memberName: m.name,
+                    memberRole: m.role,
+                    fecha: TODAY,
+                    tipo: 'inicio',
+                    horaEntrada: inicioForm.horaEntrada,
+                    energia: Number(inicioForm.energia) || 3,
+                    whatsapp:        Number(inicioForm.whatsapp)        || 0,
+                    zendesk:         Number(inicioForm.zendesk)         || 0,
+                    correo:          Number(inicioForm.correo)          || 0,
+                    llamadas:        Number(inicioForm.llamadas)        || 0,
+                    telegram:        Number(inicioForm.telegram)        || 0,
+                    instagram:       Number(inicioForm.instagram)       || 0,
+                    facebook:        Number(inicioForm.facebook)        || 0,
+                    whatsappViejito: Number(inicioForm.whatsappViejito) || 0,
+                    whatsappSoporte: Number(inicioForm.whatsappSoporte) || 0,
+                    whatsappSkool:   Number(inicioForm.whatsappSkool)   || 0,
+                    ghl:             Number(inicioForm.ghl)             || 0,
+                    createdAt: new Date().toISOString(),
+                  })
+                  setInicioMember(null)
+                }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+                style={{
+                  background: inicioForm.horaEntrada ? 'rgba(100,160,240,0.15)' : 'rgba(180,185,210,0.04)',
+                  color: inicioForm.horaEntrada ? '#7ab0f0' : S.silverDim,
+                  border: `1px solid ${inicioForm.horaEntrada ? 'rgba(100,160,240,0.35)' : S.border}`,
+                }}>
+                <Sun size={14} /> Registrar Inicio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal FIN DE JORNADA (pre-QR) ────────────────────────────────── */}
       {preQRMember && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-sm mx-4 rounded-t-3xl md:rounded-2xl flex flex-col"
@@ -343,7 +477,7 @@ export default function TeamSidebar() {
               style={{ borderBottom: `1px solid ${S.border}` }}>
               <QrCode size={15} style={{ color: preQRStatus === 'completo' ? '#70c080' : '#d4a050' }} />
               <div className="flex-1">
-                <p className="text-sm font-bold" style={{ color: S.silverBright }}>Reporte antes del QR</p>
+                <p className="text-sm font-bold" style={{ color: S.silverBright }}>Fin de Jornada</p>
                 <p className="text-[10px] mt-0.5" style={{ color: S.silverDim }}>
                   {preQRMember.name.split(' · ').pop()} · QR {preQRStatus}
                 </p>
@@ -352,39 +486,35 @@ export default function TeamSidebar() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              <p className="text-[10px] leading-relaxed" style={{ color: S.silverDim }}>
-                Antes de generar el QR, registra el estado de tus canales de atención al momento.
-              </p>
 
-              {/* Hora */}
+              {/* Hora de salida */}
               <div>
-                <p className="text-[9px] tracking-widets uppercase mb-1.5" style={{ color: S.silverDim }}>Hora de registro *</p>
+                <p className="text-[9px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Hora de salida *</p>
                 <input type="time" value={preQRForm.hora} onChange={e => pqr('hora', e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
                   style={{ background: 'var(--th-input)', border: `1px solid ${preQRForm.hora ? 'rgba(180,185,210,0.25)' : S.border}`, color: S.silverBright }} />
               </div>
 
-              {/* Contadores de canales */}
+              {/* Canales atendidos */}
               <div>
-                <p className="text-[9px] tracking-widets uppercase mb-2" style={{ color: S.silverDim }}>Mensajes / pendientes por canal</p>
+                <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Mensajes atendidos por canal</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { key: 'whatsapp'  as const, label: 'WhatsApp',  emoji: '💬' },
-                    { key: 'zendesk'   as const, label: 'Zendesk',   emoji: '🎫' },
-                    { key: 'correo'    as const, label: 'Correo',    emoji: '📧' },
-                    { key: 'llamadas'  as const, label: 'Llamadas',  emoji: '📞' },
-                    { key: 'telegram'  as const, label: 'Telegram',  emoji: '✈️' },
-                    { key: 'instagram'       as const, label: 'Instagram',       emoji: '📸' },
-                    { key: 'facebook'        as const, label: 'Facebook',        emoji: '👤' },
-                    { key: 'whatsappViejito' as const, label: 'WhatsApp Viejito',emoji: '📲' },
-                    { key: 'whatsappSoporte' as const, label: 'WhatsApp Soporte',emoji: '💬' },
-                    { key: 'whatsappSkool'   as const, label: 'WhatsApp SKOOL',  emoji: '🎓' },
-                    { key: 'ghl'             as const, label: 'GHL',             emoji: '⚙️' },
+                    { key: 'whatsapp'        as const, label: 'WhatsApp',         emoji: '💬' },
+                    { key: 'zendesk'         as const, label: 'Zendesk',          emoji: '🎫' },
+                    { key: 'correo'          as const, label: 'Correo',           emoji: '📧' },
+                    { key: 'llamadas'        as const, label: 'Llamadas',         emoji: '📞' },
+                    { key: 'telegram'        as const, label: 'Telegram',         emoji: '✈️' },
+                    { key: 'instagram'       as const, label: 'Instagram',        emoji: '📸' },
+                    { key: 'facebook'        as const, label: 'Facebook',         emoji: '👤' },
+                    { key: 'whatsappViejito' as const, label: 'WA Viejito',       emoji: '📲' },
+                    { key: 'whatsappSoporte' as const, label: 'WA Soporte',       emoji: '💬' },
+                    { key: 'whatsappSkool'   as const, label: 'WA SKOOL',         emoji: '🎓' },
+                    { key: 'ghl'             as const, label: 'GHL',              emoji: '⚙️' },
                   ].map(ch => (
                     <div key={ch.key}>
                       <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>{ch.emoji} {ch.label}</p>
-                      <input
-                        type="number" min="0" value={preQRForm[ch.key]}
+                      <input type="number" min="0" value={preQRForm[ch.key]}
                         onChange={e => pqr(ch.key, e.target.value)}
                         placeholder="0"
                         className="w-full px-3 py-2 rounded-xl outline-none text-sm text-center"
@@ -394,9 +524,91 @@ export default function TeamSidebar() {
                 </div>
               </div>
 
+              {/* Devoluciones */}
+              <div>
+                <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Devoluciones del día</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>↩ Solicitadas</p>
+                    <input type="number" min="0" value={preQRForm.devolucionesSolicitadas}
+                      onChange={e => pqr('devolucionesSolicitadas', e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-xl outline-none text-sm text-center"
+                      style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  </div>
+                  <div>
+                    <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>✓ Autorizadas</p>
+                    <input type="number" min="0" value={preQRForm.devolucionesAutorizadas}
+                      onChange={e => pqr('devolucionesAutorizadas', e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-xl outline-none text-sm text-center"
+                      style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Casos */}
+              <div>
+                <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Casos del día</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>✅ Resueltos</p>
+                    <input type="number" min="0" value={preQRForm.casosResueltos}
+                      onChange={e => pqr('casosResueltos', e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-xl outline-none text-sm text-center"
+                      style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  </div>
+                  <div>
+                    <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>⏳ Pendientes para mañana</p>
+                    <input type="number" min="0" value={preQRForm.casosPendientes}
+                      onChange={e => pqr('casosPendientes', e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-xl outline-none text-sm text-center"
+                      style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Escalación y calidad */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>¿Escalado a DLP?</p>
+                  <div className="flex gap-2">
+                    {['sí','no'].map(v => (
+                      <button key={v} onClick={() => pqr('escaladoDLP', v)}
+                        className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+                        style={{
+                          background: preQRForm.escaladoDLP === v ? (v === 'sí' ? 'rgba(220,80,80,0.15)' : 'rgba(100,200,120,0.12)') : 'rgba(180,185,210,0.04)',
+                          color: preQRForm.escaladoDLP === v ? (v === 'sí' ? '#e07070' : '#70c080') : S.silverDim,
+                          border: `1px solid ${preQRForm.escaladoDLP === v ? (v === 'sí' ? 'rgba(220,80,80,0.3)' : 'rgba(100,200,120,0.3)') : S.border}`,
+                        }}>
+                        {v === 'sí' ? '🚨 Sí' : '✓ No'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Calidad del día (1-5)</p>
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} onClick={() => pqr('calidadPercibida', String(n))}
+                        className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+                        style={{
+                          background: preQRForm.calidadPercibida === String(n) ? 'rgba(212,160,80,0.2)' : 'rgba(180,185,210,0.04)',
+                          color: preQRForm.calidadPercibida === String(n) ? '#d4a050' : S.silverDim,
+                          border: `1px solid ${preQRForm.calidadPercibida === String(n) ? 'rgba(212,160,80,0.4)' : S.border}`,
+                        }}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               {/* Tareas extra */}
               <div>
-                <p className="text-[9px] tracking-widets uppercase mb-1.5" style={{ color: S.silverDim }}>Tareas adicionales del día (opcional)</p>
+                <p className="text-[9px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Tareas adicionales del día (opcional)</p>
                 <textarea
                   value={preQRForm.tareasExtra}
                   onChange={e => pqr('tareasExtra', e.target.value)}
@@ -419,24 +631,32 @@ export default function TeamSidebar() {
                 onClick={async () => {
                   const m = preQRMember
                   const s = preQRStatus
-                  // Save report
-                  saveReporteQR({
-                    id: `rqr_${Date.now()}`,
+                  // Guardar en Firestore (reportes_jornada)
+                  await setDoc(doc(db, 'reportes_jornada', `${m.id}_${TODAY}_fin`), {
+                    id: `${m.id}_${TODAY}_fin`,
                     memberId: m.id,
                     memberName: m.name,
+                    memberRole: m.role,
                     fecha: TODAY,
-                    hora: preQRForm.hora,
-                    whatsapp:  Number(preQRForm.whatsapp)  || 0,
-                    zendesk:   Number(preQRForm.zendesk)   || 0,
-                    correo:    Number(preQRForm.correo)    || 0,
-                    llamadas:  Number(preQRForm.llamadas)  || 0,
-                    telegram:  Number(preQRForm.telegram)  || 0,
+                    tipo: 'fin',
+                    horaSalida: preQRForm.hora,
+                    whatsapp:        Number(preQRForm.whatsapp)        || 0,
+                    zendesk:         Number(preQRForm.zendesk)         || 0,
+                    correo:          Number(preQRForm.correo)          || 0,
+                    llamadas:        Number(preQRForm.llamadas)        || 0,
+                    telegram:        Number(preQRForm.telegram)        || 0,
                     instagram:       Number(preQRForm.instagram)       || 0,
                     facebook:        Number(preQRForm.facebook)        || 0,
                     whatsappViejito: Number(preQRForm.whatsappViejito) || 0,
                     whatsappSoporte: Number(preQRForm.whatsappSoporte) || 0,
                     whatsappSkool:   Number(preQRForm.whatsappSkool)   || 0,
                     ghl:             Number(preQRForm.ghl)             || 0,
+                    casosResueltos:          Number(preQRForm.casosResueltos)          || 0,
+                    casosPendientes:         Number(preQRForm.casosPendientes)         || 0,
+                    escaladoDLP:             preQRForm.escaladoDLP === 'sí',
+                    calidadPercibida:        Number(preQRForm.calidadPercibida)        || 3,
+                    devolucionesSolicitadas: Number(preQRForm.devolucionesSolicitadas) || 0,
+                    devolucionesAutorizadas: Number(preQRForm.devolucionesAutorizadas) || 0,
                     tareasExtra: preQRForm.tareasExtra.split('\n').map(t => t.trim()).filter(Boolean),
                     status: s,
                     createdAt: new Date().toISOString(),
@@ -450,7 +670,7 @@ export default function TeamSidebar() {
                   color: preQRForm.hora ? (preQRStatus === 'completo' ? '#70c080' : '#d4a050') : S.silverDim,
                   border: `1px solid ${preQRForm.hora ? (preQRStatus === 'completo' ? 'rgba(100,200,120,0.35)' : 'rgba(212,160,80,0.35)') : S.border}`,
                 }}>
-                <QrCode size={14} /> Generar QR
+                <QrCode size={14} /> Guardar y Generar QR
               </button>
             </div>
           </div>
@@ -828,17 +1048,24 @@ export default function TeamSidebar() {
 
                       {/* QR buttons */}
                       <div className="space-y-1.5 mb-3">
+                        {/* Botón: Inicio de Jornada */}
+                        <button onClick={() => { setInicioMember(member); setInicioForm({ ...EMPTY_INI, horaEntrada: new Date().toTimeString().slice(0,5) }) }}
+                          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold"
+                          style={{ background: 'rgba(100,160,240,0.08)', color: '#7ab0f0', border: '1px solid rgba(100,160,240,0.25)' }}>
+                          <Sun size={12} /> Inicio de Jornada
+                        </button>
+
                         {completed ? (
-                          <button onClick={() => { setPreQRMember(member); setPreQRStatus('completo'); setPreQRForm({ whatsapp:'', zendesk:'', correo:'', llamadas:'', telegram:'', instagram:'', facebook:'', whatsappViejito:'', whatsappSoporte:'', whatsappSkool:'', ghl:'', hora: new Date().toTimeString().slice(0,5), tareasExtra:'' }) }}
+                          <button onClick={() => { setPreQRMember(member); setPreQRStatus('completo'); setPreQRForm({ ...EMPTY_FIN, hora: new Date().toTimeString().slice(0,5) }) }}
                             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold"
                             style={{ background: 'rgba(100,200,120,0.12)', color: '#70c080', border: '1px solid rgba(100,200,120,0.3)' }}>
-                            <QrCode size={13} /> {hasAttendance ? '✓ Ver QR Completo' : 'QR — Completo'}
+                            <QrCode size={13} /> {hasAttendance ? '✓ Ver QR Completo' : 'QR — Fin de Jornada ✓'}
                           </button>
                         ) : (
-                          <button onClick={() => { setPreQRMember(member); setPreQRStatus('incompleto'); setPreQRForm({ whatsapp:'', zendesk:'', correo:'', llamadas:'', telegram:'', instagram:'', facebook:'', whatsappViejito:'', whatsappSoporte:'', whatsappSkool:'', ghl:'', hora: new Date().toTimeString().slice(0,5), tareasExtra:'' }) }}
+                          <button onClick={() => { setPreQRMember(member); setPreQRStatus('incompleto'); setPreQRForm({ ...EMPTY_FIN, hora: new Date().toTimeString().slice(0,5) }) }}
                             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold"
                             style={{ background: 'rgba(220,150,50,0.08)', color: '#d4a050', border: '1px solid rgba(220,150,50,0.25)' }}>
-                            <QrCode size={13} /> QR — Incompleto ({done}/{total})
+                            <QrCode size={13} /> QR — Fin Incompleto ({done}/{total})
                           </button>
                         )}
                       </div>
