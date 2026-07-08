@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, BarChart2, CheckCircle2, XCircle, Clock, Trophy, ArrowLeft, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight, Calendar, BarChart2, CheckCircle2, XCircle, Clock, Trophy, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { getMembers, AttendanceRecord, TeamMember } from '@/lib/teamStore'
+import { useFirestoreCollection } from '@/lib/firestoreCollection'
+import { useEffect } from 'react'
 
 const S = {
   bg:           'var(--th-bg)',
   card:         'var(--th-card)',
   border:       'var(--th-border)',
-  borderLight:  'var(--th-border-light)',
-  borderActive: 'var(--th-border-active)',
   silver:       'var(--th-silver)',
   silverBright: 'var(--th-bright)',
   silverDim:    'var(--th-dim)',
@@ -19,40 +19,30 @@ const S = {
   red:    '#dc4646',
 }
 
-const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const DAYS_ES   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 export default function AttendanceDashboard() {
   const today = new Date()
-  const [year, setYear] = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth())
-  const [view, setView] = useState<'calendar' | 'stats'>('calendar')
-  const [records, setRecords] = useState<AttendanceRecord[]>([])
-  const [members, setMembers] = useState<TeamMember[]>([])
+  const [year, setYear]         = useState(today.getFullYear())
+  const [month, setMonth]       = useState(today.getMonth())
+  const [view, setView]         = useState<'calendar' | 'stats'>('calendar')
+  const [members, setMembers]   = useState<TeamMember[]>([])
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
-  function loadData() {
-    getMembers().then(setMembers)
-    fetch('/api/attendance')
-      .then(r => r.json())
-      .then(data => setRecords(data))
-      .catch(() => {})
-  }
+  // Firestore real-time: todos los registros de asistencia
+  const { data: records, loading } = useFirestoreCollection<AttendanceRecord>('asistencia')
 
   useEffect(() => {
-    loadData()
-    // Auto-refresh every 15 seconds
-    const interval = setInterval(loadData, 15000)
-    return () => clearInterval(interval)
+    getMembers().then(setMembers)
   }, [])
 
-  // Filter records for current month
-  const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`
-  const monthRecords = records.filter(r => r.date.startsWith(monthStr))
+  const monthStr     = `${year}-${String(month + 1).padStart(2, '0')}`
+  const monthRecords = records.filter(r => r.date?.startsWith(monthStr))
 
-  // Build calendar grid
-  const firstDay = new Date(year, month, 1).getDay()
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  // Calendario
+  const firstDay     = new Date(year, month, 1).getDay()
+  const daysInMonth  = new Date(year, month + 1, 0).getDate()
   const calendarCells: (number | null)[] = [
     ...Array(firstDay).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
@@ -65,14 +55,14 @@ export default function AttendanceDashboard() {
 
   function getDayColor(recs: AttendanceRecord[]): string {
     if (recs.length === 0) return S.border
-    const all = recs.every(r => r.status === 'completo')
+    const all  = recs.every(r => r.status === 'completo')
     const some = recs.some(r => r.status === 'completo')
     if (all) return S.green
     if (some) return S.orange
     return S.red
   }
 
-  // Stats per member
+  // Estadísticas por miembro
   type MemberStats = {
     member: TeamMember
     completos: number
@@ -86,13 +76,16 @@ export default function AttendanceDashboard() {
   const memberStats: MemberStats[] = members
     .filter(m => !m.isAdmin)
     .map(m => {
-      const mRecords = monthRecords.filter(r => r.memberId === m.id)
-      const completos = mRecords.filter(r => r.status === 'completo').length
+      const mRecords    = monthRecords.filter(r => r.memberId === m.id)
+      const completos   = mRecords.filter(r => r.status === 'completo').length
       const incompletos = mRecords.filter(r => r.status === 'incompleto').length
-      const pendientes = mRecords.filter(r => r.status === 'pending').length
-      const total = mRecords.length
-      const avgPct = total > 0
-        ? Math.round(mRecords.reduce((sum, r) => sum + (r.tasksDone / r.tasksTotal) * 100, 0) / total)
+      const pendientes  = mRecords.filter(r => r.status === 'pending').length
+      const total       = mRecords.length
+      const avgPct      = total > 0
+        ? Math.round(mRecords.reduce((sum, r) => {
+            const t = r.tasksTotal || 1
+            return sum + (r.tasksDone / t) * 100
+          }, 0) / total)
         : 0
       const score = completos * 100 + incompletos * 60
       return { member: m, completos, incompletos, pendientes, total, score, avgPct }
@@ -116,6 +109,14 @@ export default function AttendanceDashboard() {
     setSelectedDay(null)
   }
 
+  // Resumen de hoy
+  const todayStr    = today.toISOString().split('T')[0]
+  const todayRecs   = records.filter(r => r.date === todayStr)
+  const todayTotal  = members.filter(m => !m.isAdmin).length
+  const todayDone   = todayRecs.filter(r => r.status === 'completo' || r.status === 'incompleto').length
+  const todayPendingMembers = members
+    .filter(m => !m.isAdmin && !todayRecs.find(r => r.memberId === m.id && r.status !== 'pending'))
+
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -127,29 +128,92 @@ export default function AttendanceDashboard() {
           </Link>
           <div className="flex-1">
             <h1 className="text-lg font-bold" style={{ color: S.silverBright }}>Registro de Asistencia</h1>
-            <p className="text-xs" style={{ color: S.silverDim }}>Solo visible para administrador</p>
+            <p className="text-xs" style={{ color: S.silverDim }}>
+              {loading ? 'Cargando...' : `${records.length} registros en Firestore`}
+            </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={loadData}
-              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl transition-all"
-              style={{ color: S.silverDim, border: `1px solid ${S.border}` }}
-              title="Actualizar datos">
-              <RefreshCw size={13} />
-            </button>
             <button onClick={() => setView('calendar')}
               className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl transition-all"
-              style={view === 'calendar' ? { background: 'rgba(180,185,210,0.12)', color: S.silverBright, border: `1px solid rgba(180,185,210,0.22)` } : { color: S.silverDim, border: `1px solid ${S.border}` }}>
+              style={view === 'calendar'
+                ? { background: 'rgba(180,185,210,0.12)', color: S.silverBright, border: `1px solid rgba(180,185,210,0.22)` }
+                : { color: S.silverDim, border: `1px solid ${S.border}` }}>
               <Calendar size={13} /> Calendario
             </button>
             <button onClick={() => setView('stats')}
               className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl transition-all"
-              style={view === 'stats' ? { background: 'rgba(180,185,210,0.12)', color: S.silverBright, border: `1px solid rgba(180,185,210,0.22)` } : { color: S.silverDim, border: `1px solid ${S.border}` }}>
+              style={view === 'stats'
+                ? { background: 'rgba(180,185,210,0.12)', color: S.silverBright, border: `1px solid rgba(180,185,210,0.22)` }
+                : { color: S.silverDim, border: `1px solid ${S.border}` }}>
               <BarChart2 size={13} /> Estadísticas
             </button>
           </div>
         </div>
 
-        {/* Month navigation */}
+        {/* Resumen de HOY */}
+        <div className="rounded-2xl p-4 mb-5"
+          style={{ background: S.card, border: `1px solid ${S.border}` }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold" style={{ color: S.silverBright }}>Hoy — {new Date(todayStr + 'T12:00:00').toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long' })}</p>
+            <span className="text-xs px-2 py-0.5 rounded-full"
+              style={{ background: todayDone === todayTotal ? 'rgba(100,200,120,0.1)' : 'rgba(220,150,50,0.1)',
+                color: todayDone === todayTotal ? S.green : S.orange }}>
+              {todayDone}/{todayTotal} confirmados
+            </span>
+          </div>
+
+          {/* Barra de progreso de hoy */}
+          <div className="mb-3" style={{ height: '6px', background: 'rgba(180,185,210,0.1)', borderRadius: '3px' }}>
+            <div style={{
+              height: '100%',
+              width: `${todayTotal > 0 ? (todayDone / todayTotal) * 100 : 0}%`,
+              borderRadius: '3px',
+              background: todayDone === todayTotal ? S.green : 'linear-gradient(90deg,#d4a050,#e0c070)',
+              transition: 'width 0.5s ease',
+            }} />
+          </div>
+
+          {/* Lista de miembros de hoy */}
+          <div className="grid grid-cols-2 gap-2">
+            {members.filter(m => !m.isAdmin).map(m => {
+              const rec = todayRecs.find(r => r.memberId === m.id)
+              const st  = rec?.status
+              return (
+                <div key={m.id} className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                  style={{ background: 'rgba(180,185,210,0.04)', border: `1px solid ${S.border}` }}>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                    style={{ background: st === 'completo' ? 'rgba(100,200,120,0.2)' : st === 'incompleto' ? 'rgba(220,150,50,0.2)' : 'rgba(180,185,210,0.1)',
+                      color: st === 'completo' ? S.green : st === 'incompleto' ? S.orange : S.silverDim }}>
+                    {m.initial}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate" style={{ color: S.silverBright }}>
+                      {m.name.split(' · ').pop()?.split(' ')[0]}
+                    </p>
+                    <p className="text-[10px]"
+                      style={{ color: st === 'completo' ? S.green : st === 'incompleto' ? S.orange : S.silverDim }}>
+                      {st === 'completo' ? '✓ Completo' : st === 'incompleto' ? '⚠ Incompleto' : '· Pendiente'}
+                    </p>
+                  </div>
+                  {rec && (
+                    <span className="text-[10px] font-bold flex-shrink-0"
+                      style={{ color: st === 'completo' ? S.green : S.orange }}>
+                      {rec.tasksDone}/{rec.tasksTotal}
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {todayPendingMembers.length > 0 && (
+            <p className="text-[10px] mt-3 text-center" style={{ color: S.silverDim }}>
+              Sin confirmar: {todayPendingMembers.map(m => m.name.split(' ')[0]).join(', ')}
+            </p>
+          )}
+        </div>
+
+        {/* Navegación por mes */}
         <div className="flex items-center justify-between mb-4 px-1">
           <button onClick={prevMonth} className="p-2 rounded-lg" style={{ color: S.silver, border: `1px solid ${S.border}` }}>
             <ChevronLeft size={16} />
@@ -164,12 +228,12 @@ export default function AttendanceDashboard() {
 
         {view === 'calendar' && (
           <>
-            {/* Summary chips */}
+            {/* Chips resumen del mes */}
             <div className="grid grid-cols-3 gap-2 mb-5">
               {[
-                { label: 'Completos', count: monthRecords.filter(r=>r.status==='completo').length, color: S.green, icon: <CheckCircle2 size={14}/> },
-                { label: 'Incompletos', count: monthRecords.filter(r=>r.status==='incompleto').length, color: S.orange, icon: <XCircle size={14}/> },
-                { label: 'Pendientes', count: monthRecords.filter(r=>r.status==='pending').length, color: S.silverDim, icon: <Clock size={14}/> },
+                { label: 'Completos',   count: monthRecords.filter(r => r.status === 'completo').length,   color: S.green,     icon: <CheckCircle2 size={14}/> },
+                { label: 'Incompletos', count: monthRecords.filter(r => r.status === 'incompleto').length, color: S.orange,    icon: <XCircle size={14}/> },
+                { label: 'Pendientes',  count: monthRecords.filter(r => r.status === 'pending').length,    color: S.silverDim, icon: <Clock size={14}/> },
               ].map(chip => (
                 <div key={chip.label} className="rounded-2xl p-3 text-center"
                   style={{ background: S.card, border: `1px solid ${S.border}` }}>
@@ -182,9 +246,8 @@ export default function AttendanceDashboard() {
               ))}
             </div>
 
-            {/* Calendar grid */}
+            {/* Calendario */}
             <div className="rounded-2xl overflow-hidden mb-4" style={{ background: S.card, border: `1px solid ${S.border}` }}>
-              {/* Day headers */}
               <div className="grid grid-cols-7">
                 {DAYS_ES.map(d => (
                   <div key={d} className="py-2 text-center text-[10px] font-bold tracking-wider"
@@ -193,14 +256,13 @@ export default function AttendanceDashboard() {
                   </div>
                 ))}
               </div>
-              {/* Day cells */}
               <div className="grid grid-cols-7">
                 {calendarCells.map((day, i) => {
                   if (!day) return <div key={i} className="aspect-square" />
-                  const recs = getDayRecords(day)
-                  const color = getDayColor(recs)
+                  const recs    = getDayRecords(day)
+                  const color   = getDayColor(recs)
                   const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
-                  const isToday = dateStr === today.toISOString().split('T')[0]
+                  const isToday    = dateStr === todayStr
                   const isSelected = selectedDay === dateStr
                   return (
                     <button key={i} onClick={() => setSelectedDay(isSelected ? null : dateStr)}
@@ -230,7 +292,7 @@ export default function AttendanceDashboard() {
               </div>
             </div>
 
-            {/* Legend */}
+            {/* Leyenda */}
             <div className="flex gap-4 justify-center mb-4 text-[10px]" style={{ color: S.silverDim }}>
               {[{ c: S.green, l: 'Completo' }, { c: S.orange, l: 'Incompleto' }, { c: S.silverDim, l: 'Pendiente' }].map(x => (
                 <div key={x.l} className="flex items-center gap-1.5">
@@ -240,7 +302,7 @@ export default function AttendanceDashboard() {
               ))}
             </div>
 
-            {/* Day detail */}
+            {/* Detalle del día seleccionado */}
             {selectedDay && selectedDayRecords.length > 0 && (
               <div className="rounded-2xl overflow-hidden" style={{ background: S.card, border: `1px solid rgba(180,185,210,0.15)` }}>
                 <div className="px-4 py-3" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
@@ -248,30 +310,32 @@ export default function AttendanceDashboard() {
                     {new Date(selectedDay + 'T12:00:00').toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long' })}
                   </p>
                 </div>
-                <div className="divide-y" style={{ '--tw-divide-opacity': 1 } as React.CSSProperties}>
-                  {selectedDayRecords.map(rec => (
-                    <div key={rec.id} className="flex items-center gap-3 px-4 py-3">
-                      {rec.status === 'completo'
-                        ? <CheckCircle2 size={16} style={{ color: S.green, flexShrink: 0 }} />
-                        : rec.status === 'incompleto'
-                        ? <XCircle size={16} style={{ color: S.orange, flexShrink: 0 }} />
-                        : <Clock size={16} style={{ color: S.silverDim, flexShrink: 0 }} />
-                      }
-                      <div className="flex-1">
-                        <p className="text-sm font-medium" style={{ color: S.silverBright }}>{rec.memberName}</p>
-                        <p className="text-xs" style={{ color: S.silverDim }}>{rec.memberRole}</p>
+                <div>
+                  {selectedDayRecords.map(rec => {
+                    const pct = rec.tasksTotal > 0 ? Math.round((rec.tasksDone / rec.tasksTotal) * 100) : 0
+                    return (
+                      <div key={rec.id} className="flex items-center gap-3 px-4 py-3"
+                        style={{ borderBottom: `1px solid ${S.border}` }}>
+                        {rec.status === 'completo'
+                          ? <CheckCircle2 size={16} style={{ color: S.green, flexShrink: 0 }} />
+                          : rec.status === 'incompleto'
+                          ? <XCircle size={16} style={{ color: S.orange, flexShrink: 0 }} />
+                          : <Clock size={16} style={{ color: S.silverDim, flexShrink: 0 }} />
+                        }
+                        <div className="flex-1">
+                          <p className="text-sm font-medium" style={{ color: S.silverBright }}>{rec.memberName}</p>
+                          <p className="text-xs" style={{ color: S.silverDim }}>{rec.memberRole}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-bold"
+                            style={{ color: rec.status === 'completo' ? S.green : rec.status === 'incompleto' ? S.orange : S.silverDim }}>
+                            {rec.tasksDone}/{rec.tasksTotal} tareas
+                          </p>
+                          <p className="text-[10px]" style={{ color: S.silverDim }}>{pct}% completado</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs font-bold"
-                          style={{ color: rec.status === 'completo' ? S.green : rec.status === 'incompleto' ? S.orange : S.silverDim }}>
-                          {rec.tasksDone}/{rec.tasksTotal} tareas
-                        </p>
-                        <p className="text-[10px]" style={{ color: S.silverDim }}>
-                          {Math.round((rec.tasksDone/rec.tasksTotal)*100)}% completado
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -280,7 +344,7 @@ export default function AttendanceDashboard() {
 
         {view === 'stats' && (
           <>
-            {/* Ranking */}
+            {/* Ranking del mes */}
             <div className="rounded-2xl overflow-hidden mb-4" style={{ background: S.card, border: `1px solid ${S.border}` }}>
               <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
                 <Trophy size={15} style={{ color: '#d4a050' }} />
@@ -319,11 +383,10 @@ export default function AttendanceDashboard() {
                             )}
                           </div>
                           <p className="text-[10px] mt-0.5" style={{ color: S.silverDim }}>
-                            {s.avgPct}% promedio
+                            {s.avgPct}% promedio de tareas
                           </p>
                         </div>
                       </div>
-                      {/* Bar */}
                       <div className="ml-8">
                         <div style={{ height: '5px', background: S.border, borderRadius: '3px', overflow: 'hidden' }}>
                           <div style={{
@@ -337,7 +400,7 @@ export default function AttendanceDashboard() {
                           }} />
                         </div>
                         <p className="text-[9px] mt-1" style={{ color: S.silverDim }}>
-                          {s.completos} días completos de {s.total} registros
+                          {s.completos} días completos · {s.incompletos} incompletos · {s.pendientes} pendientes
                         </p>
                       </div>
                     </div>
@@ -346,10 +409,10 @@ export default function AttendanceDashboard() {
               )}
             </div>
 
-            {/* Detail table */}
+            {/* Tabla de desempeño */}
             <div className="rounded-2xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.border}` }}>
               <div className="px-4 py-3" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
-                <p className="text-sm font-bold" style={{ color: S.silverBright }}>Detalle por Colaborador</p>
+                <p className="text-sm font-bold" style={{ color: S.silverBright }}>Desempeño por Colaborador — {MONTHS_ES[month]}</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
@@ -361,7 +424,7 @@ export default function AttendanceDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {memberStats.map((s, idx) => {
+                    {memberStats.map(s => {
                       const perf = s.total === 0 ? 0 : Math.round((s.completos / s.total) * 100)
                       return (
                         <tr key={s.member.id} style={{ borderBottom: `1px solid ${S.border}` }}>
@@ -375,7 +438,11 @@ export default function AttendanceDashboard() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <div style={{ flex: 1, height: '4px', background: S.border, borderRadius: '2px' }}>
-                                <div style={{ height: '100%', width: `${perf}%`, background: perf >= 80 ? S.green : perf >= 50 ? S.orange : S.red, borderRadius: '2px' }} />
+                                <div style={{
+                                  height: '100%', width: `${perf}%`,
+                                  background: perf >= 80 ? S.green : perf >= 50 ? S.orange : S.red,
+                                  borderRadius: '2px',
+                                }} />
                               </div>
                               <span style={{ color: perf >= 80 ? S.green : perf >= 50 ? S.orange : S.red, minWidth: '32px' }}>
                                 {perf}%

@@ -2,15 +2,13 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle2, XCircle, Clock, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
+import { CheckCircle2, XCircle } from 'lucide-react'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 const S = {
   bg:           'var(--th-bg)',
-  card:         'var(--th-card)',
   border:       'var(--th-border)',
-  borderLight:  'var(--th-border-light)',
-  borderActive: 'var(--th-border-active)',
   silver:       'var(--th-silver)',
   silverBright: 'var(--th-bright)',
   silverDim:    'var(--th-dim)',
@@ -42,17 +40,16 @@ function AttendancePage() {
       const decoded: QRData = JSON.parse(decodeURIComponent(atob(raw)))
       setData(decoded)
 
-      // Check server for existing record
-      fetch(`/api/attendance`)
-        .then(r => r.json())
-        .then((records: Array<{ id: string; status: string }>) => {
-          const existing = records.find(r => r.id === decoded.rid)
-          if (existing && existing.status !== 'pending') {
+      // Verificar si ya existe un registro confirmado en Firestore
+      getDoc(doc(db, 'asistencia', decoded.rid)).then(snap => {
+        if (snap.exists()) {
+          const existing = snap.data() as { status?: string }
+          if (existing.status && existing.status !== 'pending') {
             setConfirmed(existing.status as 'completo' | 'incompleto')
             setAlreadySaved(true)
           }
-        })
-        .catch(() => {})
+        }
+      }).catch(() => {})
     } catch {
       setError('QR no válido o expirado')
     }
@@ -62,44 +59,40 @@ function AttendancePage() {
     if (!data || loading) return
     setLoading(true)
     try {
-      // Save/update on server so Mac calendar can see it
-      await fetch('/api/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: data.rid,
-          memberId: data.mid,
-          memberName: data.name,
-          memberRole: data.role,
-          date: data.date,
-          completedAt: new Date().toISOString(),
-          scannedAt: new Date().toISOString(),
-          status,
-          tasksTotal: data.total,
-          tasksDone: data.done,
-        }),
+      await setDoc(doc(db, 'asistencia', data.rid), {
+        id: data.rid,
+        memberId: data.mid,
+        memberName: data.name,
+        memberRole: data.role,
+        date: data.date,
+        completedAt: new Date().toISOString(),
+        scannedAt: new Date().toISOString(),
+        status,
+        tasksTotal: data.total,
+        tasksDone: data.done,
       })
       setConfirmed(status)
-    } catch {
-      setError('Error al guardar. Verifica tu conexión WiFi.')
+    } catch (e) {
+      setError('Error al guardar. Verifica tu conexión.')
+      console.error(e)
     } finally {
       setLoading(false)
     }
   }
 
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: S.bg }}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#040408' }}>
       <div className="text-center max-w-xs">
         <XCircle size={48} style={{ color: '#e07070', margin: '0 auto 16px' }} />
-        <p className="text-sm mb-4" style={{ color: S.silverBright }}>{error}</p>
-        <p className="text-xs" style={{ color: S.silverDim }}>Pide al colaborador que genere el QR de nuevo</p>
+        <p className="text-sm mb-4" style={{ color: '#d4d8e8' }}>{error}</p>
+        <p className="text-xs" style={{ color: '#5a5e72' }}>Pide a DLP que genere el QR de nuevo</p>
       </div>
     </div>
   )
 
   if (!data) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: S.bg }}>
-      <div className="text-sm animate-pulse" style={{ color: S.silverDim }}>Cargando...</div>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#040408' }}>
+      <div className="text-sm animate-pulse" style={{ color: '#5a5e72' }}>Cargando...</div>
     </div>
   )
 
@@ -107,7 +100,7 @@ function AttendancePage() {
   const isComplete = data.status === 'completo'
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: S.bg }}>
+    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#040408' }}>
 
       {/* Grid bg */}
       <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.03 }}>
@@ -127,14 +120,14 @@ function AttendancePage() {
           <div className="px-6 py-5 text-center"
             style={{
               background: isComplete ? 'rgba(100,200,120,0.05)' : 'rgba(220,150,50,0.05)',
-              borderBottom: `1px solid ${S.border}`,
+              borderBottom: '1px solid rgba(180,185,210,0.1)',
             }}>
-            <p className="text-[10px] tracking-[0.25em] uppercase mb-2" style={{ color: S.silverDim }}>
+            <p className="text-[10px] tracking-[0.25em] uppercase mb-2" style={{ color: '#5a5e72' }}>
               Registro de Asistencia
             </p>
-            <p className="text-xl font-bold" style={{ color: S.silverBright }}>{data.name}</p>
-            <p className="text-xs mt-0.5" style={{ color: S.silverDim }}>{data.role}</p>
-            <p className="text-[10px] mt-2" style={{ color: S.silverDim }}>
+            <p className="text-xl font-bold" style={{ color: '#d4d8e8' }}>{data.name}</p>
+            <p className="text-xs mt-0.5" style={{ color: '#8a8e9a' }}>{data.role}</p>
+            <p className="text-[10px] mt-2" style={{ color: '#5a5e72' }}>
               {new Date(data.date + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
@@ -143,12 +136,12 @@ function AttendancePage() {
             {/* Progress */}
             <div>
               <div className="flex justify-between text-xs mb-2">
-                <span style={{ color: S.silverDim }}>Tareas del día</span>
+                <span style={{ color: '#5a5e72' }}>Tareas del día</span>
                 <span style={{ color: isComplete ? '#70c080' : '#d4a050', fontWeight: 700 }}>
                   {data.done}/{data.total} ({pct}%)
                 </span>
               </div>
-              <div style={{ height: '8px', background: S.border, borderRadius: '4px' }}>
+              <div style={{ height: '8px', background: 'rgba(180,185,210,0.1)', borderRadius: '4px' }}>
                 <div style={{
                   height: '100%', width: `${pct}%`, borderRadius: '4px',
                   background: isComplete ? 'linear-gradient(90deg,#50c878,#70e090)' : 'linear-gradient(90deg,#c87832,#e09050)',
@@ -158,7 +151,7 @@ function AttendancePage() {
               </div>
             </div>
 
-            {/* Status */}
+            {/* Status badge */}
             <div className="text-center">
               <span className="text-xs px-4 py-1.5 rounded-full font-medium"
                 style={{
@@ -170,21 +163,21 @@ function AttendancePage() {
               </span>
             </div>
 
-            {/* Confirmation */}
+            {/* Confirmation area */}
             {confirmed ? (
               <div className="text-center py-4">
                 {confirmed === 'completo'
                   ? <CheckCircle2 size={56} style={{ color: '#70c080', margin: '0 auto 12px' }} />
                   : <XCircle size={56} style={{ color: '#d4a050', margin: '0 auto 12px' }} />
                 }
-                <p className="font-bold text-lg" style={{ color: S.silverBright }}>
+                <p className="font-bold text-lg" style={{ color: '#d4d8e8' }}>
                   {confirmed === 'completo' ? '¡Asistencia Confirmada!' : 'Marcado como Incompleto'}
                 </p>
                 <p className="text-sm font-semibold mt-1" style={{ color: confirmed === 'completo' ? '#70c080' : '#d4a050' }}>
                   {data.name}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: S.silverDim }}>
-                  {alreadySaved ? 'Ya estaba registrado' : 'Guardado correctamente'}
+                <p className="text-xs mt-0.5" style={{ color: '#5a5e72' }}>
+                  {alreadySaved ? 'Ya estaba registrado' : 'Guardado en Firestore ✓'}
                 </p>
                 <div className="mt-3 mb-5">
                   <span className="text-xs px-3 py-1.5 rounded-full"
@@ -197,13 +190,12 @@ function AttendancePage() {
                   </span>
                 </div>
 
-                {/* Close / next scan button */}
                 <button
                   onClick={() => { window.location.href = '/asistencia-ready' }}
                   className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-all"
                   style={{
                     background: 'rgba(180,185,210,0.12)',
-                    color: S.silverBright,
+                    color: '#d4d8e8',
                     border: '2px solid rgba(180,185,210,0.25)',
                     boxShadow: '0 0 20px rgba(180,185,210,0.06)',
                     letterSpacing: '0.03em',
@@ -213,7 +205,7 @@ function AttendancePage() {
               </div>
             ) : (
               <div className="space-y-2.5 pt-2">
-                <p className="text-[10px] text-center tracking-widest uppercase" style={{ color: S.silverDim }}>
+                <p className="text-[10px] text-center tracking-widest uppercase" style={{ color: '#5a5e72' }}>
                   Confirmar asistencia
                 </p>
                 <button onClick={() => confirm('completo')} disabled={loading}
@@ -244,7 +236,7 @@ function AttendancePage() {
           </div>
 
           <div className="px-6 pb-5 text-center">
-            <p className="text-[10px]" style={{ color: S.silverDim }}>
+            <p className="text-[10px]" style={{ color: '#5a5e72' }}>
               Club Sinergetico · Portal de Soporte
             </p>
           </div>
