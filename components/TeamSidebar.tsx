@@ -84,6 +84,8 @@ export default function TeamSidebar() {
   const [editForm, setEditForm] = useState({ name: '', role: '', username: '', password: '', email: '', tasks: '' })
   const [editHorario, setEditHorario] = useState<HorarioSemanal>({})
   const [editIsAdmin, setEditIsAdmin] = useState(false)
+  const [editPasaAsistencia, setEditPasaAsistencia] = useState(true)
+  const [editTieneKPI, setEditTieneKPI] = useState(true)
   const editScrollRef = useRef<HTMLDivElement>(null)
 
   // Pre-QR report state (FIN de jornada)
@@ -241,6 +243,8 @@ export default function TeamSidebar() {
     })
     setEditHorario(member.horario ?? {})
     setEditIsAdmin(member.isAdmin)
+    setEditPasaAsistencia(member.pasaAsistencia !== false)
+    setEditTieneKPI(member.tieneKPI !== false)
     setTimeout(() => {
       if (editScrollRef.current) editScrollRef.current.scrollTop = 0
     }, 50)
@@ -264,6 +268,8 @@ export default function TeamSidebar() {
         email: editForm.email.trim() || m.email,
         tasks: editForm.tasks.split('\n').map(t => t.trim()).filter(Boolean),
         horario: editHorario,
+        pasaAsistencia: editPasaAsistencia,
+        tieneKPI: editTieneKPI,
       }
     })
     const ok = await persistMembers(updated, previous)
@@ -726,6 +732,33 @@ export default function TeamSidebar() {
                 Administrador (acceso total)
               </label>
 
+              {/* Participación operativa */}
+              <div>
+                <p className="text-[10px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Participación operativa</p>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+                    style={{
+                      background: editPasaAsistencia ? 'rgba(100,200,120,0.08)' : 'rgba(180,185,210,0.04)',
+                      border: `1px solid ${editPasaAsistencia ? 'rgba(100,200,120,0.25)' : S.border}`,
+                      color: editPasaAsistencia ? '#70c080' : S.silverDim,
+                    }}>
+                    <input type="checkbox" checked={editPasaAsistencia}
+                      onChange={e => setEditPasaAsistencia(e.target.checked)} />
+                    📋 Pasa asistencia (QR)
+                  </label>
+                  <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+                    style={{
+                      background: editTieneKPI ? 'rgba(122,176,240,0.08)' : 'rgba(180,185,210,0.04)',
+                      border: `1px solid ${editTieneKPI ? 'rgba(122,176,240,0.25)' : S.border}`,
+                      color: editTieneKPI ? '#7ab0f0' : S.silverDim,
+                    }}>
+                    <input type="checkbox" checked={editTieneKPI}
+                      onChange={e => setEditTieneKPI(e.target.checked)} />
+                    📊 Registra KPIs (inicio/fin de jornada)
+                  </label>
+                </div>
+              </div>
+
               {/* Horario semanal — solo admin puede configurarlo */}
               <div>
                 <p className="text-[10px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>
@@ -1046,27 +1079,36 @@ export default function TeamSidebar() {
                         </div>
                       )}
 
-                      {/* QR buttons */}
+                      {/* QR buttons — solo para miembros operativos */}
                       <div className="space-y-1.5 mb-3">
-                        {/* Botón: Inicio de Jornada */}
-                        <button onClick={() => { setInicioMember(member); setInicioForm({ ...EMPTY_INI, horaEntrada: new Date().toTimeString().slice(0,5) }) }}
-                          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold"
-                          style={{ background: 'rgba(100,160,240,0.08)', color: '#7ab0f0', border: '1px solid rgba(100,160,240,0.25)' }}>
-                          <Sun size={12} /> Inicio de Jornada
-                        </button>
+                        {member.tieneKPI !== false && (
+                          <button onClick={() => { setInicioMember(member); setInicioForm({ ...EMPTY_INI, horaEntrada: new Date().toTimeString().slice(0,5) }) }}
+                            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold"
+                            style={{ background: 'rgba(100,160,240,0.08)', color: '#7ab0f0', border: '1px solid rgba(100,160,240,0.25)' }}>
+                            <Sun size={12} /> Inicio de Jornada
+                          </button>
+                        )}
 
-                        {completed ? (
-                          <button onClick={() => { setPreQRMember(member); setPreQRStatus('completo'); setPreQRForm({ ...EMPTY_FIN, hora: new Date().toTimeString().slice(0,5) }) }}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold"
-                            style={{ background: 'rgba(100,200,120,0.12)', color: '#70c080', border: '1px solid rgba(100,200,120,0.3)' }}>
-                            <QrCode size={13} /> {hasAttendance ? '✓ Ver QR Completo' : 'QR — Fin de Jornada ✓'}
-                          </button>
-                        ) : (
-                          <button onClick={() => { setPreQRMember(member); setPreQRStatus('incompleto'); setPreQRForm({ ...EMPTY_FIN, hora: new Date().toTimeString().slice(0,5) }) }}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold"
-                            style={{ background: 'rgba(220,150,50,0.08)', color: '#d4a050', border: '1px solid rgba(220,150,50,0.25)' }}>
-                            <QrCode size={13} /> QR — Fin Incompleto ({done}/{total})
-                          </button>
+                        {member.pasaAsistencia !== false && (
+                          completed ? (
+                            <button onClick={() => { setPreQRMember(member); setPreQRStatus('completo'); setPreQRForm({ ...EMPTY_FIN, hora: new Date().toTimeString().slice(0,5) }) }}
+                              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold"
+                              style={{ background: 'rgba(100,200,120,0.12)', color: '#70c080', border: '1px solid rgba(100,200,120,0.3)' }}>
+                              <QrCode size={13} /> {hasAttendance ? '✓ Ver QR Completo' : 'QR — Fin de Jornada ✓'}
+                            </button>
+                          ) : (
+                            <button onClick={() => { setPreQRMember(member); setPreQRStatus('incompleto'); setPreQRForm({ ...EMPTY_FIN, hora: new Date().toTimeString().slice(0,5) }) }}
+                              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold"
+                              style={{ background: 'rgba(220,150,50,0.08)', color: '#d4a050', border: '1px solid rgba(220,150,50,0.25)' }}>
+                              <QrCode size={13} /> QR — Fin Incompleto ({done}/{total})
+                            </button>
+                          )
+                        )}
+
+                        {member.pasaAsistencia === false && member.tieneKPI === false && (
+                          <p className="text-[10px] text-center py-1" style={{ color: S.silverDim }}>
+                            Perfil de visualización — sin asistencia ni KPIs
+                          </p>
                         )}
                       </div>
 

@@ -74,7 +74,7 @@ export default function AttendanceDashboard() {
   }
 
   const memberStats: MemberStats[] = members
-    .filter(m => !m.isAdmin)
+    .filter(m => !m.isAdmin && m.pasaAsistencia !== false)
     .map(m => {
       const mRecords    = monthRecords.filter(r => r.memberId === m.id)
       const completos   = mRecords.filter(r => r.status === 'completo').length
@@ -112,10 +112,10 @@ export default function AttendanceDashboard() {
   // Resumen de hoy
   const todayStr    = today.toISOString().split('T')[0]
   const todayRecs   = records.filter(r => r.date === todayStr)
-  const todayTotal  = members.filter(m => !m.isAdmin).length
+  const todayTotal  = members.filter(m => !m.isAdmin && m.pasaAsistencia !== false).length
   const todayDone   = todayRecs.filter(r => r.status === 'completo' || r.status === 'incompleto').length
   const todayPendingMembers = members
-    .filter(m => !m.isAdmin && !todayRecs.find(r => r.memberId === m.id && r.status !== 'pending'))
+    .filter(m => !m.isAdmin && m.pasaAsistencia !== false && !todayRecs.find(r => r.memberId === m.id && r.status !== 'pending'))
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>
@@ -175,7 +175,7 @@ export default function AttendanceDashboard() {
 
           {/* Lista de miembros de hoy */}
           <div className="grid grid-cols-2 gap-2">
-            {members.filter(m => !m.isAdmin).map(m => {
+            {members.filter(m => !m.isAdmin && m.pasaAsistencia !== false).map(m => {
               const rec = todayRecs.find(r => r.memberId === m.id)
               const st  = rec?.status
               return (

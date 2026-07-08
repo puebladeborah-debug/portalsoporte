@@ -59,6 +59,9 @@ export type TeamMember = {
   password: string
   email: string // correo real registrado en Firebase Authentication
   horario?: HorarioSemanal
+  // Participación operativa — false = excluido de asistencia/KPIs
+  pasaAsistencia?: boolean
+  tieneKPI?: boolean
   // Perfil personal
   perfilCompleto?: boolean
   reglamentoFirmado?: boolean
@@ -278,6 +281,8 @@ export const DEFAULT_MEMBERS: TeamMember[] = [
     password: '',
     permissions: ['manuales', 'buscar'],
     tasks: [],
+    pasaAsistencia: false,
+    tieneKPI: false,
   },
   {
     id: 'mdl',
@@ -290,6 +295,8 @@ export const DEFAULT_MEMBERS: TeamMember[] = [
     password: '',
     permissions: ['manuales', 'buscar'],
     tasks: [],
+    pasaAsistencia: false,
+    tieneKPI: false,
   },
 ]
 
