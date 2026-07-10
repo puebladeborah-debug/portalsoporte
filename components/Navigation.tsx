@@ -439,6 +439,14 @@ export default function Navigation() {
             <span className="whitespace-nowrap">{label}</span>
           </Link>
         ))}
+        {member?.isAdmin && (
+          <Link href="/admin"
+            className="flex-shrink-0 flex flex-col items-center justify-center py-2.5 gap-1 text-[10px] font-medium"
+            style={{ width: '64px', ...(pathname === '/admin' ? { color: '#d4d8e8' } : { color: '#3a3e4a' }) }}>
+            <Settings size={19} />
+            <span className="whitespace-nowrap">Admin</span>
+          </Link>
+        )}
         <button onClick={() => setShowProfile(true)}
           className="flex-shrink-0 flex flex-col items-center justify-center py-2.5 gap-1 text-[10px]"
           style={{ width: '64px', color: '#3a3e4a' }}>
