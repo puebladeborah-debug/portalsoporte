@@ -38,8 +38,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <AuthProvider>
             <Navigation />
-            <ClockWidget />
             <main className="pt-4 md:pt-[96px] md:pb-8 min-h-screen main-mobile-pad" style={{ background: 'var(--th-bg)' }}>
+              <ClockWidget />
               {children}
             </main>
           </AuthProvider>
