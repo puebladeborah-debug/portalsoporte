@@ -737,8 +737,8 @@ export default function ChatPage() {
   if (!session) return null
 
   return (
-    <div className="flex h-screen md:h-[calc(100vh-4rem)]"
-      style={{ background: S.bg, marginTop: 0 }}>
+    <div className="flex chat-page-h"
+      style={{ background: S.bg }}>
 
       {/* ── Conversations sidebar ── */}
       <div className={`${showList ? 'flex' : 'hidden'} md:flex flex-col border-r flex-shrink-0`}
@@ -817,7 +817,7 @@ export default function ChatPage() {
       {!showList && (
         <button
           onClick={() => setShowList(true)}
-          className="md:hidden fixed bottom-28 left-4 w-10 h-10 rounded-full flex items-center justify-center z-40 shadow-lg"
+          className="md:hidden fixed left-4 w-10 h-10 rounded-full flex items-center justify-center z-40 shadow-lg float-safe-bottom"
           style={{ background: S.card, border: `1px solid ${S.borderLight}`, color: S.silver }}>
           <ChevronDown size={18} style={{ transform: 'rotate(90deg)' }} />
         </button>
