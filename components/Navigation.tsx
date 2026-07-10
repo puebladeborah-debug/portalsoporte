@@ -423,7 +423,7 @@ export default function Navigation() {
       </header>
 
       {/* Mobile bottom nav — se desliza horizontalmente porque ya no caben todas las secciones en una fila fija */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 flex overflow-x-auto no-scrollbar z-50"
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 flex overflow-x-auto no-scrollbar z-50 nav-safe-bottom"
         style={{ background: 'var(--th-nav-bottom)', borderTop: `1px solid ${S.borderLight}`, backdropFilter: 'blur(20px)' }}>
         {navItems.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href}

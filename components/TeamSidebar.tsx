@@ -313,7 +313,7 @@ export default function TeamSidebar() {
     <>
       {/* Mobile toggle button */}
       <button onClick={() => setOpen(open ? null : 'mobile')}
-        className="md:hidden fixed bottom-20 right-4 z-40 p-3 rounded-2xl shadow-lg"
+        className="md:hidden fixed right-4 z-40 p-3 rounded-2xl shadow-lg float-safe-bottom"
         style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', color: S.silverBright }}>
         <Users size={20} />
       </button>
