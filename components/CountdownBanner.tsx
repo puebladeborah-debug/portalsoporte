@@ -1,12 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Plus, X, Trash2, Timer, Check, Pencil } from 'lucide-react'
 import { useAuth } from './LoginGate'
-import {
-  getCountdownEvents, saveCountdownEvent, deleteCountdownEvent,
-  CountdownEvent,
-} from '@/lib/teamStore'
+import { useFirestoreCollection } from '@/lib/firestoreCollection'
+import type { CountdownEvent } from '@/lib/teamStore'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -44,12 +42,10 @@ function getStatus(ev: CountdownEvent) {
   const now = Date.now()
   const inicio = new Date(ev.fechaInicio).getTime()
   const fin    = new Date(ev.fechaFin).getTime()
-  if (now < inicio) return 'upcoming'   // aún no inicia
-  if (now < fin)    return 'active'     // en curso
+  if (now < inicio) return 'upcoming'
+  if (now < fin)    return 'active'
   return 'finished'
 }
-
-// ── Tarjeta de un evento ─────────────────────────────────────────────────────
 
 function EventCard({ ev, canEdit, onEdit, onDelete }: {
   ev: CountdownEvent
@@ -57,11 +53,12 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
   onEdit: () => void
   onDelete: () => void
 }) {
-  const [now, setNow] = useState(Date.now())
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
+  const [, setTick] = useState(0)
+  // Tick every second to update the countdown
+  useState(() => {
+    const id = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(id)
-  }, [])
+  })
 
   const c = COLORS[ev.color] ?? COLORS.blue
   const status = getStatus(ev)
@@ -71,14 +68,8 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
 
   return (
     <div className="relative rounded-2xl px-4 py-3 flex-shrink-0"
-      style={{
-        background: c.bg,
-        border: `1px solid ${c.border}`,
-        boxShadow: c.glow,
-        minWidth: '220px',
-      }}>
+      style={{ background: c.bg, border: `1px solid ${c.border}`, boxShadow: c.glow, minWidth: '220px' }}>
 
-      {/* Admin actions */}
       {canEdit && (
         <div className="absolute top-2 right-2 flex gap-1">
           <button onClick={onEdit} className="p-1 rounded-lg"
@@ -92,7 +83,6 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
         </div>
       )}
 
-      {/* Estado */}
       <div className="flex items-center gap-1.5 mb-2">
         <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: c.text }} />
         <p className="text-[9px] tracking-widest uppercase font-bold" style={{ color: c.text }}>
@@ -100,31 +90,27 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
         </p>
       </div>
 
-      {/* Título */}
-      <p className="text-sm font-bold mb-3 pr-8" style={{ color: S.silverBright }}>
-        {ev.titulo}
-      </p>
+      <p className="text-sm font-bold mb-3 pr-8" style={{ color: S.silverBright }}>{ev.titulo}</p>
 
-      {/* Contador */}
       {cd ? (
         <div className="flex items-end gap-2">
           {cd.dias > 0 && (
-            <div className="text-center">
-              <p className="text-3xl font-bold tabular-nums leading-none"
-                style={{ color: c.text, fontFamily: 'Impact, "Arial Narrow Bold", sans-serif',
-                  textShadow: `0 0 8px ${c.text}` }}>
-                {pad(cd.dias)}
-              </p>
-              <p className="text-[8px] tracking-widest uppercase mt-0.5" style={{ color: c.text, opacity: 0.7 }}>
-                {cd.dias === 1 ? 'día' : 'días'}
-              </p>
-            </div>
+            <>
+              <div className="text-center">
+                <p className="text-3xl font-bold tabular-nums leading-none"
+                  style={{ color: c.text, fontFamily: 'Impact, "Arial Narrow Bold", sans-serif', textShadow: `0 0 8px ${c.text}` }}>
+                  {pad(cd.dias)}
+                </p>
+                <p className="text-[8px] tracking-widest uppercase mt-0.5" style={{ color: c.text, opacity: 0.7 }}>
+                  {cd.dias === 1 ? 'día' : 'días'}
+                </p>
+              </div>
+              <p className="text-xl font-bold pb-3" style={{ color: c.text, opacity: 0.4 }}>:</p>
+            </>
           )}
-          {cd.dias > 0 && <p className="text-xl font-bold pb-3" style={{ color: c.text, opacity: 0.4 }}>:</p>}
           <div className="text-center">
             <p className="text-3xl font-bold tabular-nums leading-none"
-              style={{ color: c.text, fontFamily: 'Impact, "Arial Narrow Bold", sans-serif',
-                textShadow: `0 0 8px ${c.text}` }}>
+              style={{ color: c.text, fontFamily: 'Impact, "Arial Narrow Bold", sans-serif', textShadow: `0 0 8px ${c.text}` }}>
               {pad(cd.horas)}
             </p>
             <p className="text-[8px] tracking-widest uppercase mt-0.5" style={{ color: c.text, opacity: 0.7 }}>hrs</p>
@@ -132,8 +118,7 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
           <p className="text-xl font-bold pb-3" style={{ color: c.text, opacity: 0.4 }}>:</p>
           <div className="text-center">
             <p className="text-3xl font-bold tabular-nums leading-none"
-              style={{ color: c.text, fontFamily: 'Impact, "Arial Narrow Bold", sans-serif',
-                textShadow: `0 0 8px ${c.text}` }}>
+              style={{ color: c.text, fontFamily: 'Impact, "Arial Narrow Bold", sans-serif', textShadow: `0 0 8px ${c.text}` }}>
               {pad(cd.mins)}
             </p>
             <p className="text-[8px] tracking-widest uppercase mt-0.5" style={{ color: c.text, opacity: 0.7 }}>min</p>
@@ -141,8 +126,7 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
           <p className="text-xl font-bold pb-3" style={{ color: c.text, opacity: 0.4 }}>:</p>
           <div className="text-center">
             <p className="text-3xl font-bold tabular-nums leading-none"
-              style={{ color: c.text, fontFamily: 'Impact, "Arial Narrow Bold", sans-serif',
-                textShadow: `0 0 8px ${c.text}`, opacity: 0.65 }}>
+              style={{ color: c.text, fontFamily: 'Impact, "Arial Narrow Bold", sans-serif', textShadow: `0 0 8px ${c.text}`, opacity: 0.65 }}>
               {pad(cd.segs)}
             </p>
             <p className="text-[8px] tracking-widest uppercase mt-0.5" style={{ color: c.text, opacity: 0.5 }}>seg</p>
@@ -152,7 +136,6 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
         <p className="text-xs" style={{ color: c.text }}>¡Hoy es el día!</p>
       )}
 
-      {/* Fechas */}
       <p className="text-xs mt-2 font-semibold opacity-90" style={{ color: c.text }}>
         {new Date(ev.fechaInicio).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric' })}
         {' – '}
@@ -162,24 +145,16 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
   )
 }
 
-// ── Componente principal ─────────────────────────────────────────────────────
-
-const BLANK: Omit<CountdownEvent, 'id'> = {
-  titulo: '', fechaInicio: '', fechaFin: '', color: 'blue',
-}
+const BLANK = { titulo: '', fechaInicio: '', fechaFin: '', color: 'blue' }
 
 export default function CountdownBanner() {
   const { member } = useAuth()
-  const [events, setEvents] = useState<CountdownEvent[]>([])
+  const { data: events, set, remove } = useFirestoreCollection<CountdownEvent>('fechas_importantes')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ ...BLANK })
   const [editId, setEditId] = useState<string | null>(null)
 
   const canEdit = !!member?.isAdmin
-
-  useEffect(() => { setEvents(getCountdownEvents()) }, [])
-
-  function reload() { setEvents(getCountdownEvents()) }
 
   function openNew() {
     setForm({ ...BLANK })
@@ -193,31 +168,23 @@ export default function CountdownBanner() {
     setShowForm(true)
   }
 
-  function save() {
+  async function save() {
     if (!form.titulo.trim() || !form.fechaFin) return
-    saveCountdownEvent({
-      id: editId ?? `cd_${Date.now()}`,
+    const id = editId ?? `cd_${Date.now()}`
+    await set(id, {
       titulo: form.titulo.trim(),
       fechaInicio: form.fechaInicio || new Date().toISOString().slice(0, 16),
       fechaFin: form.fechaFin,
       color: form.color,
     })
-    reload()
     setShowForm(false)
   }
 
-  function remove(id: string) {
-    deleteCountdownEvent(id)
-    reload()
-  }
-
-  // Only show active / upcoming events
   const visible = events.filter(ev => getStatus(ev) !== 'finished')
   if (visible.length === 0 && !canEdit) return null
 
   return (
     <div className="mt-4 mb-2">
-      {/* Section header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Timer size={11} style={{ color: S.silver }} />
@@ -234,10 +201,8 @@ export default function CountdownBanner() {
         )}
       </div>
 
-      {/* Cards carousel */}
       {visible.length > 0 ? (
-        <div className="flex gap-3 overflow-x-auto pb-1"
-          style={{ scrollbarWidth: 'none' }}>
+        <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {visible.map(ev => (
             <EventCard key={ev.id} ev={ev} canEdit={canEdit}
               onEdit={() => openEdit(ev)}
@@ -250,15 +215,13 @@ export default function CountdownBanner() {
         </p>
       )}
 
-      {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-sm mx-4 rounded-2xl overflow-hidden"
             style={{ background: S.bg, border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.95)' }}>
 
-            <div className="flex items-center gap-3 px-5 py-4"
-              style={{ borderBottom: `1px solid ${S.border}` }}>
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
               <Timer size={15} style={{ color: S.silver }} />
               <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>
                 {editId ? 'Editar evento' : 'Nueva fecha importante'}
@@ -267,8 +230,6 @@ export default function CountdownBanner() {
             </div>
 
             <div className="px-5 py-4 space-y-4">
-
-              {/* Título */}
               <div>
                 <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Título del evento</p>
                 <input value={form.titulo} onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
@@ -277,7 +238,6 @@ export default function CountdownBanner() {
                   style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
               </div>
 
-              {/* Fechas */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Fecha inicio</p>
@@ -291,11 +251,10 @@ export default function CountdownBanner() {
                   <input type="datetime-local" value={form.fechaFin}
                     onChange={e => setForm(f => ({ ...f, fechaFin: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-xl outline-none text-xs"
-                    style={{ background: 'var(--th-input)', border: `1px solid !form.fechaFin ? 'rgba(220,70,70,0.4)' : ${S.border}`, color: S.silverBright }} />
+                    style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
                 </div>
               </div>
 
-              {/* Color */}
               <div>
                 <p className="text-[10px] tracking-widest uppercase mb-2" style={{ color: S.silverDim }}>Color</p>
                 <div className="flex gap-2">
@@ -307,15 +266,12 @@ export default function CountdownBanner() {
                         border: form.color === key ? `2px solid ${c.text}` : `1px solid ${c.border}`,
                         boxShadow: form.color === key ? c.glow : 'none',
                       }}>
-                      {form.color === key && (
-                        <Check size={12} style={{ color: c.text, margin: '0 auto' }} />
-                      )}
+                      {form.color === key && <Check size={12} style={{ color: c.text, margin: '0 auto' }} />}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Buttons */}
               <div className="flex gap-3 pt-1">
                 <button onClick={() => setShowForm(false)}
                   className="flex-1 py-2.5 rounded-xl text-sm"
