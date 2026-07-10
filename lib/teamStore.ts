@@ -94,6 +94,7 @@ export type Session = {
   memberName: string
   isAdmin: boolean
   loginTime: string
+  expiresAt: string  // ISO — sesión válida 30 días
 }
 
 const ATTEND_KEY = 'attendance_v1'
@@ -389,22 +390,32 @@ export async function login(username: string, password: string): Promise<TeamMem
 
 export function getSession(): Session | null {
   if (typeof window === 'undefined') return null
-  const s = sessionStorage.getItem(SESSION_KEY)
-  return s ? JSON.parse(s) : null
+  const s = localStorage.getItem(SESSION_KEY)
+  if (!s) return null
+  const parsed: Session = JSON.parse(s)
+  // Cierra sesión automáticamente si pasaron 30 días
+  if (parsed.expiresAt && new Date() > new Date(parsed.expiresAt)) {
+    localStorage.removeItem(SESSION_KEY)
+    return null
+  }
+  return parsed
 }
 
 export function setSession(member: TeamMember) {
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + 30)
   const session: Session = {
     memberId: member.id,
     memberName: member.name,
     isAdmin: member.isAdmin,
     loginTime: new Date().toISOString(),
+    expiresAt: expiresAt.toISOString(),
   }
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
 }
 
 export function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY)
+  localStorage.removeItem(SESSION_KEY)
   import('firebase/auth').then(({ signOut }) => import('./firebase').then(({ auth }) => signOut(auth).catch(() => {})))
 }
 
