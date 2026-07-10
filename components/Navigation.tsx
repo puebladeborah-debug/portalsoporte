@@ -50,7 +50,7 @@ const TIPO_COLOR: Record<TipoIncidencia, { text: string; icon: React.ReactNode }
 }
 
 function ProfileModal({ onClose }: { onClose: () => void }) {
-  const { session, member, refresh } = useAuth()
+  const { session, member, refresh, logout } = useAuth()
   const { theme, accentColor, setTheme, setAccentColor } = useThemeCtx()
   const [tab, setTab] = useState<'perfil' | 'incidencias'>('perfil')
   const [editName, setEditName] = useState(member?.name.split(' · ').pop() || '')
@@ -272,6 +272,12 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
               {member?.isAdmin && <span className="ml-2 px-1.5 py-0.5 rounded-full text-[9px]" style={{ background: 'rgba(180,185,210,0.1)', color: S.silver }}>Admin</span>}
             </p>
           </div>
+
+          <button onClick={() => { logout(); onClose() }}
+            className="w-full mt-2 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+            style={{ background: 'rgba(220,80,80,0.07)', color: '#e07070', border: '1px solid rgba(220,80,80,0.2)' }}>
+            <LogOut size={14} /> Cerrar sesión
+          </button>
         </div>}
 
         {/* Tab: Incidencias */}
