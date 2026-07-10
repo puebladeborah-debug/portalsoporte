@@ -839,9 +839,38 @@ export default function TeamSidebar() {
         </div>
       )}
 
-      {/* SIDEBAR */}
-      <aside className="hidden md:flex flex-col flex-shrink-0 overflow-y-auto"
-        style={{ width: '220px', background: 'var(--th-nav)', borderLeft: '1px solid rgba(180,185,210,0.07)', backdropFilter: 'blur(16px)', height: 'calc(100vh - 112px)', position: 'sticky', top: '112px' }}>
+      {/* Backdrop móvil — se muestra detrás del panel cuando está abierto */}
+      {open === 'mobile' && (
+        <div className="md:hidden fixed inset-0 z-40"
+          style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(2px)' }}
+          onClick={() => setOpen(null)} />
+      )}
+
+      {/* SIDEBAR — escritorio siempre visible, móvil como panel lateral derecho */}
+      <aside
+        className={`flex-col flex-shrink-0 overflow-y-auto ${open === 'mobile' ? 'flex' : 'hidden md:flex'}`}
+        style={open === 'mobile' ? {
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 50,
+          width: 'min(88vw, 300px)',
+          background: 'var(--th-nav)',
+          borderLeft: '1px solid rgba(180,185,210,0.12)',
+          backdropFilter: 'blur(20px)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingTop: 'env(safe-area-inset-top)',
+          boxShadow: '-8px 0 40px rgba(0,0,0,0.6)',
+        } : {
+          width: '220px',
+          background: 'var(--th-nav)',
+          borderLeft: '1px solid rgba(180,185,210,0.07)',
+          backdropFilter: 'blur(16px)',
+          height: 'calc(100vh - 112px)',
+          position: 'sticky',
+          top: '112px',
+        }}>
         <div className="px-3 py-4 flex-1">
 
           {/* Header */}
@@ -852,6 +881,12 @@ export default function TeamSidebar() {
               <button onClick={() => setShowAddForm(!showAddForm)} className="p-1 rounded-lg"
                 style={{ color: S.silver, border: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.05)' }}>
                 <Plus size={12} />
+              </button>
+            )}
+            {open === 'mobile' && (
+              <button onClick={() => setOpen(null)} className="md:hidden p-1 rounded-lg ml-1"
+                style={{ color: S.silverDim, background: 'rgba(180,185,210,0.08)' }}>
+                <X size={15} />
               </button>
             )}
           </div>
