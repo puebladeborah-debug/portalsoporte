@@ -3,9 +3,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { ChevronRight, ArrowLeft, Zap, Download, FileText, FileSpreadsheet } from 'lucide-react'
+import { ChevronRight, ArrowLeft, Zap, Download, FileText, FileSpreadsheet, X } from 'lucide-react'
 import { categories, articles } from '@/lib/data'
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 
 const CAT_IMAGES: Record<string, string> = {
   'estructura-organizacional': '/estructura.png',
@@ -161,40 +161,56 @@ function FileIcon({ tipo }: { tipo: string }) {
   return <FileText size={18} />
 }
 
-function ListaArchivos({ archivos }: { archivos: ArchivoDescargable[] }) {
+function ListaArchivos({ archivos, onViewPdf }: { archivos: ArchivoDescargable[]; onViewPdf: (url: string, nombre: string) => void }) {
   return (
     <div className="space-y-2">
-      {archivos.map(ar => (
-        <a key={ar.archivo} href={ar.archivo} download
-          className="flex items-center gap-3 p-3 rounded-2xl transition-all"
-          style={{ background: 'rgba(122,176,240,0.04)', border: '1px solid rgba(122,176,240,0.15)', textDecoration: 'none' }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: TIPO_COLOR[ar.tipo], color: TIPO_TEXT[ar.tipo] }}>
-            <FileIcon tipo={ar.tipo} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: 'var(--th-bright)' }}>{ar.nombre}</p>
-            <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--th-dim)' }}>{ar.descripcion}</p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"
+      {archivos.map(ar => {
+        const isPdf = ar.tipo === 'pdf'
+        const inner = (
+          <>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: TIPO_COLOR[ar.tipo], color: TIPO_TEXT[ar.tipo] }}>
-              {ar.tipo}
-            </span>
-            <span className="text-[10px]" style={{ color: 'var(--th-dim)' }}>{ar.tamaño}</span>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: 'rgba(122,176,240,0.12)', color: '#7ab0f0' }}>
-              <Download size={13} />
+              <FileIcon tipo={ar.tipo} />
             </div>
-          </div>
-        </a>
-      ))}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold" style={{ color: 'var(--th-bright)' }}>{ar.nombre}</p>
+              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--th-dim)' }}>{ar.descripcion}</p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"
+                style={{ background: TIPO_COLOR[ar.tipo], color: TIPO_TEXT[ar.tipo] }}>
+                {ar.tipo}
+              </span>
+              <span className="text-[10px]" style={{ color: 'var(--th-dim)' }}>{ar.tamaño}</span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(122,176,240,0.12)', color: '#7ab0f0' }}>
+                <Download size={13} />
+              </div>
+            </div>
+          </>
+        )
+
+        return isPdf ? (
+          <button key={ar.archivo} onClick={() => onViewPdf(ar.archivo, ar.nombre)}
+            className="w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left"
+            style={{ background: 'rgba(122,176,240,0.04)', border: '1px solid rgba(122,176,240,0.15)' }}>
+            {inner}
+          </button>
+        ) : (
+          <a key={ar.archivo} href={ar.archivo} download
+            className="flex items-center gap-3 p-3 rounded-2xl transition-all"
+            style={{ background: 'rgba(122,176,240,0.04)', border: '1px solid rgba(122,176,240,0.15)', textDecoration: 'none' }}>
+            {inner}
+          </a>
+        )
+      })}
     </div>
   )
 }
 
 function ManualContent() {
   const searchParams = useSearchParams()
+  const [openPdf, setOpenPdf] = useState<{ url: string; nombre: string } | null>(null)
   const categoriaSlug = searchParams.get('categoria')
   const vistaDescargas = searchParams.get('vista') === 'descargas'
   const selectedCategory = categories.find((c) => c.slug === categoriaSlug)
@@ -204,6 +220,51 @@ function ManualContent() {
         return cat ? a.category_id === cat.id : true
       })
     : articles
+
+  function handleViewPdf(url: string, nombre: string) {
+    setOpenPdf({ url, nombre })
+  }
+
+  // ── Visor de PDF (overlay de pantalla completa) ────────────────────────────
+  if (openPdf) {
+    return (
+      <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#06060a' }}>
+        {/* Barra superior con botón cerrar */}
+        <div className="flex items-center justify-between gap-3 px-4 flex-shrink-0"
+          style={{
+            paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))',
+            paddingBottom: '0.75rem',
+            background: 'rgba(12,12,20,0.97)',
+            borderBottom: '1px solid rgba(180,185,210,0.1)',
+          }}>
+          <button
+            onClick={() => setOpenPdf(null)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl"
+            style={{ background: 'rgba(220,80,80,0.1)', color: '#e07070', border: '1px solid rgba(220,80,80,0.2)' }}>
+            <X size={16} />
+            <span className="text-sm font-semibold">Cerrar</span>
+          </button>
+          <p className="text-xs font-medium flex-1 truncate text-center" style={{ color: 'var(--th-silver)' }}>
+            {openPdf.nombre}
+          </p>
+          <a href={openPdf.url} download
+            className="flex items-center gap-2 px-3 py-2 rounded-xl"
+            style={{ background: 'rgba(122,176,240,0.1)', color: '#7ab0f0', border: '1px solid rgba(122,176,240,0.2)', textDecoration: 'none' }}>
+            <Download size={14} />
+            <span className="text-sm font-semibold">Guardar</span>
+          </a>
+        </div>
+
+        {/* Contenido PDF */}
+        <iframe
+          src={openPdf.url}
+          className="flex-1 w-full"
+          style={{ border: 'none' }}
+          title={openPdf.nombre}
+        />
+      </div>
+    )
+  }
 
   // Vista: archivos descargables (tarjeta dedicada)
   if (vistaDescargas) {
@@ -225,7 +286,7 @@ function ManualContent() {
               <p className="text-sm mt-0.5" style={{ color: S.silverDim }}>{ARCHIVOS.length} documentos disponibles para descarga</p>
             </div>
           </div>
-          <ListaArchivos archivos={ARCHIVOS} />
+          <ListaArchivos archivos={ARCHIVOS} onViewPdf={handleViewPdf} />
         </div>
       </div>
     )
@@ -258,7 +319,7 @@ function ManualContent() {
                   Archivos descargables ({archivosCategoria.length})
                 </p>
               </div>
-              <ListaArchivos archivos={archivosCategoria} />
+              <ListaArchivos archivos={archivosCategoria} onViewPdf={handleViewPdf} />
             </div>
           )}
 
