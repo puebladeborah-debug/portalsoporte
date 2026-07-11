@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, X, Trash2, Timer, Check, Pencil } from 'lucide-react'
 import { useAuth } from './LoginGate'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
@@ -54,11 +54,10 @@ function EventCard({ ev, canEdit, onEdit, onDelete }: {
   onDelete: () => void
 }) {
   const [, setTick] = useState(0)
-  // Tick every second to update the countdown
-  useState(() => {
+  useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(id)
-  })
+  }, [])
 
   const c = COLORS[ev.color] ?? COLORS.blue
   const status = getStatus(ev)
@@ -155,6 +154,8 @@ export default function CountdownBanner() {
   const [editId, setEditId] = useState<string | null>(null)
 
   const canEdit = !!member?.isAdmin
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   function openNew() {
     setForm({ ...BLANK })
@@ -170,14 +171,27 @@ export default function CountdownBanner() {
 
   async function save() {
     if (!form.titulo.trim() || !form.fechaFin) return
-    const id = editId ?? `cd_${Date.now()}`
-    await set(id, {
-      titulo: form.titulo.trim(),
-      fechaInicio: form.fechaInicio || new Date().toISOString().slice(0, 16),
-      fechaFin: form.fechaFin,
-      color: form.color,
-    })
-    setShowForm(false)
+    setSaving(true)
+    setSaveError(null)
+    try {
+      const id = editId ?? `cd_${Date.now()}`
+      await set(id, {
+        titulo: form.titulo.trim(),
+        fechaInicio: form.fechaInicio || new Date().toISOString().slice(0, 16),
+        fechaFin: form.fechaFin,
+        color: form.color,
+      })
+      setShowForm(false)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('permission') || msg.includes('Permission') || msg.includes('PERMISSION_DENIED')) {
+        setSaveError('Sin permiso en Firestore. Publica las reglas de seguridad en Firebase Console.')
+      } else {
+        setSaveError('Error al guardar. Verifica tu conexión e intenta de nuevo.')
+      }
+    } finally {
+      setSaving(false)
+    }
   }
 
   const visible = events.filter(ev => getStatus(ev) !== 'finished')
@@ -272,20 +286,27 @@ export default function CountdownBanner() {
                 </div>
               </div>
 
+              {saveError && (
+                <div className="px-3 py-2.5 rounded-xl text-xs"
+                  style={{ background: 'rgba(220,80,80,0.08)', border: '1px solid rgba(220,80,80,0.25)', color: '#e07070' }}>
+                  ⚠️ {saveError}
+                </div>
+              )}
+
               <div className="flex gap-3 pt-1">
                 <button onClick={() => setShowForm(false)}
                   className="flex-1 py-2.5 rounded-xl text-sm"
                   style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
                   Cancelar
                 </button>
-                <button onClick={save} disabled={!form.titulo.trim() || !form.fechaFin}
+                <button onClick={save} disabled={!form.titulo.trim() || !form.fechaFin || saving}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
                   style={{
-                    background: form.titulo && form.fechaFin ? 'rgba(180,185,210,0.1)' : 'rgba(180,185,210,0.03)',
-                    color: form.titulo && form.fechaFin ? S.silverBright : S.silverDim,
-                    border: `1px solid ${form.titulo && form.fechaFin ? 'rgba(180,185,210,0.25)' : S.border}`,
+                    background: form.titulo && form.fechaFin && !saving ? 'rgba(180,185,210,0.1)' : 'rgba(180,185,210,0.03)',
+                    color: form.titulo && form.fechaFin && !saving ? S.silverBright : S.silverDim,
+                    border: `1px solid ${form.titulo && form.fechaFin && !saving ? 'rgba(180,185,210,0.25)' : S.border}`,
                   }}>
-                  <Check size={14} /> Guardar
+                  <Check size={14} /> {saving ? 'Guardando…' : 'Guardar'}
                 </button>
               </div>
             </div>
