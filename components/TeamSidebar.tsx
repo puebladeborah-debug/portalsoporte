@@ -327,7 +327,7 @@ export default function TeamSidebar() {
 
       {/* QR Modal */}
       {qrUrl && qrMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.9)' }}>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.9)' }}>
           <div className="rounded-2xl p-6 flex flex-col items-center gap-4 max-w-xs w-full mx-4"
             style={{ background: 'var(--th-inner)', border: `1px solid ${qrStatus === 'completo' ? 'rgba(100,200,120,0.3)' : 'rgba(220,150,50,0.3)'}`, boxShadow: '0 0 60px rgba(0,0,0,0.9)' }}>
             <div className="text-center">
@@ -360,7 +360,7 @@ export default function TeamSidebar() {
       {/* ── Modal pre-QR: reporte de canales ──────────────────────────────── */}
       {/* ── Modal INICIO DE JORNADA ─────────────────────────────────────── */}
       {inicioMember && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-sm mx-4 rounded-t-3xl md:rounded-2xl flex flex-col"
             style={{ background: 'var(--th-inner)', border: '1px solid rgba(100,160,240,0.25)', boxShadow: '0 0 60px rgba(0,0,0,0.95)', maxHeight: '90vh' }}>
 
@@ -482,7 +482,7 @@ export default function TeamSidebar() {
 
       {/* ── Modal FIN DE JORNADA (pre-QR) ────────────────────────────────── */}
       {preQRMember && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
           <div className="w-full max-w-sm mx-4 rounded-t-3xl md:rounded-2xl flex flex-col"
             style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.95)', maxHeight: '90vh' }}>
 
@@ -692,10 +692,10 @@ export default function TeamSidebar() {
 
       {/* Edit Member Modal */}
       {editingMember && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.88)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="w-full max-w-sm mx-0 md:mx-4 rounded-t-3xl md:rounded-2xl overflow-hidden flex flex-col"
-            style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.9)', maxHeight: 'calc(92dvh - env(safe-area-inset-bottom, 0px))' }}>
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.9)', maxHeight: '90dvh' }}>
 
             {/* Header fijo */}
             <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
