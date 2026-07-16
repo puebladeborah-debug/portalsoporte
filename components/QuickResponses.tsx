@@ -106,13 +106,17 @@ export default function QuickResponses() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [teamModalOpen, setTeamModalOpen] = useState(false)
 
   useEffect(() => {
-    function handle(e: Event) {
-      setSidebarOpen((e as CustomEvent).detail.active)
+    function handleSidebar(e: Event) { setSidebarOpen((e as CustomEvent).detail.active) }
+    function handleModal(e: Event)   { setTeamModalOpen((e as CustomEvent).detail.active) }
+    window.addEventListener('sidebarActiveChange', handleSidebar)
+    window.addEventListener('teamModalChange', handleModal)
+    return () => {
+      window.removeEventListener('sidebarActiveChange', handleSidebar)
+      window.removeEventListener('teamModalChange', handleModal)
     }
-    window.addEventListener('sidebarActiveChange', handle)
-    return () => window.removeEventListener('sidebarActiveChange', handle)
   }, [])
 
   function copy(id: string, text: string) {
@@ -133,7 +137,7 @@ export default function QuickResponses() {
       {/* Botón flotante — se oculta cuando hay un perfil o panel abierto */}
       <button
         onClick={() => setOpen(true)}
-        className={`fixed left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all z-30 quick-resp-bottom ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        className={`fixed left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all z-30 quick-resp-bottom ${sidebarOpen || teamModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         style={{
           background: 'var(--th-card)',
           border: `1px solid ${S.borderLight}`,

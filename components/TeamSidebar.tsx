@@ -63,6 +63,12 @@ export default function TeamSidebar() {
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('sidebarActiveChange', { detail: { active: open !== null } }))
   }, [open])
+
+  // Notifica cuando hay un modal de equipo abierto (editar, QR, jornada)
+  useEffect(() => {
+    const active = !!(editingMember || preQRMember || inicioMember || qrUrl)
+    window.dispatchEvent(new CustomEvent('teamModalChange', { detail: { active } }))
+  }, [editingMember, preQRMember, inicioMember, qrUrl])
   const [showAddForm, setShowAddForm] = useState(false)
   const [newName, setNewName] = useState('')
   const [newRole, setNewRole] = useState('')
@@ -686,9 +692,10 @@ export default function TeamSidebar() {
 
       {/* Edit Member Modal */}
       {editingMember && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.88)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="w-full max-w-sm mx-0 md:mx-4 rounded-t-3xl md:rounded-2xl overflow-hidden flex flex-col"
-            style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.9)', maxHeight: '92dvh' }}>
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.9)', maxHeight: 'calc(92dvh - env(safe-area-inset-bottom, 0px))' }}>
 
             {/* Header fijo */}
             <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
@@ -820,8 +827,8 @@ export default function TeamSidebar() {
             </div>
 
             {/* Botones fijos al fondo */}
-            <div className="px-5 pt-4 flex-shrink-0"
-              style={{ borderTop: `1px solid ${S.border}`, paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
+            <div className="px-5 py-4 flex-shrink-0"
+              style={{ borderTop: `1px solid ${S.border}` }}>
               {teamError && (
                 <p className="text-[11px] font-semibold mb-2 text-center" style={{ color: '#e07070' }}>{teamError}</p>
               )}
