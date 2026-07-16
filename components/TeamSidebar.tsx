@@ -232,6 +232,7 @@ export default function TeamSidebar() {
   }
 
   function openEditMember(member: TeamMember) {
+    setOpen(null)           // cierra el panel del sidebar en móvil
     setEditingMember(member)
     setEditForm({
       name: member.name.includes(' · ') ? member.name.split(' · ')[1] : member.name,
@@ -685,9 +686,9 @@ export default function TeamSidebar() {
 
       {/* Edit Member Modal */}
       {editingMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
-          <div className="w-full max-w-sm mx-4 rounded-2xl overflow-hidden flex flex-col"
-            style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.9)', maxHeight: '88vh' }}>
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.88)' }}>
+          <div className="w-full max-w-sm mx-0 md:mx-4 rounded-t-3xl md:rounded-2xl overflow-hidden flex flex-col"
+            style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 60px rgba(0,0,0,0.9)', maxHeight: '92dvh' }}>
 
             {/* Header fijo */}
             <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.03)' }}>
@@ -819,7 +820,8 @@ export default function TeamSidebar() {
             </div>
 
             {/* Botones fijos al fondo */}
-            <div className="px-5 py-4 flex-shrink-0" style={{ borderTop: `1px solid ${S.border}` }}>
+            <div className="px-5 pt-4 flex-shrink-0"
+              style={{ borderTop: `1px solid ${S.border}`, paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
               {teamError && (
                 <p className="text-[11px] font-semibold mb-2 text-center" style={{ color: '#e07070' }}>{teamError}</p>
               )}
