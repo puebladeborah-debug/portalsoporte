@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MessageSquare, X, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 const S = {
@@ -105,6 +105,15 @@ export default function QuickResponses() {
   const [open, setOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    function handle(e: Event) {
+      setSidebarOpen((e as CustomEvent).detail.active)
+    }
+    window.addEventListener('sidebarActiveChange', handle)
+    return () => window.removeEventListener('sidebarActiveChange', handle)
+  }, [])
 
   function copy(id: string, text: string) {
     navigator.clipboard.writeText(text).then(() => {
@@ -121,10 +130,10 @@ export default function QuickResponses() {
 
   return (
     <>
-      {/* Botón flotante */}
+      {/* Botón flotante — se oculta cuando hay un perfil o panel abierto */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all z-30 quick-resp-bottom"
+        className={`fixed left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all z-30 quick-resp-bottom ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         style={{
           background: 'var(--th-card)',
           border: `1px solid ${S.borderLight}`,
