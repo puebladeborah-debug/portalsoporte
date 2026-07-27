@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MessageSquare, X, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react'
+import { MessageSquare, X, Copy, Check, ChevronDown, ChevronUp, Download } from 'lucide-react'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -98,6 +98,13 @@ const RESPUESTAS = [
     titulo: 'Crear perfil en Skool',
     emoji: '👤',
     contenido: 'https://www.loom.com/share/9fef12507f2f4cca8d18190a6b5163b8?sid=d7b727a0-8f96-436f-9cf6-8af184041ddc',
+  },
+  {
+    id: 'idioma-skool',
+    titulo: 'Idioma en Skool',
+    emoji: '🌐',
+    imagen: '/respuestas-imgs/idioma-en-skool.jpeg',
+    contenido: 'IDIOMA EN SKOOL\n\nRespuesta: Esto pasa mucho en Skool, y no depende del grupo o del administrador, sino del idioma configurado en el navegador o dispositivo del usuario, no dentro de la plataforma.\n\nSkool detecta automáticamente el idioma según:\n1. El idioma principal del navegador (por ejemplo, Chrome, Safari, Edge, etc.).\n2. La configuración de idioma del sistema operativo (en el celular o computadora).\n3. No hay todavía una opción interna en Skool para "forzar" el idioma desde la cuenta o el grupo.\n\nCómo cambiarlo (instrucciones para tus miembros):\n\nEn computadora:\n1. Abre Skool en el navegador.\n2. Entra a Configuración del navegador → Idiomas (en Chrome: chrome://settings/languages).\n3. Asegúrate de que Español (México o España) esté arriba en la lista de idiomas preferidos.\n4. Cierra y vuelve a abrir Skool. → Ya debería mostrarse todo en español.\n\nEn celular:\n- iPhone: Ajustes → General → Idioma y región → Pon Español primero.\n- Android: Ajustes → Sistema → Idiomas y entrada → Idiomas → Mueve Español al primer lugar.\n- Luego cierra y vuelve a abrir la app de Skool o el navegador.',
   },
 ]
 
@@ -217,6 +224,20 @@ export default function QuickResponses() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Imagen adjunta (si la respuesta trae una) */}
+                    {r.imagen && (
+                      <div className="px-4 pb-3">
+                        <img src={r.imagen} alt={r.titulo}
+                          className="rounded-xl max-w-full mb-2"
+                          style={{ border: `1px solid ${S.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.35)' }} />
+                        <a href={r.imagen} download
+                          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                          style={{ background: 'rgba(180,185,210,0.08)', color: S.silver, border: `1px solid ${S.border}` }}>
+                          <Download size={11} /> Descargar imagen
+                        </a>
+                      </div>
+                    )}
 
                     {/* Preview del contenido */}
                     {(!multi || expanded) && (
