@@ -64,11 +64,6 @@ export default function TeamSidebar() {
     window.dispatchEvent(new CustomEvent('sidebarActiveChange', { detail: { active: open !== null } }))
   }, [open])
 
-  // Notifica cuando hay un modal de equipo abierto (editar, QR, jornada)
-  useEffect(() => {
-    const active = !!(editingMember || preQRMember || inicioMember || qrUrl)
-    window.dispatchEvent(new CustomEvent('teamModalChange', { detail: { active } }))
-  }, [editingMember, preQRMember, inicioMember, qrUrl])
   const [showAddForm, setShowAddForm] = useState(false)
   const [newName, setNewName] = useState('')
   const [newRole, setNewRole] = useState('')
@@ -112,6 +107,12 @@ export default function TeamSidebar() {
   function pif(key: keyof typeof inicioForm, val: string) {
     setInicioForm(prev => ({ ...prev, [key]: val }))
   }
+
+  // Notifica cuando hay un modal de equipo abierto (editar, QR, jornada)
+  useEffect(() => {
+    const active = !!(editingMember || preQRMember || inicioMember || qrUrl)
+    window.dispatchEvent(new CustomEvent('teamModalChange', { detail: { active } }))
+  }, [editingMember, preQRMember, inicioMember, qrUrl])
 
   useEffect(() => {
     getMembers().then(saved => {
