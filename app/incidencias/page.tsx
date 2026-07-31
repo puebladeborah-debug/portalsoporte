@@ -30,6 +30,8 @@ type Caso = {
   id: string
   categoria: Categoria
   nombre: string
+  correo?: string
+  telefono?: string
   vendedor: string
   situacion: Situacion
   fecha: string
@@ -108,6 +110,8 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
 }) {
   const { session } = useAuth()
   const [nombre, setNombre] = useState(caso?.nombre || '')
+  const [correo, setCorreo] = useState(caso?.correo || '')
+  const [telefono, setTelefono] = useState(caso?.telefono || '')
   const [vendedor, setVendedor] = useState(caso?.vendedor || '')
   const [situacion, setSituacion] = useState<Situacion>(caso?.situacion || 'abierta')
   const [fecha, setFecha] = useState(caso?.fecha || new Date().toISOString().split('T')[0])
@@ -122,7 +126,7 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
     if (!nombre.trim()) return
     setSaving(true)
     const payload = {
-      nombre, vendedor, situacion, fecha, notas, resolucion,
+      nombre, correo, telefono, vendedor, situacion, fecha, notas, resolucion,
       reembolso,
       montoReembolso: reembolso ? parseFloat(montoReembolso.replace(/,/g, '')) || 0 : 0,
       monedaReembolso,
@@ -168,6 +172,23 @@ function CasoModal({ categoria, caso, onClose, onSaved, addCaso, updateCaso, rem
               placeholder="Nombre del cliente o caso"
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
               style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Correo del cliente</p>
+              <input type="email" value={correo} onChange={e => setCorreo(e.target.value)}
+                placeholder="cliente@correo.com"
+                className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+            </div>
+            <div>
+              <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Teléfono del cliente</p>
+              <input value={telefono} onChange={e => setTelefono(e.target.value)}
+                placeholder="ej. 3312345678"
+                className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+            </div>
           </div>
 
           <div>
@@ -299,6 +320,12 @@ function CasoCard({ caso, onClick }: { caso: Caso; onClick: () => void }) {
             <span>Vendedor: <span style={{ color: S.silver }}>{caso.vendedor}</span></span>
           )}
         </div>
+        {(caso.correo || caso.telefono) && (
+          <div className="flex items-center gap-3 text-[11px] mb-2 flex-wrap" style={{ color: S.silverDim }}>
+            {caso.correo && <span className="flex items-center gap-1"><Mail size={11} /> {caso.correo}</span>}
+            {caso.telefono && <span className="flex items-center gap-1"><Phone size={11} /> {caso.telefono}</span>}
+          </div>
+        )}
         {caso.notas && (
           <p className="text-xs leading-relaxed mb-1.5" style={{ color: '#9094a4' }}>
             <span style={{ color: S.silverDim }}>Notas: </span>{caso.notas}
