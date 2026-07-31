@@ -203,6 +203,7 @@ export default function TeamSidebar() {
     const previous = members
     const updated = members.filter(m => m.id !== id)
     await persistMembers(updated, previous)
+    setConfirmDeleteMember(null)
   }
 
   async function updatePermissions(memberId: string, perm: Permission, value: boolean) {
@@ -222,6 +223,7 @@ export default function TeamSidebar() {
   }
 
   const [resetStatus, setResetStatus] = useState<Record<string, 'sent' | 'error'>>({})
+  const [confirmDeleteMember, setConfirmDeleteMember] = useState<string | null>(null)
 
   async function resetPassword(m: TeamMember) {
     if (!m.email) return
@@ -1187,11 +1189,26 @@ export default function TeamSidebar() {
                             ))}
                           </div>
                           {!member.isAdmin && (
-                            <button onClick={() => deleteMember(member.id)}
-                              className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-lg"
-                              style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.2)', background: 'rgba(220,80,80,0.05)' }}>
-                              <Trash2 size={10} /> Eliminar perfil
-                            </button>
+                            confirmDeleteMember === member.id ? (
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-[10px] flex-1" style={{ color: S.silverDim }}>¿Eliminar a {nombreCorto(member.name)}?</p>
+                                <button onClick={() => setConfirmDeleteMember(null)}
+                                  className="text-[10px] px-2 py-1 rounded-lg" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                                  Cancelar
+                                </button>
+                                <button onClick={() => deleteMember(member.id)}
+                                  className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg"
+                                  style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)' }}>
+                                  <Trash2 size={10} /> Eliminar
+                                </button>
+                              </div>
+                            ) : (
+                              <button onClick={() => setConfirmDeleteMember(member.id)}
+                                className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-lg"
+                                style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.2)', background: 'rgba(220,80,80,0.05)' }}>
+                                <Trash2 size={10} /> Eliminar perfil
+                              </button>
+                            )
                           )}
                         </div>
                       )}
