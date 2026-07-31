@@ -835,6 +835,30 @@ export default function TeamSidebar() {
               {teamError && (
                 <p className="text-[11px] font-semibold mb-2 text-center" style={{ color: '#e07070' }}>{teamError}</p>
               )}
+
+              {!editingMember.isAdmin && editingMember.id !== 'dlp' && (
+                confirmDeleteMember === editingMember.id ? (
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-[11px] flex-1" style={{ color: S.silverDim }}>¿Eliminar a {nombreCorto(editingMember.name)}?</p>
+                    <button onClick={() => setConfirmDeleteMember(null)}
+                      className="text-[11px] px-2.5 py-1.5 rounded-lg" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                      Cancelar
+                    </button>
+                    <button onClick={async () => { await deleteMember(editingMember.id); setEditingMember(null) }}
+                      className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg"
+                      style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)' }}>
+                      <Trash2 size={11} /> Eliminar
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmDeleteMember(editingMember.id)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold mb-2"
+                    style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.25)', background: 'rgba(220,80,80,0.06)' }}>
+                    <Trash2 size={12} /> Eliminar perfil
+                  </button>
+                )
+              )}
+
               <div className="flex gap-2">
                 <button onClick={() => setEditingMember(null)}
                   className="flex-1 py-2.5 rounded-xl text-sm" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
