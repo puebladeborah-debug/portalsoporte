@@ -124,6 +124,14 @@ const ARCHIVOS: ArchivoDescargable[] = [
     tamaño: '52 KB',
   },
   {
+    nombre: 'Manual de Estructura Organizacional',
+    descripcion: 'Estructura organizacional del departamento de soporte',
+    archivo: '/manuales/manual-estructura-organizacional.pdf',
+    tipo: 'pdf',
+    categoria: 'Estructura Organizacional',
+    tamaño: '1.5 MB',
+  },
+  {
     nombre: 'Checklist Gira Operativo',
     descripcion: 'Lista de verificación operativa para giras',
     archivo: '/manuales/checklist-gira-operativo.docx',
