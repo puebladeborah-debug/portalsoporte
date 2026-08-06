@@ -1,4 +1,4 @@
-export type Permission = 'checklist' | 'manuales' | 'buscar' | 'tareas' | 'avisos' | 'guardias' | 'giras'
+export type Permission = 'checklist' | 'manuales' | 'buscar' | 'tareas' | 'avisos' | 'guardias' | 'giras' | 'verKPIs'
 
 export type DiaSemana = 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo'
 

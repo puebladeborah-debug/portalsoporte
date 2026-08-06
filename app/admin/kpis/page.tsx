@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, BarChart2, Users, RefreshCw, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
+import { useAuth } from '@/components/LoginGate'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -74,6 +76,14 @@ function totalCanales(d: JornadaDoc) {
 }
 
 export default function KPIsPage() {
+  const { session, member } = useAuth()
+  const router = useRouter()
+  const puedeVer = !!member?.isAdmin || !!member?.permissions?.includes('verKPIs')
+
+  useEffect(() => {
+    if (session && !puedeVer) router.replace('/')
+  }, [session, puedeVer, router])
+
   const today   = new Date()
   const todayStr = today.toISOString().split('T')[0]
 
@@ -91,6 +101,8 @@ export default function KPIsPage() {
     if (modo === 'mes')  return allDocs.filter(d => d.fecha.startsWith(`${year}-${String(month+1).padStart(2,'0')}`))
     return allDocs.filter(d => d.fecha.startsWith(String(year)))
   }, [allDocs, modo, year, month, dia])
+
+  if (!puedeVer) return null
 
   const fins   = filtered.filter(d => d.tipo === 'fin')
   const inicios = filtered.filter(d => d.tipo === 'inicio')

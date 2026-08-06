@@ -32,6 +32,7 @@ const ALL_PERMISSIONS: { key: Permission; label: string }[] = [
   { key: 'avisos', label: 'Avisos' },
   { key: 'guardias', label: 'Editar guardias' },
   { key: 'giras',    label: 'Gestionar giras' },
+  { key: 'verKPIs',  label: 'Ver estadísticas KPI' },
 ]
 
 type ExtraTask = { id: string; text: string; date: string; targetMembers: string[]; createdBy: string }
