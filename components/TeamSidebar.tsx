@@ -93,7 +93,7 @@ export default function TeamSidebar() {
   // Pre-QR report state (FIN de jornada)
   const [preQRMember, setPreQRMember] = useState<TeamMember | null>(null)
   const [preQRStatus, setPreQRStatus] = useState<'completo' | 'incompleto'>('completo')
-  const EMPTY_FIN = { whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '', hora: '', tareasExtra: '', casosResueltos: '', casosPendientes: '', escaladoDLP: 'no', calidadPercibida: '3', devolucionesSolicitadas: '', devolucionesAutorizadas: '' }
+  const EMPTY_FIN = { whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '', skoolMdl: '', skoolCs: '', skoolLegendaria: '', whatsLegendaria: '', hora: '', tareasExtra: '', casosResueltos: '', casosPendientes: '', escaladoDLP: 'no', calidadPercibida: '3', devolucionesSolicitadas: '', devolucionesAutorizadas: '' }
   const [preQRForm, setPreQRForm] = useState(EMPTY_FIN)
 
   function pqr(key: keyof typeof preQRForm, val: string) {
@@ -101,7 +101,7 @@ export default function TeamSidebar() {
   }
 
   // INICIO de jornada state
-  const EMPTY_INI = { horaEntrada: '', energia: '3', whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '' }
+  const EMPTY_INI = { horaEntrada: '', energia: '3', whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '', skoolMdl: '', skoolCs: '', skoolLegendaria: '', whatsLegendaria: '' }
   const [inicioMember, setInicioMember] = useState<TeamMember | null>(null)
   const [inicioForm, setInicioForm] = useState(EMPTY_INI)
 
@@ -423,6 +423,10 @@ export default function TeamSidebar() {
                     { key: 'whatsappSoporte' as const, label: 'WA Soporte',       emoji: '💬' },
                     { key: 'whatsappSkool'   as const, label: 'WA SKOOL',         emoji: '🎓' },
                     { key: 'ghl'             as const, label: 'GHL',              emoji: '⚙️' },
+                    { key: 'skoolMdl'         as const, label: 'Skool MDL',        emoji: '🎓' },
+                    { key: 'skoolCs'          as const, label: 'Skool CS',         emoji: '🎓' },
+                    { key: 'skoolLegendaria'  as const, label: 'Skool Legendaria', emoji: '🎓' },
+                    { key: 'whatsLegendaria'  as const, label: 'Whats Legendaria', emoji: '💬' },
                   ].map(ch => (
                     <div key={ch.key}>
                       <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>{ch.emoji} {ch.label}</p>
@@ -467,6 +471,10 @@ export default function TeamSidebar() {
                     whatsappSoporte: Number(inicioForm.whatsappSoporte) || 0,
                     whatsappSkool:   Number(inicioForm.whatsappSkool)   || 0,
                     ghl:             Number(inicioForm.ghl)             || 0,
+                    skoolMdl:        Number(inicioForm.skoolMdl)        || 0,
+                    skoolCs:         Number(inicioForm.skoolCs)         || 0,
+                    skoolLegendaria: Number(inicioForm.skoolLegendaria) || 0,
+                    whatsLegendaria: Number(inicioForm.whatsLegendaria) || 0,
                     createdAt: new Date().toISOString(),
                   })
                   setInicioMember(null)
@@ -528,6 +536,10 @@ export default function TeamSidebar() {
                     { key: 'whatsappSoporte' as const, label: 'WA Soporte',       emoji: '💬' },
                     { key: 'whatsappSkool'   as const, label: 'WA SKOOL',         emoji: '🎓' },
                     { key: 'ghl'             as const, label: 'GHL',              emoji: '⚙️' },
+                    { key: 'skoolMdl'         as const, label: 'Skool MDL',        emoji: '🎓' },
+                    { key: 'skoolCs'          as const, label: 'Skool CS',         emoji: '🎓' },
+                    { key: 'skoolLegendaria'  as const, label: 'Skool Legendaria', emoji: '🎓' },
+                    { key: 'whatsLegendaria'  as const, label: 'Whats Legendaria', emoji: '💬' },
                   ].map(ch => (
                     <div key={ch.key}>
                       <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>{ch.emoji} {ch.label}</p>
@@ -668,6 +680,10 @@ export default function TeamSidebar() {
                     whatsappSoporte: Number(preQRForm.whatsappSoporte) || 0,
                     whatsappSkool:   Number(preQRForm.whatsappSkool)   || 0,
                     ghl:             Number(preQRForm.ghl)             || 0,
+                    skoolMdl:        Number(preQRForm.skoolMdl)        || 0,
+                    skoolCs:         Number(preQRForm.skoolCs)         || 0,
+                    skoolLegendaria: Number(preQRForm.skoolLegendaria) || 0,
+                    whatsLegendaria: Number(preQRForm.whatsLegendaria) || 0,
                     casosResueltos:          Number(preQRForm.casosResueltos)          || 0,
                     casosPendientes:         Number(preQRForm.casosPendientes)         || 0,
                     escaladoDLP:             preQRForm.escaladoDLP === 'sí',

@@ -42,6 +42,10 @@ type JornadaDoc = {
   whatsappSoporte: number
   whatsappSkool: number
   ghl: number
+  skoolMdl: number
+  skoolCs: number
+  skoolLegendaria: number
+  whatsLegendaria: number
   // inicio
   horaEntrada?: string
   energia?: number
@@ -69,6 +73,10 @@ const CANALES = [
   { key: 'whatsappSoporte' as const, label: 'WA Soporte', emoji: '💬' },
   { key: 'whatsappSkool'   as const, label: 'WA Skool',   emoji: '🎓' },
   { key: 'ghl'             as const, label: 'GHL',        emoji: '⚙️' },
+  { key: 'skoolMdl'        as const, label: 'Skool MDL',        emoji: '🎓' },
+  { key: 'skoolCs'         as const, label: 'Skool CS',         emoji: '🎓' },
+  { key: 'skoolLegendaria' as const, label: 'Skool Legendaria', emoji: '🎓' },
+  { key: 'whatsLegendaria' as const, label: 'Whats Legendaria', emoji: '💬' },
 ]
 
 function totalCanales(d: JornadaDoc) {

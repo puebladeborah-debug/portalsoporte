@@ -43,7 +43,7 @@ type JornadaDoc = {
 
 const TODAY = new Date().toISOString().split('T')[0]
 
-const EMPTY_INI = { horaEntrada: '', energia: '3', whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '' }
+const EMPTY_INI = { horaEntrada: '', energia: '3', whatsapp: '', zendesk: '', correo: '', llamadas: '', telegram: '', instagram: '', facebook: '', whatsappViejito: '', whatsappSoporte: '', whatsappSkool: '', ghl: '', skoolMdl: '', skoolCs: '', skoolLegendaria: '', whatsLegendaria: '' }
 
 function fmtFecha(fecha: string) {
   return new Date(fecha + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
@@ -80,6 +80,10 @@ function InicioModal({ memberId, memberName, memberRole, onClose }: {
       whatsappSoporte: Number(form.whatsappSoporte) || 0,
       whatsappSkool:   Number(form.whatsappSkool)   || 0,
       ghl:             Number(form.ghl)             || 0,
+      skoolMdl:        Number(form.skoolMdl)        || 0,
+      skoolCs:         Number(form.skoolCs)         || 0,
+      skoolLegendaria: Number(form.skoolLegendaria) || 0,
+      whatsLegendaria: Number(form.whatsLegendaria) || 0,
       createdAt: new Date().toISOString(),
     })
     setSaving(false)
@@ -142,6 +146,10 @@ function InicioModal({ memberId, memberName, memberRole, onClose }: {
                 { key: 'whatsappSoporte' as const, label: 'WA Soporte', emoji: '💬' },
                 { key: 'whatsappSkool' as const, label: 'WA SKOOL', emoji: '🎓' },
                 { key: 'ghl' as const, label: 'GHL', emoji: '⚙️' },
+                { key: 'skoolMdl' as const, label: 'Skool MDL', emoji: '🎓' },
+                { key: 'skoolCs' as const, label: 'Skool CS', emoji: '🎓' },
+                { key: 'skoolLegendaria' as const, label: 'Skool Legendaria', emoji: '🎓' },
+                { key: 'whatsLegendaria' as const, label: 'Whats Legendaria', emoji: '💬' },
               ].map(ch => (
                 <div key={ch.key}>
                   <p className="text-[9px] mb-1" style={{ color: S.silverDim }}>{ch.emoji} {ch.label}</p>
