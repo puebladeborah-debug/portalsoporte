@@ -610,17 +610,20 @@ export default function GirasPage() {
   const myGirasProfile = members.find(m => m.id === session?.memberId)
   const canManage = !!myGirasProfile?.isAdmin || !!myGirasProfile?.permissions.includes('giras')
 
-  // Carga eventos del sheet y los sincroniza con los guardados localmente
+  // Carga eventos del sheet y los sincroniza con los guardados localmente.
+  // La llave usa SOLO la fecha (no el nombre de ciudad): si renombras una fila
+  // en el sheet (ej. "MEXICALI" → "#2 MEXICALI") esto actualiza el evento que
+  // ya existe en vez de crear uno nuevo y duplicarlo.
   async function syncSheetEventos() {
     setLoadingSheet(true)
     try {
       const res  = await fetch('/api/giras-sheet')
       const data = await res.json()
       if (!data.eventos) return
-      const stored = getGiraEventos()
+      let stored = getGiraEventos()
       let changed = false
       for (const ev of data.eventos as { ciudad: string; fecha: string; lugar: string }[]) {
-        const key = `sheet_${ev.fecha}_${ev.ciudad.toLowerCase().replace(/\s+/g,'_')}`
+        const key = `sheet_${ev.fecha}`
         const exists = stored.find(s => s.id === key)
         if (!exists) {
           // Crear el evento con horario vacío — el usuario lo configurará
@@ -635,12 +638,40 @@ export default function GirasPage() {
             createdAt: new Date().toISOString(),
           })
           changed = true
-        } else if (exists.lugar !== ev.lugar && ev.lugar) {
-          // Actualizar lugar si cambió en el sheet
-          saveGiraEvento({ ...exists, lugar: ev.lugar })
+        } else if (exists.nombre !== ev.ciudad || (exists.lugar !== ev.lugar && ev.lugar)) {
+          // Actualizar nombre y/o lugar si cambiaron en el sheet
+          saveGiraEvento({ ...exists, nombre: ev.ciudad, lugar: ev.lugar || exists.lugar })
           changed = true
         }
       }
+
+      // Limpieza de duplicados viejos: eventos del sheet con la misma fecha
+      // (quedaron de antes de este arreglo, cuando la llave incluía el nombre).
+      stored = getGiraEventos()
+      const porFecha = new Map<string, GiraEvento[]>()
+      for (const e of stored) {
+        if (!e.fromSheet) continue
+        const arr = porFecha.get(e.fecha) || []
+        arr.push(e)
+        porFecha.set(e.fecha, arr)
+      }
+      for (const [fecha, evs] of porFecha) {
+        if (evs.length <= 1) continue
+        const conHorario = evs.filter(e => e.horario1)
+        const keeper =
+          conHorario[0] ??
+          evs.find(e => e.id === `sheet_${fecha}`) ??
+          [...evs].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0]
+        for (const e of evs) {
+          if (e.id === keeper.id) continue
+          // Reasigna cualquier registro que apuntara al duplicado, para no perder datos ya llenados
+          const regs = getGiraRegistros(e.id)
+          for (const r of regs) saveGiraRegistro({ ...r, id: r.id.replace(e.id, keeper.id), eventoId: keeper.id })
+          deleteGiraEvento(e.id)
+          changed = true
+        }
+      }
+
       if (changed || true) reload()
     } catch { /* sin internet o error de fetch */ }
     finally { setLoadingSheet(false) }
