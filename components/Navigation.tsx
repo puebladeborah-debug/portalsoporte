@@ -373,10 +373,10 @@ export default function Navigation() {
           </div>
         </Link>
 
-        <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar min-w-0 flex-1 h-full">
+        <div className="flex items-center min-w-0 flex-1 h-full">
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} title={label}
-              className="relative flex flex-col items-center justify-center w-[54px] h-[54px] rounded-xl transition-all duration-200 flex-shrink-0"
+              className="relative flex flex-col items-center justify-center h-[54px] rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[54px] px-0.5"
               style={pathname === href
                 ? { color: 'var(--th-bright)', background: 'rgba(180,185,210,0.1)', border: '1px solid rgba(180,185,210,0.2)' }
                 : { color: 'var(--th-silver)', border: '1px solid transparent' }
@@ -387,8 +387,8 @@ export default function Navigation() {
               {href === '/giras' && hayAlertaGiras && (
                 <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full animate-pulse" style={{ background: '#fbbf24', boxShadow: '0 0 6px rgba(251,191,36,0.8)' }} />
               )}
-              <Icon size={22} />
-              <span className="text-[9px] mt-1 leading-none font-medium whitespace-nowrap">{label}</span>
+              <Icon size={19} />
+              <span className="text-[8px] mt-1 leading-none font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-full">{label}</span>
             </Link>
           ))}
         </div>
