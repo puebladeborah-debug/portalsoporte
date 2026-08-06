@@ -570,53 +570,19 @@ export type GiraRegistro = {
   updatedAt: string
 }
 
+// GiraAlerta.id === eventoId — así el doc de Firestore queda indexado 1:1 por evento.
 export type GiraAlerta = {
+  id: string
   eventoId: string
   triggeredBy: string
   triggeredAt: string
 }
 
-const GIRAS_EV_KEY  = 'giras_eventos_v1'
-const GIRAS_REG_KEY = 'giras_registros_v1'
-const GIRAS_ALT_KEY = 'giras_alertas_v1'
-
-export function getGiraEventos(): GiraEvento[] {
-  if (typeof window === 'undefined') return []
-  const s = localStorage.getItem(GIRAS_EV_KEY)
-  return s ? JSON.parse(s) : []
-}
-export function saveGiraEvento(ev: GiraEvento) {
-  const all = getGiraEventos().filter(x => x.id !== ev.id)
-  localStorage.setItem(GIRAS_EV_KEY, JSON.stringify([...all, ev]))
-}
-export function deleteGiraEvento(id: string) {
-  localStorage.setItem(GIRAS_EV_KEY, JSON.stringify(getGiraEventos().filter(x => x.id !== id)))
-}
-
-export function getGiraRegistros(eventoId: string): GiraRegistro[] {
-  if (typeof window === 'undefined') return []
-  const s = localStorage.getItem(GIRAS_REG_KEY)
-  const all: GiraRegistro[] = s ? JSON.parse(s) : []
-  return all.filter(r => r.eventoId === eventoId)
-}
-export function saveGiraRegistro(r: GiraRegistro) {
-  const s = localStorage.getItem(GIRAS_REG_KEY)
-  const all: GiraRegistro[] = s ? JSON.parse(s) : []
-  const filtered = all.filter(x => x.id !== r.id)
-  localStorage.setItem(GIRAS_REG_KEY, JSON.stringify([...filtered, r]))
-}
-
-export function getGiraAlerta(eventoId: string): GiraAlerta | null {
-  if (typeof window === 'undefined') return null
-  const s = localStorage.getItem(`${GIRAS_ALT_KEY}_${eventoId}`)
-  return s ? JSON.parse(s) : null
-}
-export function setGiraAlerta(alerta: GiraAlerta) {
-  localStorage.setItem(`${GIRAS_ALT_KEY}_${alerta.eventoId}`, JSON.stringify(alerta))
-}
-export function clearGiraAlerta(eventoId: string) {
-  localStorage.removeItem(`${GIRAS_ALT_KEY}_${eventoId}`)
-}
+// Nota: eventos, registros y alertas de Giras se guardan en Firestore
+// (colecciones 'giras_eventos', 'giras_registros', 'giras_alertas') vía
+// useFirestoreCollection directo en app/giras/page.tsx — igual que
+// reembolsos, incidencias, tareas_dia, etc. Antes vivían en localStorage
+// (por eso este archivo ya no expone funciones get/save/delete para Giras).
 
 const EMPTY_CAT: GiraCatData = { activo: false, posicion: '', desde: '', hasta: '' }
 export function emptyRegistro(eventoId: string, member: TeamMember): GiraRegistro {

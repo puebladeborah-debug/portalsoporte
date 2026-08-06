@@ -1,17 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Plus, X, Check, ChevronLeft, Trash2, AlertTriangle,
   Clock, MapPin, Bell, CheckCircle2, Calendar, FileText,
 } from 'lucide-react'
 import { useAuth } from '@/components/LoginGate'
 import {
-  getGiraEventos, saveGiraEvento, deleteGiraEvento,
-  getGiraRegistros, saveGiraRegistro,
-  getGiraAlerta, setGiraAlerta, clearGiraAlerta,
   emptyRegistro,
-  GiraEvento, GiraRegistro, GiraCatData, RecepcionDocumentos,
+  GiraEvento, GiraRegistro, GiraCatData, GiraAlerta, RecepcionDocumentos,
   getMembers, TeamMember,
 } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
@@ -33,6 +30,9 @@ const CAT_COLORS = {
   apartados:  { bg: 'rgba(251,191,36,0.1)',  border: 'rgba(251,191,36,0.35)',  text: '#fbbf24' },
   interesados:{ bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.35)',  text: '#60a5fa' },
 }
+
+// Eventos pasados se pintan de rosa claro en la lista
+const PASADO = { bg: 'rgba(236,120,160,0.08)', border: 'rgba(236,120,160,0.3)', text: '#ec78a0' }
 
 // ── Componente de una categoría por miembro ──────────────────────────────────
 
@@ -136,11 +136,16 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
   canManage: boolean
   onBack: () => void
   session: { memberId: string; memberName: string; isAdmin: boolean } | null
-  onEventoUpdate: (ev: GiraEvento) => void
+  onEventoUpdate: (id: string, patch: Partial<GiraEvento>) => void
 }) {
-  const [registros, setRegistros] = useState<GiraRegistro[]>([])
-  const [alerta, setAlerta] = useState<ReturnType<typeof getGiraAlerta>>(null)
+  const { data: registrosRaw, set: setRegistroDoc } =
+    useFirestoreCollection<GiraRegistro>('giras_registros', { where: ['eventoId', '==', evento.id] })
+  const { data: alertasRaw, set: setAlertaDoc, remove: removeAlertaDoc } =
+    useFirestoreCollection<GiraAlerta>('giras_alertas')
   const { add: addAviso } = useFirestoreCollection<AvisoEquipo>('avisos_equipo')
+
+  const alerta = alertasRaw.find(a => a.id === evento.id) ?? null
+
   const [showDisclaimer, setShowDisclaimer] = useState(true)
   const [alertaAck, setAlertaAck] = useState(false)
   const [showEditHorarios, setShowEditHorarios] = useState(false)
@@ -148,57 +153,39 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
   const [editH2, setEditH2] = useState(evento.horario2 ?? '')
 
   function saveHorarios() {
-    const updated = { ...evento, horario1: editH1, horario2: editH2.trim() || undefined }
-    saveGiraEvento(updated)
-    onEventoUpdate(updated)   // actualiza estado en el padre → re-render con nuevos datos
+    onEventoUpdate(evento.id, { horario1: editH1, horario2: editH2.trim() || undefined })
     setShowEditHorarios(false)
   }
 
   const nonAdminMembers = useMemo(() => members.filter(m => !m.isAdmin), [members])
 
-  const loadData = useCallback(async () => {
-    const regs = getGiraRegistros(evento.id)
-    const membersCopy = (await getMembers()).filter(m => !m.isAdmin)
-    const full = membersCopy.map(m =>
-      regs.find(r => r.memberId === m.id) ?? emptyRegistro(evento.id, m)
-    )
-    setRegistros(full)
-    setAlerta(getGiraAlerta(evento.id))
-  }, [evento.id]) // sin nonAdminMembers en deps para evitar bucle
-
-  useEffect(() => {
-    loadData()
-    const id = setInterval(loadData, 5000) // poll for alarm
-    return () => clearInterval(id)
-  }, [loadData])
+  const registros: GiraRegistro[] = nonAdminMembers.map(m =>
+    registrosRaw.find(r => r.memberId === m.id) ?? emptyRegistro(evento.id, m)
+  )
 
   function updateRegistro(reg: GiraRegistro) {
-    const updated = { ...reg, updatedAt: new Date().toISOString() }
-    saveGiraRegistro(updated)
-    setRegistros(prev => prev.map(r => r.id === updated.id ? updated : r))
+    const { id, ...rest } = { ...reg, updatedAt: new Date().toISOString() }
+    setRegistroDoc(id, rest)
   }
 
   function marcarCompleto(reg: GiraRegistro) {
-    const updated = {
+    updateRegistro({
       ...reg,
       actividadCompletada: !reg.actividadCompletada,
       actividadCompletadaAt: !reg.actividadCompletada ? new Date().toISOString() : undefined,
-      updatedAt: new Date().toISOString(),
-    }
-    saveGiraRegistro(updated)
-    setRegistros(prev => prev.map(r => r.id === updated.id ? updated : r))
+    })
   }
 
   function updateRecepcion(horario: 1 | 2, d: RecepcionDocumentos) {
-    const updated = horario === 1 ? { ...evento, recepcion1: d } : { ...evento, recepcion2: d }
-    saveGiraEvento(updated)
-    onEventoUpdate(updated)
+    onEventoUpdate(evento.id, horario === 1 ? { recepcion1: d } : { recepcion2: d })
   }
 
   async function triggerHojasListas() {
-    const a = { eventoId: evento.id, triggeredBy: session?.memberName ?? 'Admin', triggeredAt: new Date().toISOString() }
-    setGiraAlerta(a)
-    setAlerta(a)
+    await setAlertaDoc(evento.id, {
+      eventoId: evento.id,
+      triggeredBy: session?.memberName ?? 'Admin',
+      triggeredAt: new Date().toISOString(),
+    })
     // Notificación compartida para todo el equipo via Firestore
     await addAviso({
       author: session?.memberName ?? 'DLP',
@@ -216,12 +203,7 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
   }
 
   async function desactivarHojasListas() {
-    // Limpia la alerta local de giras
-    clearGiraAlerta(evento.id)
-    setAlerta(null)
-    // Elimina el aviso de Firestore (el de tipo hojas_listas de este evento)
-    // useFirestoreCollection no expone remove directamente aquí,
-    // lo hacemos buscando en avisos y usando la API de Firestore directamente
+    await removeAlertaDoc(evento.id)
     try {
       const { db } = await import('@/lib/firebase')
       const { collection, query, where, getDocs, deleteDoc } = await import('firebase/firestore')
@@ -474,16 +456,11 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
                     </div>
                     <div className="pt-2">
                       <button
-                        onClick={() => {
-                          const updated = {
-                            ...reg,
-                            h2actividadCompletada: !reg.h2actividadCompletada,
-                            h2actividadCompletadaAt: !reg.h2actividadCompletada ? new Date().toISOString() : undefined,
-                            updatedAt: new Date().toISOString(),
-                          }
-                          saveGiraRegistro(updated)
-                          setRegistros(prev => prev.map(r => r.id === updated.id ? updated : r))
-                        }}
+                        onClick={() => updateRegistro({
+                          ...reg,
+                          h2actividadCompletada: !reg.h2actividadCompletada,
+                          h2actividadCompletadaAt: !reg.h2actividadCompletada ? new Date().toISOString() : undefined,
+                        })}
                         className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all"
                         style={reg.h2actividadCompletada
                           ? { background: 'rgba(92,184,122,0.12)', color: '#5cb87a', border: '1px solid rgba(92,184,122,0.3)' }
@@ -503,7 +480,7 @@ function EventoDetalle({ evento, members, canManage, onBack, session, onEventoUp
         </div>
 
         {canManage && alerta && (
-          <button onClick={() => { clearGiraAlerta(evento.id); setAlerta(null) }}
+          <button onClick={desactivarHojasListas}
             className="w-full mt-4 py-2 rounded-xl text-xs text-center"
             style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
             Desactivar alarma
@@ -599,18 +576,27 @@ const BLANK_EV = { nombre: '', fecha: '', horario1: '', horario2: '' }
 
 export default function GirasPage() {
   const { session } = useAuth()
-  const [eventos, setEventos] = useState<GiraEvento[]>([])
   const [members, setMembers] = useState<TeamMember[]>([])
-  const [selected, setSelected] = useState<GiraEvento | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ ...BLANK_EV })
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const [loadingSheet, setLoadingSheet] = useState(false)
 
+  const { data: eventosRaw, loading: loadingEventos, set: setEventoDoc, update: updateEventoDoc, remove: removeEventoDoc } =
+    useFirestoreCollection<GiraEvento>('giras_eventos')
+  const { data: registrosAll, remove: removeRegistroDoc } =
+    useFirestoreCollection<GiraRegistro>('giras_registros')
+  const { data: alertasAll, remove: removeAlertaDoc } =
+    useFirestoreCollection<GiraAlerta>('giras_alertas')
+
+  const eventos = useMemo(() => [...eventosRaw].sort((a, b) => a.fecha.localeCompare(b.fecha)), [eventosRaw])
+  const selected = eventos.find(e => e.id === selectedId) ?? null
+
   const myGirasProfile = members.find(m => m.id === session?.memberId)
   const canManage = !!myGirasProfile?.isAdmin || !!myGirasProfile?.permissions.includes('giras')
 
-  // Carga eventos del sheet y los sincroniza con los guardados localmente.
+  // Carga eventos del sheet y los sincroniza con los guardados en Firestore.
   // La llave usa SOLO la fecha (no el nombre de ciudad): si renombras una fila
   // en el sheet (ej. "MEXICALI" → "#2 MEXICALI") esto actualiza el evento que
   // ya existe en vez de crear uno nuevo y duplicarlo.
@@ -620,15 +606,11 @@ export default function GirasPage() {
       const res  = await fetch('/api/giras-sheet')
       const data = await res.json()
       if (!data.eventos) return
-      let stored = getGiraEventos()
-      let changed = false
       for (const ev of data.eventos as { ciudad: string; fecha: string; lugar: string }[]) {
         const key = `sheet_${ev.fecha}`
-        const exists = stored.find(s => s.id === key)
+        const exists = eventosRaw.find(s => s.id === key)
         if (!exists) {
-          // Crear el evento con horario vacío — el usuario lo configurará
-          saveGiraEvento({
-            id: key,
+          await setEventoDoc(key, {
             nombre: ev.ciudad,
             fecha: ev.fecha,
             horario1: '',
@@ -637,60 +619,26 @@ export default function GirasPage() {
             createdBy: 'sheet',
             createdAt: new Date().toISOString(),
           })
-          changed = true
         } else if (exists.nombre !== ev.ciudad || (exists.lugar !== ev.lugar && ev.lugar)) {
-          // Actualizar nombre y/o lugar si cambiaron en el sheet
-          saveGiraEvento({ ...exists, nombre: ev.ciudad, lugar: ev.lugar || exists.lugar })
-          changed = true
+          await updateEventoDoc(key, { nombre: ev.ciudad, lugar: ev.lugar || exists.lugar })
         }
       }
-
-      // Limpieza de duplicados viejos: eventos del sheet con la misma fecha
-      // (quedaron de antes de este arreglo, cuando la llave incluía el nombre).
-      stored = getGiraEventos()
-      const porFecha = new Map<string, GiraEvento[]>()
-      for (const e of stored) {
-        if (!e.fromSheet) continue
-        const arr = porFecha.get(e.fecha) || []
-        arr.push(e)
-        porFecha.set(e.fecha, arr)
-      }
-      for (const [fecha, evs] of porFecha) {
-        if (evs.length <= 1) continue
-        const conHorario = evs.filter(e => e.horario1)
-        const keeper =
-          conHorario[0] ??
-          evs.find(e => e.id === `sheet_${fecha}`) ??
-          [...evs].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0]
-        for (const e of evs) {
-          if (e.id === keeper.id) continue
-          // Reasigna cualquier registro que apuntara al duplicado, para no perder datos ya llenados
-          const regs = getGiraRegistros(e.id)
-          for (const r of regs) saveGiraRegistro({ ...r, id: r.id.replace(e.id, keeper.id), eventoId: keeper.id })
-          deleteGiraEvento(e.id)
-          changed = true
-        }
-      }
-
-      if (changed || true) reload()
     } catch { /* sin internet o error de fetch */ }
     finally { setLoadingSheet(false) }
   }
 
-  useEffect(() => {
-    getMembers().then(setMembers)
-    reload()
-    syncSheetEventos()
-  }, [])
+  useEffect(() => { getMembers().then(setMembers) }, [])
 
-  function reload() {
-    setEventos(getGiraEventos().sort((a, b) => a.fecha.localeCompare(b.fecha)))
-  }
+  // Espera a que llegue el primer snapshot de Firestore antes de sincronizar,
+  // para no crear duplicados por comparar contra una lista todavía vacía.
+  useEffect(() => {
+    if (!loadingEventos) syncSheetEventos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingEventos])
 
   function saveEv() {
     if (!form.nombre.trim() || !form.fecha || !form.horario1) return
-    saveGiraEvento({
-      id: `gev_${Date.now()}`,
+    setEventoDoc(`gev_${Date.now()}`, {
       nombre: form.nombre.trim(),
       fecha: form.fecha,
       horario1: form.horario1,
@@ -698,9 +646,15 @@ export default function GirasPage() {
       createdBy: session?.memberId ?? '',
       createdAt: new Date().toISOString(),
     })
-    reload()
     setShowForm(false)
     setForm({ ...BLANK_EV })
+  }
+
+  async function eliminarEvento(id: string) {
+    await removeEventoDoc(id)
+    for (const r of registrosAll.filter(r => r.eventoId === id)) await removeRegistroDoc(r.id)
+    if (alertasAll.some(a => a.id === id)) await removeAlertaDoc(id)
+    setConfirmDel(null)
   }
 
   if (selected) {
@@ -709,12 +663,9 @@ export default function GirasPage() {
         evento={selected}
         members={members}
         canManage={!!canManage}
-        onBack={() => setSelected(null)}
+        onBack={() => setSelectedId(null)}
         session={session}
-        onEventoUpdate={(ev) => {
-          setSelected(ev)
-          setEventos(prev => prev.map(e => e.id === ev.id ? ev : e))
-        }}
+        onEventoUpdate={(id, patch) => updateEventoDoc(id, patch)}
       />
     )
   }
@@ -755,24 +706,26 @@ export default function GirasPage() {
         ) : (
           <div className="space-y-3">
             {eventos.map(ev => {
-              const alerta = getGiraAlerta(ev.id)
+              const alerta = alertasAll.find(a => a.id === ev.id) ?? null
               const fecha = new Date(ev.fecha + 'T12:00:00')
               const isPast = fecha < new Date()
               return (
                 <div key={ev.id} className="rounded-2xl overflow-hidden transition-all"
-                  style={{ background: S.card, border: `1px solid ${alerta ? 'rgba(251,191,36,0.4)' : S.border}`,
-                    opacity: isPast ? 0.65 : 1 }}>
-                  <button onClick={() => setSelected(ev)} className="w-full text-left px-4 py-4">
+                  style={{
+                    background: isPast ? PASADO.bg : S.card,
+                    border: `1px solid ${alerta ? 'rgba(251,191,36,0.4)' : isPast ? PASADO.border : S.border}`,
+                  }}>
+                  <button onClick={() => setSelectedId(ev.id)} className="w-full text-left px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           {alerta && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold animate-pulse"
                             style={{ background: 'rgba(220,70,70,0.15)', color: '#f87171', border: '1px solid rgba(220,70,70,0.3)' }}>🚨 Alerta</span>}
-                          {isPast && <span className="text-[9px] px-1.5 py-0.5 rounded-full"
-                            style={{ background: 'rgba(180,185,210,0.08)', color: S.silverDim }}>Pasado</span>}
+                          {isPast && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                            style={{ background: 'rgba(236,120,160,0.14)', color: PASADO.text, border: `1px solid ${PASADO.border}` }}>Pasado</span>}
                         </div>
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <p className="font-bold text-sm" style={{ color: S.silverBright }}>{ev.nombre}</p>
+                          <p className="font-bold text-sm" style={{ color: isPast ? PASADO.text : S.silverBright }}>{ev.nombre}</p>
                           {ev.fromSheet && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
                               style={{ background: 'rgba(96,165,250,0.12)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.25)' }}>
@@ -780,24 +733,24 @@ export default function GirasPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs mt-0.5" style={{ color: S.silverDim }}>
+                        <p className="text-xs mt-0.5" style={{ color: isPast ? PASADO.text : S.silverDim, opacity: isPast ? 0.85 : 1 }}>
                           {fecha.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                         </p>
                         {ev.lugar && (
-                          <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: S.silverDim }}>
+                          <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: isPast ? PASADO.text : S.silverDim, opacity: isPast ? 0.85 : 1 }}>
                             <MapPin size={9} /> {ev.lugar}
                           </p>
                         )}
                         <div className="flex items-center gap-2 mt-1.5">
                           {ev.horario1 ? (
-                            <span className="text-[10px] flex items-center gap-1" style={{ color: '#60a5fa' }}>
+                            <span className="text-[10px] flex items-center gap-1" style={{ color: isPast ? PASADO.text : '#60a5fa' }}>
                               <Clock size={10} /> {ev.horario1}
                             </span>
                           ) : canManage && (
                             <span className="text-[10px]" style={{ color: S.silverDim }}>Sin horario — toca para configurar</span>
                           )}
                           {ev.horario2 && (
-                            <span className="text-[10px] flex items-center gap-1" style={{ color: '#60a5fa' }}>
+                            <span className="text-[10px] flex items-center gap-1" style={{ color: isPast ? PASADO.text : '#60a5fa' }}>
                               <Clock size={10} /> {ev.horario2}
                             </span>
                           )}
@@ -811,7 +764,7 @@ export default function GirasPage() {
                             <Trash2 size={13} />
                           </button>
                         )}
-                        <div className="p-2 rounded-xl" style={{ color: '#60a5fa' }}>→</div>
+                        <div className="p-2 rounded-xl" style={{ color: isPast ? PASADO.text : '#60a5fa' }}>→</div>
                       </div>
                     </div>
                   </button>
@@ -834,7 +787,7 @@ export default function GirasPage() {
             <div className="flex gap-2 px-5 pb-4">
               <button onClick={() => setConfirmDel(null)} className="flex-1 py-2.5 rounded-xl text-sm"
                 style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>Cancelar</button>
-              <button onClick={() => { deleteGiraEvento(confirmDel); reload(); setConfirmDel(null) }}
+              <button onClick={() => eliminarEvento(confirmDel)}
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold"
                 style={{ background: 'rgba(220,70,70,0.12)', color: '#dc4646', border: '1px solid rgba(220,70,70,0.3)' }}>
                 Eliminar
