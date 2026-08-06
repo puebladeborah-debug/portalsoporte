@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Calendar, BarChart2, CheckCircle2, XCircle, Clock, Trophy, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { getMembers, AttendanceRecord, TeamMember } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
-import { useEffect } from 'react'
+import { useAuth } from '@/components/LoginGate'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -23,6 +24,9 @@ const DAYS_ES   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 export default function AttendanceDashboard() {
+  const { session, member } = useAuth()
+  const router = useRouter()
+
   const today = new Date()
   const [year, setYear]         = useState(today.getFullYear())
   const [month, setMonth]       = useState(today.getMonth())
@@ -34,8 +38,11 @@ export default function AttendanceDashboard() {
   const { data: records, loading } = useFirestoreCollection<AttendanceRecord>('asistencia')
 
   useEffect(() => {
+    if (session && !member?.isAdmin) router.replace('/')
     getMembers().then(setMembers)
-  }, [])
+  }, [session, member, router])
+
+  if (!member?.isAdmin) return null
 
   const monthStr     = `${year}-${String(month + 1).padStart(2, '0')}`
   const monthRecords = records.filter(r => r.date?.startsWith(monthStr))
