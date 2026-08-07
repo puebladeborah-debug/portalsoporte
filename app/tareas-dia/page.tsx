@@ -5,6 +5,7 @@ import { Plus, X, Trash2, ClipboardList, ChevronLeft, ChevronRight, Clock, UserR
 import { useAuth } from '@/components/LoginGate'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { getMembers, TeamMember } from '@/lib/teamStore'
+import type { AvisoEquipo } from '@/components/NoticesPanel'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -43,12 +44,13 @@ function fmtFecha(fecha: string) {
 }
 
 /* ─── Modal: nueva tarea ─────────────────────────────────────────────────── */
-function NuevaTareaModal({ fechaInicial, members, onClose, onSaved, addTarea }: {
+function NuevaTareaModal({ fechaInicial, members, onClose, onSaved, addTarea, addAviso }: {
   fechaInicial: string
   members: TeamMember[]
   onClose: () => void
   onSaved: () => void
   addTarea: (item: Omit<TareaDia, 'id'>) => Promise<string>
+  addAviso: (item: Omit<AvisoEquipo, 'id'>) => Promise<string>
 }) {
   const { session } = useAuth()
   const [fecha, setFecha] = useState(fechaInicial)
@@ -63,14 +65,26 @@ function NuevaTareaModal({ fechaInicial, members, onClose, onSaved, addTarea }: 
     if (!tarea.trim() || !personaId) return
     setSaving(true)
     const persona = members.find(m => m.id === personaId)
+    const personaNombre = persona ? nombreCorto(persona.name) : '—'
     await addTarea({
       fecha,
       personaId,
-      personaNombre: persona ? nombreCorto(persona.name) : '—',
+      personaNombre,
       tarea: tarea.trim(),
       horarioLimite,
       createdBy: session?.memberName || '',
       createdAt: new Date().toISOString(),
+    })
+    // Aviso privado — solo le llega a la persona asignada (y lo ve el admin, para dar seguimiento)
+    await addAviso({
+      author: session?.memberName || 'Equipo',
+      role: '',
+      message: `📌 Nueva tarea asignada — ${tarea.trim()}${horarioLimite ? ` (hasta las ${horarioLimite})` : ''}`,
+      timestamp: new Date().toISOString(),
+      priority: 'normal',
+      type: 'tarea_asignada',
+      targetMemberId: personaId,
+      targetMemberName: personaNombre,
     })
     setSaving(false)
     onSaved()
@@ -144,6 +158,7 @@ export default function TareasDiaPage() {
 
   const { data: todas, loading, add: addTarea, remove: removeTarea } =
     useFirestoreCollection<TareaDia>('tareas_dia')
+  const { add: addAviso } = useFirestoreCollection<AvisoEquipo>('avisos_equipo')
 
   const delDia = useMemo(() =>
     todas.filter(t => t.fecha === fecha).sort((a, b) => (a.horarioLimite || '').localeCompare(b.horarioLimite || '')),
@@ -279,6 +294,7 @@ export default function TareasDiaPage() {
           onClose={() => setModalAbierto(false)}
           onSaved={() => setModalAbierto(false)}
           addTarea={addTarea}
+          addAviso={addAviso}
         />
       )}
     </div>

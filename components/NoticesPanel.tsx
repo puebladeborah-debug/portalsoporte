@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Bell, X, Plus, Send, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Bell, X, Plus, Send, AlertCircle, CheckCircle2, ClipboardList, Lock } from 'lucide-react'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from './LoginGate'
 
@@ -23,8 +23,11 @@ export type AvisoEquipo = {
   message: string
   timestamp: string
   priority: 'normal' | 'urgente'
-  type?: 'normal' | 'hojas_listas'
+  type?: 'normal' | 'hojas_listas' | 'tarea_asignada'
   eventoNombre?: string
+  // Si viene lleno, el aviso es privado — solo lo ve esa persona (y el admin, para dar seguimiento)
+  targetMemberId?: string
+  targetMemberName?: string
 }
 
 export default function NoticesPanel() {
@@ -33,8 +36,10 @@ export default function NoticesPanel() {
     'avisos_equipo',
     { orderByField: 'timestamp' }
   )
+  // Avisos públicos para todos, más los dirigidos a mí — el admin ve todo, para dar seguimiento
+  const visibles = notices.filter(n => !n.targetMemberId || n.targetMemberId === member?.id || member?.isAdmin)
   // mostrar más recientes primero
-  const sorted = [...notices].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+  const sorted = [...visibles].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
 
   const [open, setOpen] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -151,23 +156,34 @@ export default function NoticesPanel() {
                 <div className="p-3 space-y-2">
                   {sorted.map(notice => {
                     const isHojas = notice.type === 'hojas_listas'
+                    const isTarea = notice.type === 'tarea_asignada'
                     return (
                       <div key={notice.id} className="rounded-xl p-3 relative"
                         style={{
                           background: isHojas
                             ? 'rgba(220,170,60,0.08)'
+                            : isTarea
+                            ? 'rgba(106,173,220,0.06)'
                             : notice.priority === 'urgente'
                             ? 'rgba(220,80,80,0.06)'
                             : 'rgba(180,185,210,0.04)',
-                          border: `1px solid ${isHojas ? 'rgba(220,170,60,0.35)' : notice.priority === 'urgente' ? 'rgba(220,80,80,0.2)' : S.border}`,
+                          border: `1px solid ${isHojas ? 'rgba(220,170,60,0.35)' : isTarea ? 'rgba(106,173,220,0.3)' : notice.priority === 'urgente' ? 'rgba(220,80,80,0.2)' : S.border}`,
                         }}>
                         <div className="flex items-start gap-2">
                           {isHojas
                             ? <CheckCircle2 size={13} style={{ color: '#dcaa3c', flexShrink: 0, marginTop: '2px' }} />
+                            : isTarea
+                            ? <ClipboardList size={13} style={{ color: '#6aaddc', flexShrink: 0, marginTop: '2px' }} />
                             : notice.priority === 'urgente'
                             ? <AlertCircle size={13} style={{ color: '#e07070', flexShrink: 0, marginTop: '2px' }} />
                             : null}
                           <div className="flex-1">
+                            {notice.targetMemberId && (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-1"
+                                style={{ background: 'rgba(180,185,210,0.1)', color: S.silver, border: `1px solid ${S.border}` }}>
+                                <Lock size={8} /> Para: {notice.targetMemberName || 'una persona'}
+                              </span>
+                            )}
                             <p className="text-xs leading-relaxed" style={{ color: S.silverBright }}>{notice.message}</p>
                             <div className="flex items-center gap-2 mt-1.5">
                               <span className="text-[10px]" style={{ color: S.silverDim }}>{notice.author.split(' · ').pop()}</span>
