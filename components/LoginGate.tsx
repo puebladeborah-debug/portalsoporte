@@ -48,33 +48,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (pathname ?? '').startsWith('/asistencia-ready')
 
   async function refresh() {
-    try {
-      const s = getSession()
-      setSessionState(s)
-      if (s) {
-        const members = await getMembers()
-        const m = members.find((x: TeamMember) => x.id === s.memberId) ?? null
-        setMember(m)
-        if (!m?.reglamentoFirmado && !hasSignedReglamento(s.memberId)) {
-          setNeedsSignature(true)
-        } else if (!m?.perfilCompleto && !m?.isAdmin) {
-          setNeedsProfile(true)
-        }
-      } else {
-        setMember(null)
-        setNeedsSignature(false)
-      }
-    } catch {
-      setSessionState(null)
+    const s = getSession()
+    setSessionState(s)
+    if (!s) {
       setMember(null)
       setNeedsSignature(false)
       setNeedsProfile(false)
+      setReady(true)
+      return
+    }
+    try {
+      const members = await getMembers()
+      const m = members.find((x: TeamMember) => x.id === s.memberId) ?? null
+      setMember(m)
+      if (!m?.reglamentoFirmado && !hasSignedReglamento(s.memberId)) {
+        setNeedsSignature(true)
+      } else if (!m?.perfilCompleto && !m?.isAdmin) {
+        setNeedsProfile(true)
+      }
+    } catch {
+      // Lectura fallida (ej. red lenta): se conserva la sesión tal cual
+      // estaba en vez de forzar de nuevo el registro de perfil/reglamento.
     } finally {
       setReady(true)
     }
   }
 
-  useEffect(() => { refresh() }, [])
+  // Espera a que Firebase confirme si ya hay una sesión de Authentication
+  // restaurada (esto tarda un instante tras un cierre/reapertura completos)
+  // antes de leer Firestore. Si se lee antes de tiempo, la consulta de
+  // "equipo" se rechaza por falta de sesión y la app cree que el perfil y
+  // el reglamento no se han completado, aunque sí lo estén.
+  useEffect(() => {
+    let unsub: (() => void) | undefined
+    ;(async () => {
+      const { onAuthStateChanged } = await import('firebase/auth')
+      const { auth } = await import('@/lib/firebase')
+      unsub = onAuthStateChanged(auth, () => { refresh() })
+    })()
+    return () => unsub?.()
+  }, [])
 
   function logout() {
     clearSession()

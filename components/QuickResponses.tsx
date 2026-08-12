@@ -106,6 +106,13 @@ const RESPUESTAS = [
     imagen: '/respuestas-imgs/idioma-en-skool.jpeg',
     contenido: 'IDIOMA EN SKOOL\n\nRespuesta: Esto pasa mucho en Skool, y no depende del grupo o del administrador, sino del idioma configurado en el navegador o dispositivo del usuario, no dentro de la plataforma.\n\nSkool detecta automáticamente el idioma según:\n1. El idioma principal del navegador (por ejemplo, Chrome, Safari, Edge, etc.).\n2. La configuración de idioma del sistema operativo (en el celular o computadora).\n3. No hay todavía una opción interna en Skool para "forzar" el idioma desde la cuenta o el grupo.\n\nCómo cambiarlo (instrucciones para tus miembros):\n\nEn computadora:\n1. Abre Skool en el navegador.\n2. Entra a Configuración del navegador → Idiomas (en Chrome: chrome://settings/languages).\n3. Asegúrate de que Español (México o España) esté arriba en la lista de idiomas preferidos.\n4. Cierra y vuelve a abrir Skool. → Ya debería mostrarse todo en español.\n\nEn celular:\n- iPhone: Ajustes → General → Idioma y región → Pon Español primero.\n- Android: Ajustes → Sistema → Idiomas y entrada → Idiomas → Mueve Español al primer lugar.\n- Luego cierra y vuelve a abrir la app de Skool o el navegador.',
   },
+  {
+    id: 'obtener-boleto',
+    titulo: 'Obtener boleto Synergy Unlimited 2026',
+    emoji: '🎟️',
+    imagen: '/respuestas-imgs/obtener-boleto.jpeg',
+    contenido: '🎟️ ¡Tus boletos para Synergy Unlimited 2026 ya están listos!\n\nIngresa con el correo con el que te registraste, consulta tus accesos y descarga tus boletos. 🚀\n\n👉 https://synergyunlimited.com/mis-boletos\n\n¡Guárdalos y prepárate para vivir Synergy Unlimited! 🔥',
+  },
 ]
 
 export default function QuickResponses() {
