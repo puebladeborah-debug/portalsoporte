@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Phone, Mail, MessageCircle, Plus, X, AlertCircle, CheckCircle2, Check,
+  Phone, Mail, MessageCircle, Plus, X, AlertCircle, CheckCircle2, Check, Pencil,
 } from 'lucide-react'
 import { useAuth } from './LoginGate'
 import { getMembers, TeamMember, EXEC_IDS } from '@/lib/teamStore'
@@ -47,34 +47,40 @@ function nombreCorto(nombre: string) {
   return nombre.includes(' · ') ? nombre.split(' · ').pop()! : nombre
 }
 
-/* ─── Modal: nuevo contacto ──────────────────────────────────────────────── */
-function NuevoContactoModal({ members, myId, onClose, onCreate }: {
+/* ─── Modal: nuevo contacto / editar contacto ────────────────────────────── */
+type DatosContacto = {
+  clienteNombre: string; fecha: string; hora: string; metodo: Metodo
+  lada?: string; telefono?: string; asignadoA: string
+}
+
+function ContactoFormModal({ members, myId, item, onClose, onSave }: {
   members: TeamMember[]
   myId: string
+  item?: ContactoCliente | null
   onClose: () => void
-  onCreate: (item: Omit<ContactoCliente, 'id'>) => Promise<void>
+  onSave: (datos: DatosContacto) => Promise<void>
 }) {
-  const [clienteNombre, setClienteNombre] = useState('')
-  const [fecha, setFecha] = useState('')
-  const [hora, setHora] = useState('')
-  const [metodo, setMetodo] = useState<Metodo>('whatsapp')
-  const [lada, setLada] = useState('+52')
-  const [telefono, setTelefono] = useState('')
-  const [asignadoA, setAsignadoA] = useState(myId)
+  const [clienteNombre, setClienteNombre] = useState(item?.clienteNombre ?? '')
+  const [fecha, setFecha] = useState(item?.fecha ?? '')
+  const [hora, setHora] = useState(item?.hora ?? '')
+  const [metodo, setMetodo] = useState<Metodo>(item?.metodo ?? 'whatsapp')
+  const [lada, setLada] = useState(item?.lada ?? '+52')
+  const [telefono, setTelefono] = useState(item?.telefono ?? '')
+  const [asignadoA, setAsignadoA] = useState(item?.asignadoA ?? myId)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const valido = clienteNombre.trim() && fecha && hora && asignadoA && (metodo !== 'llamada' || telefono.trim())
 
-  async function crear() {
+  async function guardar() {
     if (!valido) return
     setSaving(true)
     setError('')
     try {
-      await onCreate({
+      await onSave({
         clienteNombre: clienteNombre.trim(), fecha, hora, metodo,
         ...(metodo === 'llamada' ? { lada: lada.trim(), telefono: telefono.trim() } : {}),
-        asignadoA, asignadoPor: myId, estado: 'pendiente', createdAt: new Date().toISOString(),
+        asignadoA,
       })
       onClose()
     } catch (err) {
@@ -90,7 +96,9 @@ function NuevoContactoModal({ members, myId, onClose, onCreate }: {
         style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)', maxHeight: '88vh' }}>
 
         <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
-          <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>Nuevo contacto de cliente</p>
+          <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>
+            {item ? 'Editar contacto' : 'Nuevo contacto de cliente'}
+          </p>
           <button onClick={onClose} style={{ color: S.silverDim }}><X size={16} /></button>
         </div>
 
@@ -177,10 +185,10 @@ function NuevoContactoModal({ members, myId, onClose, onCreate }: {
               ].filter(Boolean).join(', ')}
             </p>
           )}
-          <button onClick={crear} disabled={!valido || saving}
+          <button onClick={guardar} disabled={!valido || saving}
             className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
             style={{ background: valido ? 'rgba(180,185,210,0.1)' : 'rgba(180,185,210,0.04)', color: valido ? S.silverBright : S.silverDim, border: `1px solid ${valido ? S.borderActive : S.border}`, opacity: saving ? 0.6 : 1 }}>
-            {saving ? 'Guardando…' : 'Crear contacto'}
+            {saving ? 'Guardando…' : item ? 'Guardar cambios' : 'Crear contacto'}
           </button>
         </div>
       </div>
@@ -189,11 +197,12 @@ function NuevoContactoModal({ members, myId, onClose, onCreate }: {
 }
 
 /* ─── Tarjeta de contacto ─────────────────────────────────────────────────── */
-function ContactoCard({ c, members, puedeCompletar, onComplete }: {
+function ContactoCard({ c, members, puedeCompletar, onComplete, onEdit }: {
   c: ContactoCliente
   members: TeamMember[]
   puedeCompletar: boolean
   onComplete: (id: string, resolucion: string) => Promise<void>
+  onEdit: () => void
 }) {
   const [showResolver, setShowResolver] = useState(false)
   const [resolucion, setResolucion] = useState('')
@@ -219,13 +228,22 @@ function ContactoCard({ c, members, puedeCompletar, onComplete }: {
       <div className="px-4 py-3">
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <p className="text-sm font-bold truncate" style={{ color: pendiente ? '#e07070' : S.silverBright }}>{c.clienteNombre}</p>
-          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0"
-            style={pendiente
-              ? { background: 'rgba(220,70,70,0.15)', color: '#e07070', border: '1px solid rgba(220,70,70,0.35)' }
-              : { background: 'rgba(100,200,120,0.12)', color: '#70c080', border: '1px solid rgba(100,200,120,0.3)' }}>
-            {pendiente ? <AlertCircle size={11} /> : <CheckCircle2 size={11} />}
-            {pendiente ? 'Pendiente' : 'Completada'}
-          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full"
+              style={pendiente
+                ? { background: 'rgba(220,70,70,0.15)', color: '#e07070', border: '1px solid rgba(220,70,70,0.35)' }
+                : { background: 'rgba(100,200,120,0.12)', color: '#70c080', border: '1px solid rgba(100,200,120,0.3)' }}>
+              {pendiente ? <AlertCircle size={11} /> : <CheckCircle2 size={11} />}
+              {pendiente ? 'Pendiente' : 'Completada'}
+            </span>
+            {pendiente && puedeCompletar && (
+              <button onClick={onEdit} title="Editar"
+                className="w-6 h-6 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(180,185,210,0.08)', color: S.silverDim, border: `1px solid ${S.border}` }}>
+                <Pencil size={11} />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3 text-[11px] mb-2 flex-wrap" style={{ color: pendiente ? 'rgba(224,112,112,0.8)' : S.silverDim }}>
@@ -278,6 +296,7 @@ export default function ContactarCliente() {
   const { session, member } = useAuth()
   const [members, setMembers] = useState<TeamMember[]>([])
   const [showModal, setShowModal] = useState(false)
+  const [editando, setEditando] = useState<ContactoCliente | null>(null)
 
   useEffect(() => { getMembers().then(setMembers) }, [])
 
@@ -318,15 +337,22 @@ export default function ContactarCliente() {
           {ordenados.map(c => (
             <ContactoCard key={c.id} c={c} members={members}
               puedeCompletar={c.asignadoA === member.id || !!member.isAdmin}
-              onComplete={completar} />
+              onComplete={completar}
+              onEdit={() => setEditando(c)} />
           ))}
         </div>
       )}
 
-      {showModal && (
-        <NuevoContactoModal members={asignables} myId={member.id}
-          onClose={() => setShowModal(false)}
-          onCreate={async item => { await add(item) }} />
+      {(showModal || editando) && (
+        <ContactoFormModal members={asignables} myId={member.id} item={editando}
+          onClose={() => { setShowModal(false); setEditando(null) }}
+          onSave={async datos => {
+            if (editando) {
+              await update(editando.id, datos)
+            } else {
+              await add({ ...datos, asignadoPor: member.id, estado: 'pendiente', createdAt: new Date().toISOString() })
+            }
+          }} />
       )}
     </div>
   )
