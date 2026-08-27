@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Phone, Mail, MessageCircle, Plus, X, AlertCircle, CheckCircle2, Check, Pencil,
+  Phone, Mail, MessageCircle, Plus, X, AlertCircle, CheckCircle2, Check, Pencil, Trash2,
 } from 'lucide-react'
 import { useAuth } from './LoginGate'
 import { getMembers, TeamMember, EXEC_IDS } from '@/lib/teamStore'
@@ -53,12 +53,13 @@ type DatosContacto = {
   lada?: string; telefono?: string; asignadoA: string
 }
 
-function ContactoFormModal({ members, myId, item, onClose, onSave }: {
+function ContactoFormModal({ members, myId, item, onClose, onSave, onDelete }: {
   members: TeamMember[]
   myId: string
   item?: ContactoCliente | null
   onClose: () => void
   onSave: (datos: DatosContacto) => Promise<void>
+  onDelete?: () => Promise<void>
 }) {
   const [clienteNombre, setClienteNombre] = useState(item?.clienteNombre ?? '')
   const [fecha, setFecha] = useState(item?.fecha ?? '')
@@ -69,6 +70,8 @@ function ContactoFormModal({ members, myId, item, onClose, onSave }: {
   const [asignadoA, setAsignadoA] = useState(item?.asignadoA ?? myId)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [confirmarBorrar, setConfirmarBorrar] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const valido = clienteNombre.trim() && fecha && hora && asignadoA && (metodo !== 'llamada' || telefono.trim())
 
@@ -86,6 +89,18 @@ function ContactoFormModal({ members, myId, item, onClose, onSave }: {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar')
       setSaving(false)
+    }
+  }
+
+  async function eliminar() {
+    if (!onDelete) return
+    setDeleting(true)
+    try {
+      await onDelete()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo eliminar')
+      setDeleting(false)
     }
   }
 
@@ -175,7 +190,7 @@ function ContactoFormModal({ members, myId, item, onClose, onSave }: {
 
         <div className="px-5 py-4" style={{ borderTop: `1px solid ${S.border}` }}>
           {error && <p className="text-[11px] font-semibold text-center mb-2" style={{ color: '#e07070' }}>{error}</p>}
-          {!valido && !error && (
+          {!valido && !error && !confirmarBorrar && (
             <p className="text-[11px] text-center mb-2" style={{ color: S.silverDim }}>
               Falta: {[
                 !clienteNombre.trim() && 'nombre del cliente',
@@ -185,11 +200,36 @@ function ContactoFormModal({ members, myId, item, onClose, onSave }: {
               ].filter(Boolean).join(', ')}
             </p>
           )}
-          <button onClick={guardar} disabled={!valido || saving}
-            className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
-            style={{ background: valido ? 'rgba(180,185,210,0.1)' : 'rgba(180,185,210,0.04)', color: valido ? S.silverBright : S.silverDim, border: `1px solid ${valido ? S.borderActive : S.border}`, opacity: saving ? 0.6 : 1 }}>
-            {saving ? 'Guardando…' : item ? 'Guardar cambios' : 'Crear contacto'}
-          </button>
+
+          {confirmarBorrar ? (
+            <div className="flex items-center gap-2">
+              <button onClick={() => setConfirmarBorrar(false)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
+                style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                Cancelar
+              </button>
+              <button onClick={eliminar} disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold"
+                style={{ background: 'rgba(220,80,80,0.15)', color: '#e07070', border: '1px solid rgba(220,80,80,0.35)', opacity: deleting ? 0.6 : 1 }}>
+                <Trash2 size={13} /> {deleting ? 'Eliminando…' : '¿Seguro? Eliminar'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {item && onDelete && (
+                <button onClick={() => setConfirmarBorrar(true)}
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all"
+                  style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.25)', background: 'rgba(220,80,80,0.06)' }}>
+                  <Trash2 size={13} /> Eliminar
+                </button>
+              )}
+              <button onClick={guardar} disabled={!valido || saving}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: valido ? 'rgba(180,185,210,0.1)' : 'rgba(180,185,210,0.04)', color: valido ? S.silverBright : S.silverDim, border: `1px solid ${valido ? S.borderActive : S.border}`, opacity: saving ? 0.6 : 1 }}>
+                {saving ? 'Guardando…' : item ? 'Guardar cambios' : 'Crear contacto'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -300,7 +340,7 @@ export default function ContactarCliente() {
 
   useEffect(() => { getMembers().then(setMembers) }, [])
 
-  const { data: contactos, add, update } = useFirestoreCollection<ContactoCliente>('contactos_cliente')
+  const { data: contactos, add, update, remove } = useFirestoreCollection<ContactoCliente>('contactos_cliente')
 
   if (!session || !member || EXEC_IDS.includes(member.id)) return null
 
@@ -352,7 +392,8 @@ export default function ContactarCliente() {
             } else {
               await add({ ...datos, asignadoPor: member.id, estado: 'pendiente', createdAt: new Date().toISOString() })
             }
-          }} />
+          }}
+          onDelete={editando ? async () => { await remove(editando.id) } : undefined} />
       )}
     </div>
   )
