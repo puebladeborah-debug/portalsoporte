@@ -17,13 +17,14 @@ const S = {
 }
 
 type Acceso = {
-  id: string; plataforma: string; clave: string; createdAt: string
+  id: string; plataforma: string; usuario: string; clave: string; createdAt: string
 }
 
-function CopyButton({ value }: { value: string }) {
+function CopyButton({ value, title }: { value: string; title?: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <button
+      title={title}
       onClick={(e) => {
         e.stopPropagation()
         navigator.clipboard.writeText(value).then(() => {
@@ -41,10 +42,11 @@ function CopyButton({ value }: { value: string }) {
 function AccesoModal({ item, onClose, onSave, onDelete }: {
   item: Acceso | null
   onClose: () => void
-  onSave: (plataforma: string, clave: string) => Promise<void>
+  onSave: (plataforma: string, usuario: string, clave: string) => Promise<void>
   onDelete?: () => Promise<void>
 }) {
   const [plataforma, setPlataforma] = useState(item?.plataforma || '')
+  const [usuario, setUsuario] = useState(item?.usuario || '')
   const [clave, setClave] = useState(item?.clave || '')
   const [verClave, setVerClave] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -52,11 +54,12 @@ function AccesoModal({ item, onClose, onSave, onDelete }: {
   const [deleting, setDeleting] = useState(false)
 
   const inputStyle = { background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }
+  const valido = plataforma.trim() && usuario.trim() && clave.trim()
 
   async function save() {
-    if (!plataforma.trim() || !clave.trim()) return
+    if (!valido) return
     setSaving(true)
-    await onSave(plataforma.trim(), clave.trim())
+    await onSave(plataforma.trim(), usuario.trim(), clave.trim())
     setSaving(false)
   }
 
@@ -85,6 +88,12 @@ function AccesoModal({ item, onClose, onSave, onDelete }: {
             <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Plataforma</p>
             <input value={plataforma} onChange={e => setPlataforma(e.target.value)}
               placeholder="ej. Skool"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Usuario</p>
+            <input value={usuario} onChange={e => setUsuario(e.target.value)}
+              placeholder="ej. soporte@synergy.com"
               className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
           </div>
           <div>
@@ -125,9 +134,9 @@ function AccesoModal({ item, onClose, onSave, onDelete }: {
                   <Trash2 size={13} /> Eliminar
                 </button>
               )}
-              <button onClick={save} disabled={!plataforma.trim() || !clave.trim() || saving}
+              <button onClick={save} disabled={!valido || saving}
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
-                style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)', opacity: !plataforma.trim() || !clave.trim() || saving ? 0.5 : 1 }}>
+                style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)', opacity: !valido || saving ? 0.5 : 1 }}>
                 {saving ? 'Guardando…' : item ? 'Guardar cambios' : 'Agregar acceso'}
               </button>
             </div>
@@ -184,11 +193,11 @@ export default function AccesosPage() {
         <AccesoModal
           item={modal === 'new' ? null : modal}
           onClose={() => setModal(null)}
-          onSave={async (plataforma, clave) => {
+          onSave={async (plataforma, usuario, clave) => {
             if (modal === 'new') {
-              await add({ plataforma, clave, createdAt: new Date().toISOString() })
+              await add({ plataforma, usuario, clave, createdAt: new Date().toISOString() })
             } else {
-              await update(modal.id, { plataforma, clave })
+              await update(modal.id, { plataforma, usuario, clave })
             }
             setModal(null)
           }}
@@ -210,16 +219,20 @@ function AccesoCard({ item, onEdit }: { item: Acceso; onEdit: () => void }) {
       <div className="flex items-center gap-2 px-4 py-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>{item.plataforma}</p>
+          {item.usuario && (
+            <p className="text-[11px] mt-0.5 truncate" style={{ color: S.silverDim }}>{item.usuario}</p>
+          )}
           <p className="text-[11px] mt-0.5 font-mono" style={{ color: S.silverDim }}>
             {verClave ? item.clave : '•'.repeat(Math.max(item.clave.length, 8))}
           </p>
         </div>
+        {item.usuario && <CopyButton value={item.usuario} title="Copiar usuario" />}
         <button onClick={() => setVerClave(v => !v)}
           className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
           style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
           {verClave ? <EyeOff size={14} /> : <Eye size={14} />}
         </button>
-        <CopyButton value={item.clave} />
+        <CopyButton value={item.clave} title="Copiar contraseña" />
         <button onClick={onEdit}
           className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
           style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
