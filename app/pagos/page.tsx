@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import {
   Copy, Check, Smartphone, Building2, CreditCard, Hash,
   MapPin, Mail, FileText, Landmark, ExternalLink, ChevronDown, ChevronUp, Link2,
-  Calculator, ChevronRight, Search, X as XIcon,
+  Calculator, ChevronRight, Search, X as XIcon, Plus, Trash2, Pencil,
 } from 'lucide-react'
+import { useFirestoreCollection } from '@/lib/firestoreCollection'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -827,6 +828,221 @@ function Calculadora({ nombre, multiplicador, accentColor, presets }: {
   )
 }
 
+/* ─── Enlaces de pago agregados manualmente por el equipo ───────────────── */
+type EnlacePago = {
+  id: string; nombre: string; plataforma: string; url: string; createdAt: string
+}
+
+function EnlacePagoModal({ item, onClose, onSave, onDelete }: {
+  item: EnlacePago | null
+  onClose: () => void
+  onSave: (nombre: string, plataforma: string, url: string) => Promise<void>
+  onDelete?: () => Promise<void>
+}) {
+  const [nombre, setNombre] = useState(item?.nombre || '')
+  const [plataforma, setPlataforma] = useState(item?.plataforma || '')
+  const [url, setUrl] = useState(item?.url || '')
+  const [saving, setSaving] = useState(false)
+  const [confirmarBorrar, setConfirmarBorrar] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const inputStyle = { background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }
+  const valido = nombre.trim() && plataforma.trim() && url.trim()
+
+  async function save() {
+    if (!valido) return
+    setSaving(true)
+    await onSave(nombre.trim(), plataforma.trim(), url.trim())
+    setSaving(false)
+  }
+
+  async function eliminar() {
+    if (!onDelete) return
+    setDeleting(true)
+    await onDelete()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)' }}>
+
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
+          <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>
+            {item ? 'Editar enlace de pago' : 'Nuevo enlace de pago'}
+          </p>
+          <button onClick={onClose} style={{ color: S.silverDim }}><XIcon size={16} /></button>
+        </div>
+
+        <div className="px-5 py-5 space-y-4">
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Nombre del enlace</p>
+            <input value={nombre} onChange={e => setNombre(e.target.value)}
+              placeholder="ej. Apartado 500 USD"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Plataforma de pago</p>
+            <input value={plataforma} onChange={e => setPlataforma(e.target.value)}
+              placeholder="ej. Stripe, Hotmart, Mercado Pago…"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Enlace</p>
+            <input value={url} onChange={e => setUrl(e.target.value)}
+              placeholder="https://…"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+        </div>
+
+        <div className="px-5 py-4" style={{ borderTop: `1px solid ${S.border}` }}>
+          {confirmarBorrar ? (
+            <div className="flex items-center gap-2">
+              <button onClick={() => setConfirmarBorrar(false)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
+                style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                Cancelar
+              </button>
+              <button onClick={eliminar} disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold"
+                style={{ background: 'rgba(220,80,80,0.15)', color: '#e07070', border: '1px solid rgba(220,80,80,0.35)', opacity: deleting ? 0.6 : 1 }}>
+                <Trash2 size={13} /> {deleting ? 'Eliminando…' : '¿Seguro? Eliminar'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {item && onDelete && (
+                <button onClick={() => setConfirmarBorrar(true)}
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all"
+                  style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.25)', background: 'rgba(220,80,80,0.06)' }}>
+                  <Trash2 size={13} /> Eliminar
+                </button>
+              )}
+              <button onClick={save} disabled={!valido || saving}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)', opacity: !valido || saving ? 0.5 : 1 }}>
+                {saving ? 'Guardando…' : item ? 'Guardar cambios' : 'Agregar enlace'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EnlacePagoCard({ item, onEdit }: { item: EnlacePago; onEdit: () => void }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    navigator.clipboard.writeText(item.url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+  return (
+    <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+      style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }}>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium truncate" style={{ color: S.silver }}>{item.nombre}</p>
+        <p className="text-[10px] truncate mt-0.5" style={{ color: S.silverDim }}>{item.url}</p>
+      </div>
+      <span className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+        style={{ background: 'rgba(70,140,220,0.1)', color: '#6aaddc', border: '1px solid rgba(70,140,220,0.25)', whiteSpace: 'nowrap' }}>
+        {item.plataforma}
+      </span>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <button onClick={copy}
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+          style={{ background: copied ? 'rgba(80,200,120,0.12)' : 'rgba(180,185,210,0.06)', border: `1px solid ${copied ? 'rgba(80,200,120,0.3)' : S.border}`, color: copied ? '#60c878' : S.silverDim }}
+          title="Copiar enlace">
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+        </button>
+        <a href={item.url} target="_blank" rel="noopener noreferrer"
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+          style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}
+          title="Abrir enlace">
+          <ExternalLink size={12} />
+        </a>
+        <button onClick={onEdit}
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+          style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}
+          title="Editar">
+          <Pencil size={12} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function EnlacesManualesSection() {
+  const { data, loading, add, update, remove } = useFirestoreCollection<EnlacePago>('enlaces_pago_manual')
+  const [modal, setModal] = useState<'new' | EnlacePago | null>(null)
+  const [open, setOpen] = useState(true)
+
+  const items = [...data].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.borderLight}` }}>
+      <button onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-4 px-5 py-4 transition-all"
+        style={{ borderBottom: open ? `1px solid ${S.border}` : 'none', background: 'rgba(180,185,210,0.02)' }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'rgba(90,160,90,0.12)', border: '1px solid rgba(90,160,90,0.28)' }}>
+          <Link2 size={16} style={{ color: '#70c878' }} />
+        </div>
+        <div className="flex-1 text-left">
+          <h2 className="text-base font-bold" style={{ color: S.silverBright }}>Enlaces agregados por el equipo</h2>
+          <p className="text-xs mt-0.5" style={{ color: S.silverDim }}>{items.length} enlaces</p>
+        </div>
+        {open ? <ChevronUp size={16} style={{ color: S.silverDim }} /> : <ChevronDown size={16} style={{ color: S.silverDim }} />}
+      </button>
+
+      {open && (
+        <div className="px-4 py-4 space-y-3">
+          <button onClick={() => setModal('new')}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all"
+            style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)' }}>
+            <Plus size={14} /> Agregar enlace de pago
+          </button>
+
+          {loading ? (
+            <p className="text-center text-xs py-4" style={{ color: S.silverDim }}>Cargando…</p>
+          ) : items.length === 0 ? (
+            <p className="text-center text-xs py-4" style={{ color: S.silverDim }}>Sin enlaces agregados todavía</p>
+          ) : (
+            <div className="space-y-1.5">
+              {items.map(item => (
+                <EnlacePagoCard key={item.id} item={item} onEdit={() => setModal(item)} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {modal && (
+        <EnlacePagoModal
+          item={modal === 'new' ? null : modal}
+          onClose={() => setModal(null)}
+          onSave={async (nombre, plataforma, url) => {
+            if (modal === 'new') {
+              await add({ nombre, plataforma, url, createdAt: new Date().toISOString() })
+            } else {
+              await update(modal.id, { nombre, plataforma, url })
+            }
+            setModal(null)
+          }}
+          onDelete={modal !== 'new' ? async () => {
+            await remove((modal as EnlacePago).id)
+            setModal(null)
+          } : undefined}
+        />
+      )}
+    </div>
+  )
+}
+
 /* ─── Página principal ───────────────────────────────────────────────────── */
 export default function PagosPage() {
   const [buscar, setBuscar] = useState(false)
@@ -911,6 +1127,9 @@ export default function PagosPage() {
             <span className="text-[10px] tracking-widest uppercase" style={{ color: S.silverDim }}>Links de pago</span>
             <div className="flex-1 h-px" style={{ background: S.border }} />
           </div>
+
+          {/* ── Enlaces de pago agregados manualmente por el equipo ── */}
+          <EnlacesManualesSection />
 
           {/* ── Black Access / Bootcamp ── */}
           <LinkSection
