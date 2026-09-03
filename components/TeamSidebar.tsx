@@ -194,8 +194,27 @@ export default function TeamSidebar() {
     }
   }
 
-  async function addMember() {
+  const [posibleDuplicado, setPosibleDuplicado] = useState<{ member: TeamMember; motivo: string } | null>(null)
+
+  function buscarDuplicado(): { member: TeamMember; motivo: string } | null {
+    const nombre = newName.trim().toLowerCase()
+    const uname = (newUsername.trim() || newName.trim().split(' ')[0].toLowerCase()).toLowerCase()
+    const email = newEmail.trim().toLowerCase()
+    for (const m of members) {
+      const mNombre = (m.name.includes(' · ') ? m.name.split(' · ').pop()! : m.name).trim().toLowerCase()
+      if (mNombre === nombre) return { member: m, motivo: 'el mismo nombre' }
+      if (m.username.toLowerCase() === uname) return { member: m, motivo: 'el mismo usuario' }
+      if (email && m.email.toLowerCase() === email) return { member: m, motivo: 'el mismo correo' }
+    }
+    return null
+  }
+
+  async function addMember(forzar = false) {
     if (!newName.trim() || !newRole.trim() || !newEmail.trim() || savingTeam) return
+    if (!forzar) {
+      const dup = buscarDuplicado()
+      if (dup) { setPosibleDuplicado(dup); return }
+    }
     const m: TeamMember = {
       id: `m_${Date.now()}`, name: newName.trim(), role: newRole.trim(),
       initial: newName.trim()[0].toUpperCase(), isAdmin: false,
@@ -207,6 +226,7 @@ export default function TeamSidebar() {
     const ok = await persistMembers(fresh => [...fresh, m])
     if (!ok) return
     setChecks(prev => ({ ...prev, [m.id]: new Array(m.tasks.length).fill(false) }))
+    setPosibleDuplicado(null)
     setNewEmail('')
     setNewName(''); setNewRole(''); setNewUsername(''); setNewPassword(''); setNewTasks(''); setShowAddForm(false)
   }
@@ -938,7 +958,7 @@ export default function TeamSidebar() {
             <Users size={13} style={{ color: S.silver }} />
             <p className="text-xs font-bold tracking-[0.15em] uppercase flex-1" style={{ color: S.silverDim }}>Equipo</p>
             {adminMode && (
-              <button onClick={() => setShowAddForm(!showAddForm)} className="p-1 rounded-lg"
+              <button onClick={() => { setShowAddForm(!showAddForm); setPosibleDuplicado(null) }} className="p-1 rounded-lg"
                 style={{ color: S.silver, border: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.05)' }}>
                 <Plus size={12} />
               </button>
@@ -969,7 +989,7 @@ export default function TeamSidebar() {
                 { v: newPassword, s: setNewPassword, ph: 'Contraseña', t: 'password' },
                 { v: newEmail, s: setNewEmail, ph: 'Correo registrado en Firebase' },
               ].map((f, i) => (
-                <input key={i} value={f.v} onChange={e => f.s(e.target.value)} placeholder={f.ph}
+                <input key={i} value={f.v} onChange={e => { f.s(e.target.value); setPosibleDuplicado(null) }} placeholder={f.ph}
                   type={(f as { t?: string }).t || 'text'}
                   className="w-full text-xs p-2 rounded-lg outline-none mb-1.5"
                   style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
@@ -978,12 +998,22 @@ export default function TeamSidebar() {
                 placeholder={'Tarea 1\nTarea 2'} rows={3}
                 className="w-full text-xs p-2 rounded-lg outline-none resize-none mb-1.5"
                 style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+
+              {posibleDuplicado && (
+                <div className="mb-1.5 px-2.5 py-2 rounded-lg text-[10px] leading-relaxed"
+                  style={{ background: 'rgba(220,150,50,0.08)', border: '1px solid rgba(220,150,50,0.3)', color: '#d4a050' }}>
+                  Ya existe <strong>{nombreCorto(posibleDuplicado.member.name)}</strong> en el equipo con {posibleDuplicado.motivo}. ¿Es una persona distinta?
+                </div>
+              )}
+
               <div className="flex gap-1.5">
-                <button onClick={() => setShowAddForm(false)} className="flex-1 py-1.5 rounded-lg text-[10px]"
+                <button onClick={() => { setShowAddForm(false); setPosibleDuplicado(null) }} className="flex-1 py-1.5 rounded-lg text-[10px]"
                   style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>Cancelar</button>
-                <button onClick={addMember} disabled={savingTeam} className="flex-1 py-1.5 rounded-lg text-[10px] font-bold"
-                  style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}`, opacity: savingTeam ? 0.6 : 1 }}>
-                  {savingTeam ? 'Agregando…' : 'Agregar'}
+                <button onClick={() => addMember(!!posibleDuplicado)} disabled={savingTeam} className="flex-1 py-1.5 rounded-lg text-[10px] font-bold"
+                  style={posibleDuplicado
+                    ? { background: 'rgba(220,150,50,0.12)', color: '#d4a050', border: '1px solid rgba(220,150,50,0.35)', opacity: savingTeam ? 0.6 : 1 }
+                    : { background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}`, opacity: savingTeam ? 0.6 : 1 }}>
+                  {savingTeam ? 'Agregando…' : posibleDuplicado ? 'Sí, son distintas — agregar' : 'Agregar'}
                 </button>
               </div>
             </div>
