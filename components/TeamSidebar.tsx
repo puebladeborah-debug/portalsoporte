@@ -6,7 +6,7 @@ import {
   QrCode, Trash2, Pencil, Check, Zap, Bell, KeyRound, Sun,
 } from 'lucide-react'
 import QRCode from 'qrcode'
-import { getMembers, updateMember, addMemberDoc, deleteMemberDoc, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, EXEC_IDS } from '@/lib/teamStore'
+import { getMembers, updateMember, addMemberDoc, deleteMemberDoc, createAuthAccount, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, EXEC_IDS } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from './LoginGate'
 import { auth, db } from '@/lib/firebase'
@@ -223,8 +223,38 @@ export default function TeamSidebar() {
       email: newEmail.trim(),
       permissions: newPerms, tasks: newTasks.split('\n').map(t => t.trim()).filter(Boolean),
     }
-    const ok = await runTeamOp(prev => [...prev, m], () => addMemberDoc(m))
-    if (!ok) return
+
+    setSavingTeam(true)
+    setTeamError('')
+    try {
+      // Sin esto, la persona queda guardada en Equipo pero JAMÁS puede
+      // iniciar sesión — Firebase nunca se entera de que esa contraseña
+      // existe si solo se guarda en Firestore.
+      await createAuthAccount(m.email, m.password)
+    } catch (err) {
+      const code = (err as { code?: string })?.code
+      if (code !== 'auth/email-already-in-use') {
+        setSavingTeam(false)
+        setTeamError(
+          code === 'auth/invalid-email' ? 'El correo no es válido' :
+          code === 'auth/weak-password' ? 'La contraseña debe tener al menos 6 caracteres' :
+          'No se pudo crear el acceso de inicio de sesión para esta persona'
+        )
+        return
+      }
+      // Ya existe una cuenta con ese correo — seguimos, puede que ya tenga acceso.
+    }
+
+    setMembers(prev => [...prev, m])
+    try {
+      await addMemberDoc(m)
+    } catch (err) {
+      setMembers(prev => prev.filter(x => x.id !== m.id))
+      setTeamError(err instanceof Error ? `No se pudo guardar: ${err.message}` : 'No se pudo guardar el cambio')
+      setSavingTeam(false)
+      return
+    }
+    setSavingTeam(false)
     setChecks(prev => ({ ...prev, [m.id]: new Array(m.tasks.length).fill(false) }))
     setPosibleDuplicado(null)
     setNewEmail('')
@@ -276,9 +306,33 @@ export default function TeamSidebar() {
     }), 5000)
   }
 
+  const [creandoAcceso, setCreandoAcceso] = useState<'idle' | 'creating' | 'ok' | 'error'>('idle')
+  const [accesoError, setAccesoError] = useState('')
+
+  async function crearAccesoLogin() {
+    if (!editForm.email.trim() || !editForm.password.trim()) return
+    setCreandoAcceso('creating')
+    setAccesoError('')
+    try {
+      await createAuthAccount(editForm.email.trim(), editForm.password.trim())
+      setCreandoAcceso('ok')
+    } catch (err) {
+      const code = (err as { code?: string })?.code
+      setAccesoError(
+        code === 'auth/email-already-in-use' ? 'Ya existe una cuenta con este correo — el acceso ya debería funcionar con su contraseña actual' :
+        code === 'auth/invalid-email' ? 'El correo no es válido' :
+        code === 'auth/weak-password' ? 'La contraseña debe tener al menos 6 caracteres' :
+        'No se pudo crear el acceso'
+      )
+      setCreandoAcceso('error')
+    }
+  }
+
   function openEditMember(member: TeamMember) {
     setOpen(null)           // cierra el panel del sidebar en móvil
     setEditingMember(member)
+    setCreandoAcceso('idle')
+    setAccesoError('')
     setEditForm({
       name: member.name.includes(' · ') ? member.name.split(' · ')[1] : member.name,
       role: member.role,
@@ -780,6 +834,24 @@ export default function TeamSidebar() {
                   />
                 </div>
               ))}
+
+              {/* Crear/reparar acceso de inicio de sesión — necesario si a la
+                  persona "usuario o contraseña incorrectos" al querer entrar */}
+              <div>
+                <button onClick={crearAccesoLogin} disabled={creandoAcceso === 'creating' || !editForm.email.trim() || !editForm.password.trim()}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold"
+                  style={{ background: 'rgba(106,173,220,0.08)', color: '#6aaddc', border: '1px solid rgba(106,173,220,0.25)', opacity: creandoAcceso === 'creating' ? 0.6 : 1 }}>
+                  <KeyRound size={12} /> {creandoAcceso === 'creating' ? 'Creando acceso…' : 'Crear / reparar acceso de inicio de sesión'}
+                </button>
+                {creandoAcceso === 'ok' && (
+                  <p className="text-[10px] text-center mt-1" style={{ color: '#70c080' }}>
+                    ✓ Acceso creado — ya puede iniciar sesión con este correo y contraseña
+                  </p>
+                )}
+                {creandoAcceso === 'error' && (
+                  <p className="text-[10px] text-center mt-1" style={{ color: '#e07070' }}>{accesoError}</p>
+                )}
+              </div>
 
               {/* Administrador */}
               <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"

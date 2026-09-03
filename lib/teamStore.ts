@@ -438,6 +438,30 @@ export async function login(username: string, password: string): Promise<TeamMem
   return members.find(m => m.username.toLowerCase() === uname) ?? null
 }
 
+// Crea la cuenta real de Firebase Authentication para una persona nueva.
+// Sin esto, agregar a alguien en Equipo solo guarda su usuario/contraseña
+// en Firestore como referencia — Firebase nunca se entera de que esa
+// contraseña existe, y el login le da "Usuario o contraseña incorrectos"
+// para siempre, aunque los datos capturados sean correctos.
+// Se usa una app secundaria de Firebase para crear la cuenta sin cerrar
+// la sesión de quien está dando de alta a la persona (crear un usuario
+// con el SDK del cliente inicia sesión automáticamente como ese usuario
+// en la instancia donde se crea).
+export async function createAuthAccount(email: string, password: string): Promise<void> {
+  const { initializeApp, deleteApp } = await import('firebase/app')
+  const { getAuth, createUserWithEmailAndPassword, signOut } = await import('firebase/auth')
+  const { firebaseApp } = await import('./firebase')
+
+  const secondaryApp = initializeApp(firebaseApp.options, `secondary-${Date.now()}`)
+  const secondaryAuth = getAuth(secondaryApp)
+  try {
+    await createUserWithEmailAndPassword(secondaryAuth, email, password)
+  } finally {
+    await signOut(secondaryAuth).catch(() => {})
+    await deleteApp(secondaryApp).catch(() => {})
+  }
+}
+
 export function getSession(): Session | null {
   if (typeof window === 'undefined') return null
   const s = localStorage.getItem(SESSION_KEY)
