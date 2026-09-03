@@ -17,6 +17,14 @@ const S = {
 
 const SIN_PAIS = 'Sin país'
 
+// El sheet usa abreviaturas que no siempre son el nombre más reconocible
+// para el título del grupo — se traducen solo para mostrar, la
+// agrupación sigue usando el valor original del sheet.
+const PAIS_LABELS: Record<string, string> = { EUA: 'USA' }
+function labelPais(pais: string) {
+  return PAIS_LABELS[pais.toUpperCase()] ?? pais
+}
+
 type Comunidad = {
   id: string; ciudad: string; url: string; pais?: string; createdAt: string
 }
@@ -28,7 +36,7 @@ type ComunidadSheet = { id: string; pais: string; ciudad: string; url: string; f
 type ComunidadItem = (Comunidad & { fromSheet?: false }) | ComunidadSheet
 
 function buildMensaje(ciudad: string, url: string, pais?: string) {
-  const lugar = pais && pais !== SIN_PAIS ? `${ciudad}, ${pais}` : ciudad
+  const lugar = pais && pais !== SIN_PAIS ? `${ciudad}, ${labelPais(pais)}` : ciudad
   return `¡Claro! 🙌 Te comparto el grupo oficial de la comunidad de WhatsApp de *${lugar}*.\n\n🔗 Enlace de acceso: ${url}\n\nTe recomendamos unirte para mantenerte al tanto de avisos, novedades e información importante de la comunidad.`
 }
 
@@ -289,7 +297,7 @@ export default function ComunidadesPage() {
                     className="w-full flex items-center gap-2 px-4 py-3 transition-all"
                     style={{ borderBottom: abierto ? `1px solid ${S.border}` : 'none', background: 'rgba(180,185,210,0.02)' }}>
                     <p className="flex-1 text-left text-xs font-bold tracking-widest uppercase" style={{ color: S.silver }}>
-                      {pais}
+                      {labelPais(pais)}
                     </p>
                     <span className="text-[10px]" style={{ color: S.silverDim }}>{lista.length}</span>
                     {abierto ? <ChevronUp size={14} style={{ color: S.silverDim }} /> : <ChevronDown size={14} style={{ color: S.silverDim }} />}
