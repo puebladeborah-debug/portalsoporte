@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, X, Copy, Check, ExternalLink, Trash2, Pencil, Send, Users } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, X, Copy, Check, ExternalLink, Trash2, Pencil, Send, Users, RefreshCw, Sheet as SheetIcon } from 'lucide-react'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 
 const S = {
@@ -19,8 +19,15 @@ type Comunidad = {
   id: string; ciudad: string; url: string; createdAt: string
 }
 
-function buildMensaje(ciudad: string, url: string) {
-  return `¡Claro! 🙌 Te comparto el grupo oficial de la comunidad de WhatsApp de *${ciudad}*.\n\n🔗 Enlace de acceso: ${url}\n\nTe recomendamos unirte para mantenerte al tanto de avisos, novedades e información importante de la comunidad.`
+// Comunidad tal como viene del sheet — de solo lectura, cualquier cambio
+// (incluido el enlace) debe hacerse en el sheet y se refleja solo.
+type ComunidadSheet = { id: string; pais: string; ciudad: string; url: string; fromSheet: true }
+
+type ComunidadItem = (Comunidad & { fromSheet?: false }) | ComunidadSheet
+
+function buildMensaje(ciudad: string, url: string, pais?: string) {
+  const lugar = pais ? `${ciudad}, ${pais}` : ciudad
+  return `¡Claro! 🙌 Te comparto el grupo oficial de la comunidad de WhatsApp de *${lugar}*.\n\n🔗 Enlace de acceso: ${url}\n\nTe recomendamos unirte para mantenerte al tanto de avisos, novedades e información importante de la comunidad.`
 }
 
 function CopyButton({ value }: { value: string }) {
@@ -108,8 +115,8 @@ function ComunidadModal({ item, onClose, onSave, onDelete }: {
   )
 }
 
-function MensajeModal({ item, onClose }: { item: Comunidad; onClose: () => void }) {
-  const mensaje = buildMensaje(item.ciudad, item.url)
+function MensajeModal({ item, onClose }: { item: ComunidadItem; onClose: () => void }) {
+  const mensaje = buildMensaje(item.ciudad, item.url, item.fromSheet ? item.pais : undefined)
   const [copied, setCopied] = useState(false)
 
   function copy() {
@@ -159,20 +166,58 @@ function MensajeModal({ item, onClose }: { item: Comunidad; onClose: () => void 
 export default function ComunidadesPage() {
   const { data, loading, add, update, remove } = useFirestoreCollection<Comunidad>('whatsapp_comunidades')
   const [modal, setModal] = useState<'new' | Comunidad | null>(null)
-  const [mensajeItem, setMensajeItem] = useState<Comunidad | null>(null)
+  const [mensajeItem, setMensajeItem] = useState<ComunidadItem | null>(null)
 
-  const items = [...data].sort((a, b) => a.ciudad.localeCompare(b.ciudad, 'es'))
+  const [sheetItems, setSheetItems] = useState<ComunidadSheet[]>([])
+  const [loadingSheet, setLoadingSheet] = useState(true)
+  const [sheetError, setSheetError] = useState('')
+
+  async function cargarSheet() {
+    setLoadingSheet(true)
+    setSheetError('')
+    try {
+      const res = await fetch('/api/comunidades-sheet', { cache: 'no-store' })
+      const json = await res.json()
+      if (json.error) throw new Error(json.error)
+      const list: { pais: string; ciudad: string; url: string }[] = json.comunidades || []
+      setSheetItems(list.map((c, i) => ({ id: `sheet-${i}`, pais: c.pais, ciudad: c.ciudad, url: c.url, fromSheet: true as const })))
+    } catch (err) {
+      setSheetError(err instanceof Error ? err.message : 'No se pudo cargar el sheet')
+    } finally {
+      setLoadingSheet(false)
+    }
+  }
+
+  useEffect(() => { cargarSheet() }, [])
+
+  const manuales: ComunidadItem[] = data.map(c => ({ ...c, fromSheet: false as const }))
+  const items = [...sheetItems, ...manuales].sort((a, b) => a.ciudad.localeCompare(b.ciudad, 'es'))
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>
       <div className="max-w-2xl mx-auto px-4 py-6">
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: S.silverBright }}>Comunidades WhatsApp</h1>
-          <p className="text-sm mt-1" style={{ color: S.silverDim }}>
-            Grupos oficiales de WhatsApp por ciudad
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: S.silverBright }}>Comunidades WhatsApp</h1>
+            <p className="text-sm mt-1" style={{ color: S.silverDim }}>
+              Grupos oficiales de WhatsApp por ciudad
+            </p>
+          </div>
+          <button onClick={cargarSheet} disabled={loadingSheet}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold"
+            style={{ background: 'rgba(180,185,210,0.06)', color: S.silverDim, border: `1px solid ${S.border}`, opacity: loadingSheet ? 0.6 : 1 }}
+            title="Volver a leer el sheet">
+            <RefreshCw size={12} className={loadingSheet ? 'animate-spin' : ''} /> Actualizar
+          </button>
         </div>
+
+        {sheetError && (
+          <div className="mb-4 px-3 py-2 rounded-xl text-[11px] leading-relaxed"
+            style={{ background: 'rgba(220,80,80,0.08)', border: '1px solid rgba(220,80,80,0.25)', color: '#e07070' }}>
+            No se pudo leer el sheet de comunidades: {sheetError}
+          </div>
+        )}
 
         <button onClick={() => setModal('new')}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl mb-5 text-sm font-bold transition-all"
@@ -180,7 +225,7 @@ export default function ComunidadesPage() {
           <Plus size={16} /> Agregar comunidad
         </button>
 
-        {loading ? (
+        {loading || loadingSheet ? (
           <p className="text-center text-sm py-10" style={{ color: S.silverDim }}>Cargando…</p>
         ) : items.length === 0 ? (
           <div className="text-center py-12" style={{ color: S.silverDim }}>
@@ -191,7 +236,7 @@ export default function ComunidadesPage() {
           <div className="space-y-2.5">
             {items.map(item => (
               <ComunidadCard key={item.id} item={item}
-                onEdit={() => setModal(item)}
+                onEdit={item.fromSheet ? undefined : () => setModal(item)}
                 onMensaje={() => setMensajeItem(item)} />
             ))}
           </div>
@@ -224,12 +269,23 @@ export default function ComunidadesPage() {
   )
 }
 
-function ComunidadCard({ item, onEdit, onMensaje }: { item: Comunidad; onEdit: () => void; onMensaje: () => void }) {
+function ComunidadCard({ item, onEdit, onMensaje }: { item: ComunidadItem; onEdit?: () => void; onMensaje: () => void }) {
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.border}` }}>
       <div className="flex items-center gap-2 px-4 py-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>{item.ciudad}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>
+              {item.ciudad}{item.fromSheet && item.pais ? `, ${item.pais}` : ''}
+            </p>
+            {item.fromSheet && (
+              <span className="flex-shrink-0 flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                style={{ background: 'rgba(70,140,220,0.1)', color: '#6aaddc', border: '1px solid rgba(70,140,220,0.25)' }}
+                title="Viene del sheet — para cambiarlo, edita el sheet">
+                <SheetIcon size={9} /> Sheet
+              </span>
+            )}
+          </div>
           <a href={item.url} target="_blank" rel="noopener noreferrer"
             className="text-[11px] truncate block mt-0.5 hover:underline"
             style={{ color: S.silverDim }}>
@@ -248,11 +304,13 @@ function ComunidadCard({ item, onEdit, onMensaje }: { item: Comunidad; onEdit: (
           style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
           <ExternalLink size={14} />
         </a>
-        <button onClick={onEdit}
-          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-          style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
-          <Pencil size={13} />
-        </button>
+        {onEdit && (
+          <button onClick={onEdit}
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+            style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
+            <Pencil size={13} />
+          </button>
+        )}
       </div>
     </div>
   )
