@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { User, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react'
-import { updateMember } from '@/lib/teamStore'
+import { updateMember, getMemberFromServer } from '@/lib/teamStore'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -46,6 +46,14 @@ export default function ProfileSetupGate({ memberId, memberName, onDone }: Props
     setError('')
     try {
       await updateMember(memberId, { ...form, perfilCompleto: true })
+      // Confirma contra el servidor (no la caché local) que sí quedó
+      // guardado antes de decir "listo" — si la conexión falla justo
+      // después de encolar el cambio, updateMember puede resolver sin
+      // error aunque el dato nunca haya llegado a Firestore.
+      const confirmado = await getMemberFromServer(memberId)
+      if (!confirmado?.perfilCompleto) {
+        throw new Error('No se pudo confirmar el guardado en el servidor. Revisa tu conexión e intenta de nuevo.')
+      }
       setDone(true)
       setTimeout(onDone, 1800)
     } catch (err) {

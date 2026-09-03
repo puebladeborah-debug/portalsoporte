@@ -363,6 +363,18 @@ export async function updateMember(
   await updateDoc(doc(db, EQUIPO_COLLECTION, memberId), fields as Record<string, unknown>)
 }
 
+// Lee el registro DIRECTO del servidor (ignora cualquier caché local) para
+// poder confirmar que un guardado realmente quedó en Firestore y no solo
+// en el dispositivo. Se usa después de completar perfil/reglamento para
+// no darle al usuario un "listo" falso si el guardado no llegó a persistir
+// (ej. por una conexión que se cae justo después de encolar el cambio).
+export async function getMemberFromServer(memberId: string): Promise<TeamMember | null> {
+  const { doc, getDocFromServer } = await import('firebase/firestore')
+  const { db } = await import('./firebase')
+  const snap = await getDocFromServer(doc(db, EQUIPO_COLLECTION, memberId))
+  return snap.exists() ? (snap.data() as TeamMember) : null
+}
+
 // Agrega UNA persona nueva sin tocar el registro de nadie más.
 export async function addMemberDoc(m: TeamMember) {
   const { doc, writeBatch } = await import('firebase/firestore')

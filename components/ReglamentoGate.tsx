@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { PenLine, MessageSquare, RotateCcw, CheckCircle2, AlertCircle, FileText } from 'lucide-react'
-import { saveSignature, ReglamentoSignature, getMembers, updateMember } from '@/lib/teamStore'
+import { saveSignature, ReglamentoSignature, getMembers, updateMember, getMemberFromServer } from '@/lib/teamStore'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -233,6 +233,12 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
       // un guardado del perfil u otro cambio de equipo que ocurra casi al
       // mismo tiempo, porque solo toca estos dos campos en este registro.
       await updateMember(memberId, { reglamentoFirmado: true, reglamentoFirmadoAt: new Date().toISOString() })
+      // Confirma contra el servidor (no la caché local) que sí quedó
+      // guardado antes de decir "listo".
+      const confirmado = await getMemberFromServer(memberId)
+      if (!confirmado?.reglamentoFirmado) {
+        throw new Error('No se pudo confirmar el guardado en el servidor. Revisa tu conexión e intenta de nuevo.')
+      }
       setSigned(true)
       setTimeout(onDone, 2000)
     } catch (err) {
