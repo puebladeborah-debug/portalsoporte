@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, X, Copy, Check, ExternalLink, Trash2, Pencil, Send, Users, RefreshCw, Sheet as SheetIcon } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, X, Copy, Check, ExternalLink, Trash2, Pencil, Send, Users, RefreshCw, Sheet as SheetIcon, Search, ChevronDown, ChevronUp } from 'lucide-react'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 
 const S = {
@@ -15,8 +15,10 @@ const S = {
   silverDim:    'var(--th-dim)',
 }
 
+const SIN_PAIS = 'Sin país'
+
 type Comunidad = {
-  id: string; ciudad: string; url: string; createdAt: string
+  id: string; ciudad: string; url: string; pais?: string; createdAt: string
 }
 
 // Comunidad tal como viene del sheet — de solo lectura, cualquier cambio
@@ -26,7 +28,7 @@ type ComunidadSheet = { id: string; pais: string; ciudad: string; url: string; f
 type ComunidadItem = (Comunidad & { fromSheet?: false }) | ComunidadSheet
 
 function buildMensaje(ciudad: string, url: string, pais?: string) {
-  const lugar = pais ? `${ciudad}, ${pais}` : ciudad
+  const lugar = pais && pais !== SIN_PAIS ? `${ciudad}, ${pais}` : ciudad
   return `¡Claro! 🙌 Te comparto el grupo oficial de la comunidad de WhatsApp de *${lugar}*.\n\n🔗 Enlace de acceso: ${url}\n\nTe recomendamos unirte para mantenerte al tanto de avisos, novedades e información importante de la comunidad.`
 }
 
@@ -51,9 +53,10 @@ function CopyButton({ value }: { value: string }) {
 function ComunidadModal({ item, onClose, onSave, onDelete }: {
   item: Comunidad | null
   onClose: () => void
-  onSave: (ciudad: string, url: string) => Promise<void>
+  onSave: (pais: string, ciudad: string, url: string) => Promise<void>
   onDelete?: () => Promise<void>
 }) {
+  const [pais, setPais] = useState(item?.pais || '')
   const [ciudad, setCiudad] = useState(item?.ciudad || '')
   const [url, setUrl] = useState(item?.url || '')
   const [saving, setSaving] = useState(false)
@@ -63,7 +66,7 @@ function ComunidadModal({ item, onClose, onSave, onDelete }: {
   async function save() {
     if (!ciudad.trim() || !url.trim()) return
     setSaving(true)
-    await onSave(ciudad.trim(), url.trim())
+    await onSave(pais.trim(), ciudad.trim(), url.trim())
     setSaving(false)
   }
 
@@ -82,6 +85,12 @@ function ComunidadModal({ item, onClose, onSave, onDelete }: {
         </div>
 
         <div className="px-5 py-5 space-y-4">
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>País</p>
+            <input value={pais} onChange={e => setPais(e.target.value)}
+              placeholder="ej. México"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
           <div>
             <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Ciudad / Comunidad</p>
             <input value={ciudad} onChange={e => setCiudad(e.target.value)}
@@ -116,7 +125,7 @@ function ComunidadModal({ item, onClose, onSave, onDelete }: {
 }
 
 function MensajeModal({ item, onClose }: { item: ComunidadItem; onClose: () => void }) {
-  const mensaje = buildMensaje(item.ciudad, item.url, item.fromSheet ? item.pais : undefined)
+  const mensaje = buildMensaje(item.ciudad, item.url, item.pais)
   const [copied, setCopied] = useState(false)
 
   function copy() {
@@ -167,6 +176,8 @@ export default function ComunidadesPage() {
   const { data, loading, add, update, remove } = useFirestoreCollection<Comunidad>('whatsapp_comunidades')
   const [modal, setModal] = useState<'new' | Comunidad | null>(null)
   const [mensajeItem, setMensajeItem] = useState<ComunidadItem | null>(null)
+  const [busqueda, setBusqueda] = useState('')
+  const [cerrados, setCerrados] = useState<Record<string, boolean>>({})
 
   const [sheetItems, setSheetItems] = useState<ComunidadSheet[]>([])
   const [loadingSheet, setLoadingSheet] = useState(true)
@@ -180,7 +191,7 @@ export default function ComunidadesPage() {
       const json = await res.json()
       if (json.error) throw new Error(json.error)
       const list: { pais: string; ciudad: string; url: string }[] = json.comunidades || []
-      setSheetItems(list.map((c, i) => ({ id: `sheet-${i}`, pais: c.pais, ciudad: c.ciudad, url: c.url, fromSheet: true as const })))
+      setSheetItems(list.map((c, i) => ({ id: `sheet-${i}`, pais: c.pais || SIN_PAIS, ciudad: c.ciudad, url: c.url, fromSheet: true as const })))
     } catch (err) {
       setSheetError(err instanceof Error ? err.message : 'No se pudo cargar el sheet')
     } finally {
@@ -191,7 +202,29 @@ export default function ComunidadesPage() {
   useEffect(() => { cargarSheet() }, [])
 
   const manuales: ComunidadItem[] = data.map(c => ({ ...c, fromSheet: false as const }))
-  const items = [...sheetItems, ...manuales].sort((a, b) => a.ciudad.localeCompare(b.ciudad, 'es'))
+  const todos = [...sheetItems, ...manuales]
+
+  const q = busqueda.trim().toLowerCase()
+  const filtrados = q.length === 0 ? todos : todos.filter(item =>
+    item.ciudad.toLowerCase().includes(q) ||
+    (item.pais || '').toLowerCase().includes(q) ||
+    item.url.toLowerCase().includes(q)
+  )
+
+  // Agrupadas por país, países en orden alfabético y ciudades dentro de
+  // cada país también en orden alfabético — nunca mezcladas entre sí.
+  const grupos = useMemo(() => {
+    const map = new Map<string, ComunidadItem[]>()
+    for (const item of filtrados) {
+      const key = item.pais || SIN_PAIS
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(item)
+    }
+    return [...map.entries()]
+      .map(([pais, lista]) => [pais, lista.sort((a, b) => a.ciudad.localeCompare(b.ciudad, 'es'))] as const)
+      .sort((a, b) => a[0].localeCompare(b[0], 'es'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, sheetItems, busqueda])
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>
@@ -201,7 +234,7 @@ export default function ComunidadesPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight" style={{ color: S.silverBright }}>Comunidades WhatsApp</h1>
             <p className="text-sm mt-1" style={{ color: S.silverDim }}>
-              Grupos oficiales de WhatsApp por ciudad
+              Grupos oficiales de WhatsApp por país y ciudad
             </p>
           </div>
           <button onClick={cargarSheet} disabled={loadingSheet}
@@ -219,6 +252,20 @@ export default function ComunidadesPage() {
           </div>
         )}
 
+        {/* Buscador */}
+        <div className="relative mb-3">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: S.silverDim }} />
+          <input value={busqueda} onChange={e => setBusqueda(e.target.value)}
+            placeholder="Buscar por país o ciudad…"
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl outline-none text-sm"
+            style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+          {busqueda && (
+            <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: S.silverDim }}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
         <button onClick={() => setModal('new')}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl mb-5 text-sm font-bold transition-all"
           style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)' }}>
@@ -227,18 +274,38 @@ export default function ComunidadesPage() {
 
         {loading || loadingSheet ? (
           <p className="text-center text-sm py-10" style={{ color: S.silverDim }}>Cargando…</p>
-        ) : items.length === 0 ? (
+        ) : grupos.length === 0 ? (
           <div className="text-center py-12" style={{ color: S.silverDim }}>
             <Users size={32} className="mx-auto mb-3 opacity-20" />
-            <p className="text-sm">Sin comunidades guardadas todavía</p>
+            <p className="text-sm">{q ? `Sin resultados para "${busqueda}"` : 'Sin comunidades guardadas todavía'}</p>
           </div>
         ) : (
-          <div className="space-y-2.5">
-            {items.map(item => (
-              <ComunidadCard key={item.id} item={item}
-                onEdit={item.fromSheet ? undefined : () => setModal(item)}
-                onMensaje={() => setMensajeItem(item)} />
-            ))}
+          <div className="space-y-3">
+            {grupos.map(([pais, lista]) => {
+              const abierto = cerrados[pais] !== true
+              return (
+                <div key={pais} className="rounded-2xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.borderLight}` }}>
+                  <button onClick={() => setCerrados(prev => ({ ...prev, [pais]: abierto }))}
+                    className="w-full flex items-center gap-2 px-4 py-3 transition-all"
+                    style={{ borderBottom: abierto ? `1px solid ${S.border}` : 'none', background: 'rgba(180,185,210,0.02)' }}>
+                    <p className="flex-1 text-left text-xs font-bold tracking-widest uppercase" style={{ color: S.silver }}>
+                      {pais}
+                    </p>
+                    <span className="text-[10px]" style={{ color: S.silverDim }}>{lista.length}</span>
+                    {abierto ? <ChevronUp size={14} style={{ color: S.silverDim }} /> : <ChevronDown size={14} style={{ color: S.silverDim }} />}
+                  </button>
+                  {abierto && (
+                    <div className="p-2.5 space-y-2">
+                      {lista.map(item => (
+                        <ComunidadCard key={item.id} item={item}
+                          onEdit={item.fromSheet ? undefined : () => setModal(item)}
+                          onMensaje={() => setMensajeItem(item)} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -247,11 +314,11 @@ export default function ComunidadesPage() {
         <ComunidadModal
           item={modal === 'new' ? null : modal}
           onClose={() => setModal(null)}
-          onSave={async (ciudad, url) => {
+          onSave={async (pais, ciudad, url) => {
             if (modal === 'new') {
-              await add({ ciudad, url, createdAt: new Date().toISOString() })
+              await add({ pais, ciudad, url, createdAt: new Date().toISOString() })
             } else {
-              await update(modal.id, { ciudad, url })
+              await update(modal.id, { pais, ciudad, url })
             }
             setModal(null)
           }}
@@ -271,13 +338,11 @@ export default function ComunidadesPage() {
 
 function ComunidadCard({ item, onEdit, onMensaje }: { item: ComunidadItem; onEdit?: () => void; onMensaje: () => void }) {
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.border}` }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: 'var(--th-inner)', border: `1px solid ${S.border}` }}>
       <div className="flex items-center gap-2 px-4 py-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>
-              {item.ciudad}{item.fromSheet && item.pais ? `, ${item.pais}` : ''}
-            </p>
+            <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>{item.ciudad}</p>
             {item.fromSheet && (
               <span className="flex-shrink-0 flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                 style={{ background: 'rgba(70,140,220,0.1)', color: '#6aaddc', border: '1px solid rgba(70,140,220,0.25)' }}

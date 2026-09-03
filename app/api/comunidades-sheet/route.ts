@@ -25,13 +25,20 @@ export async function GET() {
     if (data.error) return NextResponse.json({ error: data.error.message }, { status: 400 })
 
     const rows: string[][] = data.values || []
+
+    // En el sheet el país solo va escrito en la primera fila de cada bloque
+    // (celdas combinadas visualmente) y queda en blanco en las filas
+    // siguientes del mismo país — hay que "arrastrar" el último país visto
+    // hacia las filas donde viene vacío.
+    let ultimoPais = ''
     const comunidades = rows.slice(1)
       .map(r => {
-        const pais = (r[0] || '').toString().trim()
+        const paisCelda = (r[0] || '').toString().trim()
+        if (paisCelda) ultimoPais = paisCelda
         const ciudad = (r[1] || '').toString().trim()
         const url = (r[2] || '').toString().trim()
         if (!ciudad || !url) return null
-        return { pais, ciudad, url }
+        return { pais: ultimoPais, ciudad, url }
       })
       .filter(Boolean)
 
