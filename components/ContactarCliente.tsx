@@ -247,6 +247,7 @@ function ContactoCard({ c, members, puedeCompletar, onComplete, onEdit }: {
   const [showResolver, setShowResolver] = useState(false)
   const [resolucion, setResolucion] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const asignado = members.find(m => m.id === c.asignadoA)
   const pendiente = c.estado === 'pendiente'
@@ -255,8 +256,14 @@ function ContactoCard({ c, members, puedeCompletar, onComplete, onEdit }: {
   async function completar() {
     if (!resolucion.trim()) return
     setSaving(true)
-    await onComplete(c.id, resolucion.trim())
-    setSaving(false)
+    setError('')
+    try {
+      await onComplete(c.id, resolucion.trim())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar. Intenta de nuevo.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -306,6 +313,7 @@ function ContactoCard({ c, members, puedeCompletar, onComplete, onEdit }: {
                 placeholder="¿Cómo se resolvió el contacto?" rows={2}
                 className="w-full px-3 py-2 rounded-xl outline-none text-xs resize-none"
                 style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              {error && <p className="text-[10px] font-semibold" style={{ color: '#e07070' }}>{error}</p>}
               <div className="flex gap-2">
                 <button onClick={() => setShowResolver(false)}
                   className="flex-1 py-1.5 rounded-lg text-[11px]" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
@@ -313,8 +321,8 @@ function ContactoCard({ c, members, puedeCompletar, onComplete, onEdit }: {
                 </button>
                 <button onClick={completar} disabled={!resolucion.trim() || saving}
                   className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold"
-                  style={{ background: 'rgba(100,200,120,0.15)', color: '#70c080', border: '1px solid rgba(100,200,120,0.3)' }}>
-                  <Check size={12} /> Confirmar
+                  style={{ background: 'rgba(100,200,120,0.15)', color: '#70c080', border: '1px solid rgba(100,200,120,0.3)', opacity: saving ? 0.6 : 1 }}>
+                  <Check size={12} /> {saving ? 'Guardando…' : 'Confirmar'}
                 </button>
               </div>
             </div>
