@@ -63,8 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setMember(m)
       if (!m?.reglamentoFirmado && !hasSignedReglamento(s.memberId)) {
         setNeedsSignature(true)
-      } else if (!m?.perfilCompleto && !m?.isAdmin) {
-        setNeedsProfile(true)
+        setNeedsProfile(false)
+      } else {
+        setNeedsSignature(false)
+        setNeedsProfile(!m?.perfilCompleto && !m?.isAdmin)
       }
     } catch {
       // Lectura fallida (ej. red lenta): se conserva la sesión tal cual

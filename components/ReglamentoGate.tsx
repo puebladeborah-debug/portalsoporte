@@ -63,6 +63,8 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
   const [signed, setSigned] = useState(false)
   const [hasDrawn, setHasDrawn] = useState(false)
   const [scrolledToBottom, setScrolledToBottom] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   // Structured declaration fields
   const [nombreCompleto, setNombreCompleto] = useState('')
@@ -208,8 +210,8 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
 
   // ── Submit ──────────────────────────────────────────────────────────────────
 
-  function handleSubmit() {
-    if (!canSubmit) return
+  async function handleSubmit() {
+    if (!canSubmit || saving) return
     let data = ''
     if (tab === 'firma') {
       data = canvasRef.current?.toDataURL('image/png') ?? ''
@@ -224,17 +226,27 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
       data,
     }
     saveSignature(sig)
-    // Persistir en Firestore para que no se pida de nuevo en otros dispositivos ni al reiniciar sesión
-    getMembers().then(members => {
+    setSaving(true)
+    setSaveError('')
+    try {
+      // Persistir en Firestore ANTES de avanzar — así el guardado del reglamento
+      // nunca queda en carrera con el guardado del perfil que viene justo después
+      // (ambos reescriben el registro completo del miembro; si corrieran en
+      // paralelo, el que termina último podía borrar lo que el otro acababa de
+      // guardar, y el reglamento/perfil se pedían de nuevo en el siguiente ingreso).
+      const members = await getMembers()
       const updated = members.map(m =>
         m.id === memberId
           ? { ...m, reglamentoFirmado: true, reglamentoFirmadoAt: new Date().toISOString() }
           : m
       )
-      saveMembers(updated)
-    })
-    setSigned(true)
-    setTimeout(onDone, 2000)
+      await saveMembers(updated)
+      setSigned(true)
+      setTimeout(onDone, 2000)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'No se pudo guardar. Intenta de nuevo.')
+      setSaving(false)
+    }
   }
 
   // ── Success screen ──────────────────────────────────────────────────────────
@@ -495,16 +507,23 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
           {/* Submit button */}
           <button
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || saving}
             className="w-full py-3 rounded-xl font-bold text-sm transition-all"
             style={{
               background: canSubmit ? 'rgba(100,200,120,0.15)' : 'rgba(180,185,210,0.04)',
               color: canSubmit ? '#70c080' : S.silverDim,
               border: canSubmit ? '1px solid rgba(100,200,120,0.35)' : `1px solid ${S.border}`,
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
+              cursor: canSubmit && !saving ? 'pointer' : 'not-allowed',
+              opacity: saving ? 0.6 : 1,
             }}>
-            Confirmar y entrar al portal
+            {saving ? 'Guardando…' : 'Confirmar y entrar al portal'}
           </button>
+
+          {saveError && (
+            <p className="text-center text-[11px] font-semibold mt-2" style={{ color: '#e07070' }}>
+              {saveError}
+            </p>
+          )}
 
           <p className="text-center text-[9px] mt-2" style={{ color: S.silverDim }}>
             Este registro es permanente y queda vinculado a tu cuenta · {today}
