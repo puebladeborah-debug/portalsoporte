@@ -408,6 +408,20 @@ export default function TeamSidebar() {
     return extraTasks.filter(t => t.targetMembers.length === 0 || t.targetMembers.includes(memberId))
   }
 
+  // Detecta usuarios repetidos entre personas distintas — con dos personas
+  // compartiendo el mismo username el login puede terminar entrando a
+  // cualquiera de las dos de forma inconsistente, y a esa persona se le
+  // vuelve a pedir el perfil o el reglamento sin motivo aparente.
+  const usernamesDuplicados = (() => {
+    const porUsername = new Map<string, TeamMember[]>()
+    for (const m of members) {
+      const key = m.username.toLowerCase()
+      if (!porUsername.has(key)) porUsername.set(key, [])
+      porUsername.get(key)!.push(m)
+    }
+    return [...porUsername.entries()].filter(([, lista]) => lista.length > 1)
+  })()
+
   return (
     <>
       {/* Mobile toggle button */}
@@ -1055,6 +1069,18 @@ export default function TeamSidebar() {
             <div className="mb-3 px-3 py-2 rounded-xl text-[10px] leading-relaxed"
               style={{ background: 'rgba(220,80,80,0.08)', border: '1px solid rgba(220,80,80,0.25)', color: '#e07070' }}>
               {teamError}
+            </div>
+          )}
+
+          {adminMode && usernamesDuplicados.length > 0 && (
+            <div className="mb-3 px-3 py-2 rounded-xl text-[10px] leading-relaxed"
+              style={{ background: 'rgba(220,150,50,0.08)', border: '1px solid rgba(220,150,50,0.3)', color: '#d4a050' }}>
+              ⚠️ Usuario repetido — puede causar que se pida el perfil o el reglamento de nuevo sin motivo:
+              {usernamesDuplicados.map(([uname, lista]) => (
+                <span key={uname} className="block mt-1">
+                  <strong>{uname}</strong>: {lista.map(m => nombreCorto(m.name)).join(', ')} — borra o cambia el usuario de una de las dos.
+                </span>
+              ))}
             </div>
           )}
 

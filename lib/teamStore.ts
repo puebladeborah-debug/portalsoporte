@@ -416,9 +416,14 @@ export async function login(username: string, password: string): Promise<TeamMem
   const { db } = await import('./firebase')
 
   let email: string | undefined
+  let memberId: string | undefined
   try {
     const dirSnap = await getDoc(doc(db, DIRECTORIO_COLLECTION, uname))
-    if (dirSnap.exists()) email = (dirSnap.data() as { email?: string }).email
+    if (dirSnap.exists()) {
+      const d = dirSnap.data() as { email?: string; memberId?: string }
+      email = d.email
+      memberId = d.memberId
+    }
   } catch {
     // sigue al respaldo de abajo
   }
@@ -435,6 +440,17 @@ export async function login(username: string, password: string): Promise<TeamMem
   }
 
   const members = await getMembers()
+  // Preferir el memberId exacto guardado en el directorio en vez de volver
+  // a buscar por username en todo el equipo: si alguna vez llegara a haber
+  // dos registros con el mismo username (un duplicado), buscar por username
+  // podía devolver uno distinto en cada login — a veces el que sí tenía el
+  // perfil/reglamento completos, a veces el otro — haciendo que se pidiera
+  // de nuevo sin ningún patrón aparente. El directorio apunta a un único
+  // ID fijo, así que el login siempre resuelve al mismo registro.
+  if (memberId) {
+    const exacto = members.find(m => m.id === memberId)
+    if (exacto) return exacto
+  }
   return members.find(m => m.username.toLowerCase() === uname) ?? null
 }
 
