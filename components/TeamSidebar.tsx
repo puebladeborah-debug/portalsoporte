@@ -6,7 +6,7 @@ import {
   QrCode, Trash2, Pencil, Check, Zap, Bell, KeyRound, Sun,
 } from 'lucide-react'
 import QRCode from 'qrcode'
-import { getMembers, saveMembers, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, EXEC_IDS } from '@/lib/teamStore'
+import { getMembers, updateMember, addMemberDoc, deleteMemberDoc, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, EXEC_IDS } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from './LoginGate'
 import { auth, db } from '@/lib/firebase'
@@ -169,21 +169,21 @@ export default function TeamSidebar() {
   const [teamError, setTeamError] = useState('')
   const [savingTeam, setSavingTeam] = useState(false)
 
-  // Vuelve a leer el equipo completo desde Firestore justo antes de aplicar
-  // el cambio (en vez de partir del arreglo local, que puede llevar rato
-  // desactualizado) — así una edición hecha desde otra pestaña/sesión no se
-  // pisa ni se revierte sin querer, y de paso bloquea el doble-clic mientras
-  // un guardado sigue en curso.
-  async function persistMembers(mutate: (fresh: TeamMember[]) => TeamMember[]): Promise<boolean> {
+  // Aplica el cambio local de inmediato (para que se sienta instantáneo) y
+  // lo persiste con una operación quirúrgica que toca SOLO el/los documento(s)
+  // involucrados — nunca reescribe el registro completo de todo el equipo.
+  // Así, cualquier cambio de una persona (agregar, borrar, editar, permisos)
+  // no puede pisar ni revertir lo que otra persona guardó casi al mismo
+  // tiempo (por ejemplo, alguien completando su perfil justo cuando un
+  // admin cambiaba un permiso de alguien más).
+  async function runTeamOp(apply: (prev: TeamMember[]) => TeamMember[], op: () => Promise<void>): Promise<boolean> {
     if (savingTeam) return false
     const previousLocal = members
     setSavingTeam(true)
     setTeamError('')
+    setMembers(apply(members))
     try {
-      const fresh = await getMembers()
-      const updated = mutate(fresh)
-      setMembers(updated)
-      await saveMembers(updated)
+      await op()
       return true
     } catch (err) {
       setMembers(previousLocal)
@@ -223,7 +223,7 @@ export default function TeamSidebar() {
       email: newEmail.trim(),
       permissions: newPerms, tasks: newTasks.split('\n').map(t => t.trim()).filter(Boolean),
     }
-    const ok = await persistMembers(fresh => [...fresh, m])
+    const ok = await runTeamOp(prev => [...prev, m], () => addMemberDoc(m))
     if (!ok) return
     setChecks(prev => ({ ...prev, [m.id]: new Array(m.tasks.length).fill(false) }))
     setPosibleDuplicado(null)
@@ -233,21 +233,29 @@ export default function TeamSidebar() {
 
   async function deleteMember(id: string) {
     if (id === 'dlp' || savingTeam) return
-    await persistMembers(fresh => fresh.filter(m => m.id !== id))
+    const target = members.find(m => m.id === id)
+    if (!target) return
+    await runTeamOp(prev => prev.filter(m => m.id !== id), () => deleteMemberDoc(id, target.username))
     setConfirmDeleteMember(null)
   }
 
   async function updatePermissions(memberId: string, perm: Permission, value: boolean) {
     if (savingTeam) return
-    await persistMembers(fresh => fresh.map(m => {
-      if (m.id !== memberId) return m
-      return { ...m, permissions: value ? [...m.permissions, perm] : m.permissions.filter(p => p !== perm) }
-    }))
+    const target = members.find(m => m.id === memberId)
+    if (!target) return
+    const newPermissions = value ? [...target.permissions, perm] : target.permissions.filter(p => p !== perm)
+    await runTeamOp(
+      prev => prev.map(m => m.id === memberId ? { ...m, permissions: newPermissions } : m),
+      () => updateMember(memberId, { permissions: newPermissions }),
+    )
   }
 
   async function toggleAdmin(memberId: string, value: boolean) {
     if (memberId === 'dlp' || savingTeam) return // Deborah siempre es administradora
-    await persistMembers(fresh => fresh.map(m => (m.id === memberId ? { ...m, isAdmin: value } : m)))
+    await runTeamOp(
+      prev => prev.map(m => (m.id === memberId ? { ...m, isAdmin: value } : m)),
+      () => updateMember(memberId, { isAdmin: value }),
+    )
   }
 
   const [resetStatus, setResetStatus] = useState<Record<string, 'sent' | 'error'>>({})
@@ -291,28 +299,28 @@ export default function TeamSidebar() {
   async function saveEditMember() {
     if (!editingMember || !editForm.name.trim() || savingTeam) return
     const memberId = editingMember.id
-    let updatedTasksLen = 0
-    const ok = await persistMembers(fresh => fresh.map(m => {
-      if (m.id !== memberId) return m
-      const newIsAdmin = m.id === 'dlp' ? true : editIsAdmin
-      const newName = m.id === 'dlp' ? `DLP · ${editForm.name.trim()}` : editForm.name.trim()
-      const next = {
-        ...m,
-        name: newName,
-        isAdmin: newIsAdmin,
-        initial: editForm.name.trim()[0].toUpperCase(),
-        role: editForm.role.trim() || m.role,
-        username: editForm.username.trim() || m.username,
-        password: editForm.password.trim() || m.password,
-        email: editForm.email.trim() || m.email,
-        tasks: editForm.tasks.split('\n').map(t => t.trim()).filter(Boolean),
-        horario: editHorario,
-        pasaAsistencia: editPasaAsistencia,
-        tieneKPI: editTieneKPI,
-      }
-      updatedTasksLen = next.tasks.length
-      return next
-    }))
+    const newIsAdmin = memberId === 'dlp' ? true : editIsAdmin
+    const newName = memberId === 'dlp' ? `DLP · ${editForm.name.trim()}` : editForm.name.trim()
+    const newUsernameVal = editForm.username.trim() || editingMember.username
+    const newEmailVal = editForm.email.trim() || editingMember.email
+    const fields: Partial<TeamMember> = {
+      name: newName,
+      isAdmin: newIsAdmin,
+      initial: editForm.name.trim()[0].toUpperCase(),
+      role: editForm.role.trim() || editingMember.role,
+      username: newUsernameVal,
+      password: editForm.password.trim() || editingMember.password,
+      email: newEmailVal,
+      tasks: editForm.tasks.split('\n').map(t => t.trim()).filter(Boolean),
+      horario: editHorario,
+      pasaAsistencia: editPasaAsistencia,
+      tieneKPI: editTieneKPI,
+    }
+    const updatedTasksLen = fields.tasks!.length
+    const ok = await runTeamOp(
+      prev => prev.map(m => (m.id === memberId ? { ...m, ...fields } : m)),
+      () => updateMember(memberId, fields, { oldUsername: editingMember.username, newUsername: newUsernameVal, email: newEmailVal }),
+    )
     if (!ok) return
     // Reset checks if tasks changed
     const currentChecks = checks[memberId] || []

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { BookOpen, CalendarClock, Search, Home, Settings, LogOut, User, Eye, EyeOff, Pencil, X, AlertTriangle, Info, AlertCircle, Shield, CalendarDays, MapPin, ScrollText, MessageCircle, CreditCard, FileWarning, Banknote, Sheet, BarChart3, PlayCircle, ClipboardList, Clock, Users, KeyRound } from 'lucide-react'
 import NoticesPanel from './NoticesPanel'
 import { useAuth } from './LoginGate'
-import { getMembers, saveMembers, getIncidenciasByMember, Incidencia, TipoIncidencia } from '@/lib/teamStore'
+import { updateMember, getIncidenciasByMember, Incidencia, TipoIncidencia } from '@/lib/teamStore'
 import { auth } from '@/lib/firebase'
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
@@ -92,13 +92,8 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
       }
     }
 
-    const members = await getMembers()
-    const updated = members.map(m => {
-      if (m.id !== session.memberId) return m
-      const newName = m.id === 'dlp' ? `DLP · ${editName}` : editName
-      return { ...m, name: newName, genero: editGenero }
-    })
-    await saveMembers(updated)
+    const newName = session.memberId === 'dlp' ? `DLP · ${editName}` : editName
+    await updateMember(session.memberId, { name: newName, genero: editGenero })
     refresh()
     setSaving(false)
     setCurrentPw(''); setEditPw(''); setConfirmPw('')

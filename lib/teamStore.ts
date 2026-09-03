@@ -333,6 +333,56 @@ export async function getMembers(): Promise<TeamMember[]> {
   return snap.docs.map(d => d.data() as TeamMember)
 }
 
+// Actualiza SOLO los campos indicados en el registro de UNA persona, sin
+// tocar el de nadie más. A diferencia de saveMembers (que reescribe el
+// registro completo de TODO el equipo en cada guardado, y por eso podía
+// pisar sin querer un cambio que otra persona acababa de hacer — por
+// ejemplo, borrar el "perfil completado" de alguien que lo acababa de
+// llenar, solo porque un admin guardó un cambio de otra persona casi al
+// mismo tiempo), esto usa un update de un solo documento: nunca puede
+// pisar el registro de otra persona porque ni siquiera lo toca.
+export async function updateMember(
+  memberId: string,
+  fields: Partial<TeamMember>,
+  // Cuando el username cambia hay que mover también el registro del
+  // directorio público (username -> correo) — se pasa aparte porque es
+  // el único caso en el que este update puntual toca un segundo documento.
+  usernameChange?: { oldUsername: string; newUsername: string; email: string },
+) {
+  const { doc, updateDoc, writeBatch } = await import('firebase/firestore')
+  const { db } = await import('./firebase')
+
+  if (usernameChange && usernameChange.oldUsername.toLowerCase() !== usernameChange.newUsername.toLowerCase()) {
+    const batch = writeBatch(db)
+    batch.update(doc(db, EQUIPO_COLLECTION, memberId), fields as Record<string, unknown>)
+    batch.delete(doc(db, DIRECTORIO_COLLECTION, usernameChange.oldUsername.toLowerCase()))
+    batch.set(doc(db, DIRECTORIO_COLLECTION, usernameChange.newUsername.toLowerCase()), { email: usernameChange.email, memberId })
+    await batch.commit()
+    return
+  }
+  await updateDoc(doc(db, EQUIPO_COLLECTION, memberId), fields as Record<string, unknown>)
+}
+
+// Agrega UNA persona nueva sin tocar el registro de nadie más.
+export async function addMemberDoc(m: TeamMember) {
+  const { doc, writeBatch } = await import('firebase/firestore')
+  const { db } = await import('./firebase')
+  const batch = writeBatch(db)
+  batch.set(doc(db, EQUIPO_COLLECTION, m.id), m as unknown as Record<string, unknown>)
+  batch.set(doc(db, DIRECTORIO_COLLECTION, m.username.toLowerCase()), { email: m.email, memberId: m.id })
+  await batch.commit()
+}
+
+// Elimina a UNA persona sin tocar el registro de nadie más.
+export async function deleteMemberDoc(memberId: string, username: string) {
+  const { doc, writeBatch } = await import('firebase/firestore')
+  const { db } = await import('./firebase')
+  const batch = writeBatch(db)
+  batch.delete(doc(db, EQUIPO_COLLECTION, memberId))
+  batch.delete(doc(db, DIRECTORIO_COLLECTION, username.toLowerCase()))
+  await batch.commit()
+}
+
 export async function saveMembers(members: TeamMember[]) {
   const { collection, getDocs, doc, writeBatch } = await import('firebase/firestore')
   const { db } = await import('./firebase')

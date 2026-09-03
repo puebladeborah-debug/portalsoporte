@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { PenLine, MessageSquare, RotateCcw, CheckCircle2, AlertCircle, FileText } from 'lucide-react'
-import { saveSignature, ReglamentoSignature, getMembers, saveMembers } from '@/lib/teamStore'
+import { saveSignature, ReglamentoSignature, getMembers, updateMember } from '@/lib/teamStore'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -229,18 +229,10 @@ export default function ReglamentoGate({ memberId, memberName, onDone }: Props) 
     setSaving(true)
     setSaveError('')
     try {
-      // Persistir en Firestore ANTES de avanzar — así el guardado del reglamento
-      // nunca queda en carrera con el guardado del perfil que viene justo después
-      // (ambos reescriben el registro completo del miembro; si corrieran en
-      // paralelo, el que termina último podía borrar lo que el otro acababa de
-      // guardar, y el reglamento/perfil se pedían de nuevo en el siguiente ingreso).
-      const members = await getMembers()
-      const updated = members.map(m =>
-        m.id === memberId
-          ? { ...m, reglamentoFirmado: true, reglamentoFirmadoAt: new Date().toISOString() }
-          : m
-      )
-      await saveMembers(updated)
+      // Update de un solo documento — nunca puede pisar (ni ser pisado por)
+      // un guardado del perfil u otro cambio de equipo que ocurra casi al
+      // mismo tiempo, porque solo toca estos dos campos en este registro.
+      await updateMember(memberId, { reglamentoFirmado: true, reglamentoFirmadoAt: new Date().toISOString() })
       setSigned(true)
       setTimeout(onDone, 2000)
     } catch (err) {

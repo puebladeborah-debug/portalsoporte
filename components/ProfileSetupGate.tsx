@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { User, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react'
-import { getMembers, saveMembers } from '@/lib/teamStore'
+import { updateMember } from '@/lib/teamStore'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -45,12 +45,7 @@ export default function ProfileSetupGate({ memberId, memberName, onDone }: Props
     setSaving(true)
     setError('')
     try {
-      const members = await getMembers()
-      const updated = members.map(m => {
-        if (m.id !== memberId) return m
-        return { ...m, ...form, perfilCompleto: true }
-      })
-      await saveMembers(updated)
+      await updateMember(memberId, { ...form, perfilCompleto: true })
       setDone(true)
       setTimeout(onDone, 1800)
     } catch (err) {
