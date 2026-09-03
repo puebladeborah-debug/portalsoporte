@@ -167,22 +167,35 @@ export default function TeamSidebar() {
   }
 
   const [teamError, setTeamError] = useState('')
+  const [savingTeam, setSavingTeam] = useState(false)
 
-  async function persistMembers(updated: TeamMember[], previous: TeamMember[]): Promise<boolean> {
-    setMembers(updated)
+  // Vuelve a leer el equipo completo desde Firestore justo antes de aplicar
+  // el cambio (en vez de partir del arreglo local, que puede llevar rato
+  // desactualizado) — así una edición hecha desde otra pestaña/sesión no se
+  // pisa ni se revierte sin querer, y de paso bloquea el doble-clic mientras
+  // un guardado sigue en curso.
+  async function persistMembers(mutate: (fresh: TeamMember[]) => TeamMember[]): Promise<boolean> {
+    if (savingTeam) return false
+    const previousLocal = members
+    setSavingTeam(true)
     setTeamError('')
     try {
+      const fresh = await getMembers()
+      const updated = mutate(fresh)
+      setMembers(updated)
       await saveMembers(updated)
       return true
     } catch (err) {
-      setMembers(previous)
+      setMembers(previousLocal)
       setTeamError(err instanceof Error ? `No se pudo guardar: ${err.message}` : 'No se pudo guardar el cambio')
       return false
+    } finally {
+      setSavingTeam(false)
     }
   }
 
   async function addMember() {
-    if (!newName.trim() || !newRole.trim() || !newEmail.trim()) return
+    if (!newName.trim() || !newRole.trim() || !newEmail.trim() || savingTeam) return
     const m: TeamMember = {
       id: `m_${Date.now()}`, name: newName.trim(), role: newRole.trim(),
       initial: newName.trim()[0].toUpperCase(), isAdmin: false,
@@ -191,36 +204,30 @@ export default function TeamSidebar() {
       email: newEmail.trim(),
       permissions: newPerms, tasks: newTasks.split('\n').map(t => t.trim()).filter(Boolean),
     }
-    const previous = members
-    const updated = [...members, m]
-    await persistMembers(updated, previous)
+    const ok = await persistMembers(fresh => [...fresh, m])
+    if (!ok) return
     setChecks(prev => ({ ...prev, [m.id]: new Array(m.tasks.length).fill(false) }))
     setNewEmail('')
     setNewName(''); setNewRole(''); setNewUsername(''); setNewPassword(''); setNewTasks(''); setShowAddForm(false)
   }
 
   async function deleteMember(id: string) {
-    if (id === 'dlp') return
-    const previous = members
-    const updated = members.filter(m => m.id !== id)
-    await persistMembers(updated, previous)
+    if (id === 'dlp' || savingTeam) return
+    await persistMembers(fresh => fresh.filter(m => m.id !== id))
     setConfirmDeleteMember(null)
   }
 
   async function updatePermissions(memberId: string, perm: Permission, value: boolean) {
-    const previous = members
-    const updated = members.map(m => {
+    if (savingTeam) return
+    await persistMembers(fresh => fresh.map(m => {
       if (m.id !== memberId) return m
       return { ...m, permissions: value ? [...m.permissions, perm] : m.permissions.filter(p => p !== perm) }
-    })
-    await persistMembers(updated, previous)
+    }))
   }
 
   async function toggleAdmin(memberId: string, value: boolean) {
-    if (memberId === 'dlp') return // Deborah siempre es administradora
-    const previous = members
-    const updated = members.map(m => (m.id === memberId ? { ...m, isAdmin: value } : m))
-    await persistMembers(updated, previous)
+    if (memberId === 'dlp' || savingTeam) return // Deborah siempre es administradora
+    await persistMembers(fresh => fresh.map(m => (m.id === memberId ? { ...m, isAdmin: value } : m)))
   }
 
   const [resetStatus, setResetStatus] = useState<Record<string, 'sent' | 'error'>>({})
@@ -262,13 +269,14 @@ export default function TeamSidebar() {
   }
 
   async function saveEditMember() {
-    if (!editingMember || !editForm.name.trim()) return
-    const previous = members
-    const updated = members.map(m => {
-      if (m.id !== editingMember.id) return m
+    if (!editingMember || !editForm.name.trim() || savingTeam) return
+    const memberId = editingMember.id
+    let updatedTasksLen = 0
+    const ok = await persistMembers(fresh => fresh.map(m => {
+      if (m.id !== memberId) return m
       const newIsAdmin = m.id === 'dlp' ? true : editIsAdmin
       const newName = m.id === 'dlp' ? `DLP · ${editForm.name.trim()}` : editForm.name.trim()
-      return {
+      const next = {
         ...m,
         name: newName,
         isAdmin: newIsAdmin,
@@ -282,16 +290,14 @@ export default function TeamSidebar() {
         pasaAsistencia: editPasaAsistencia,
         tieneKPI: editTieneKPI,
       }
-    })
-    const ok = await persistMembers(updated, previous)
+      updatedTasksLen = next.tasks.length
+      return next
+    }))
     if (!ok) return
     // Reset checks if tasks changed
-    const member = updated.find(m => m.id === editingMember.id)
-    if (member) {
-      const currentChecks = checks[editingMember.id] || []
-      if (currentChecks.length !== member.tasks.length) {
-        setChecks(prev => ({ ...prev, [editingMember.id]: new Array(member.tasks.length).fill(false) }))
-      }
+    const currentChecks = checks[memberId] || []
+    if (currentChecks.length !== updatedTasksLen) {
+      setChecks(prev => ({ ...prev, [memberId]: new Array(updatedTasksLen).fill(false) }))
     }
     setEditingMember(null)
   }
@@ -862,9 +868,10 @@ export default function TeamSidebar() {
                       Cancelar
                     </button>
                     <button onClick={async () => { await deleteMember(editingMember.id); setEditingMember(null) }}
+                      disabled={savingTeam}
                       className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg"
-                      style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)' }}>
-                      <Trash2 size={11} /> Eliminar
+                      style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)', opacity: savingTeam ? 0.6 : 1 }}>
+                      <Trash2 size={11} /> {savingTeam ? 'Eliminando…' : 'Eliminar'}
                     </button>
                   </div>
                 ) : (
@@ -881,10 +888,10 @@ export default function TeamSidebar() {
                   className="flex-1 py-2.5 rounded-xl text-sm" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
                   Cancelar
                 </button>
-                <button onClick={saveEditMember}
+                <button onClick={saveEditMember} disabled={savingTeam}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-                  style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}` }}>
-                  <Check size={14} /> Guardar
+                  style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}`, opacity: savingTeam ? 0.6 : 1 }}>
+                  <Check size={14} /> {savingTeam ? 'Guardando…' : 'Guardar'}
                 </button>
               </div>
             </div>
@@ -974,8 +981,10 @@ export default function TeamSidebar() {
               <div className="flex gap-1.5">
                 <button onClick={() => setShowAddForm(false)} className="flex-1 py-1.5 rounded-lg text-[10px]"
                   style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>Cancelar</button>
-                <button onClick={addMember} className="flex-1 py-1.5 rounded-lg text-[10px] font-bold"
-                  style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}` }}>Agregar</button>
+                <button onClick={addMember} disabled={savingTeam} className="flex-1 py-1.5 rounded-lg text-[10px] font-bold"
+                  style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}`, opacity: savingTeam ? 0.6 : 1 }}>
+                  {savingTeam ? 'Agregando…' : 'Agregar'}
+                </button>
               </div>
             </div>
           )}
@@ -1206,7 +1215,7 @@ export default function TeamSidebar() {
                           <label className="flex items-center gap-2 text-[10px] font-semibold mb-2"
                             style={{ color: member.isAdmin ? '#a78bfa' : S.silver }}>
                             <input type="checkbox" checked={member.isAdmin}
-                              disabled={member.id === 'dlp'}
+                              disabled={member.id === 'dlp' || savingTeam}
                               onChange={e => toggleAdmin(member.id, e.target.checked)} />
                             Administrador (acceso total)
                           </label>
@@ -1224,7 +1233,7 @@ export default function TeamSidebar() {
                               <label key={p.key} className="flex items-center gap-2 text-[10px]" style={{ color: S.silver }}>
                                 <input type="checkbox" checked={member.permissions.includes(p.key)}
                                   onChange={e => updatePermissions(member.id, p.key, e.target.checked)}
-                                  disabled={member.isAdmin} />
+                                  disabled={member.isAdmin || savingTeam} />
                                 {p.label}
                               </label>
                             ))}
@@ -1237,10 +1246,10 @@ export default function TeamSidebar() {
                                   className="text-[10px] px-2 py-1 rounded-lg" style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
                                   Cancelar
                                 </button>
-                                <button onClick={() => deleteMember(member.id)}
+                                <button onClick={() => deleteMember(member.id)} disabled={savingTeam}
                                   className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg"
-                                  style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)' }}>
-                                  <Trash2 size={10} /> Eliminar
+                                  style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', background: 'rgba(220,80,80,0.08)', opacity: savingTeam ? 0.6 : 1 }}>
+                                  <Trash2 size={10} /> {savingTeam ? 'Eliminando…' : 'Eliminar'}
                                 </button>
                               </div>
                             ) : (
