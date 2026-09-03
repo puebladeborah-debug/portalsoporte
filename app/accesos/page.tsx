@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, X, Copy, Check, Trash2, Pencil, KeyRound, Eye, EyeOff } from 'lucide-react'
+import { Plus, X, Copy, Check, Trash2, Pencil, KeyRound, Eye, EyeOff, Phone } from 'lucide-react'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from '@/components/LoginGate'
 
@@ -147,6 +147,129 @@ function AccesoModal({ item, onClose, onSave, onDelete }: {
   )
 }
 
+/* ─── Teléfonos ──────────────────────────────────────────────────────────── */
+type Telefono = {
+  id: string; nombre: string; numero: string; createdAt: string
+}
+
+function TelefonoModal({ item, onClose, onSave, onDelete }: {
+  item: Telefono | null
+  onClose: () => void
+  onSave: (nombre: string, numero: string) => Promise<void>
+  onDelete?: () => Promise<void>
+}) {
+  const [nombre, setNombre] = useState(item?.nombre || '')
+  const [numero, setNumero] = useState(item?.numero || '')
+  const [saving, setSaving] = useState(false)
+  const [confirmarBorrar, setConfirmarBorrar] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const inputStyle = { background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }
+  const valido = nombre.trim() && numero.trim()
+
+  async function save() {
+    if (!valido) return
+    setSaving(true)
+    await onSave(nombre.trim(), numero.trim())
+    setSaving(false)
+  }
+
+  async function eliminar() {
+    if (!onDelete) return
+    setDeleting(true)
+    await onDelete()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)' }}>
+
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
+          <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>
+            {item ? 'Editar teléfono' : 'Nuevo teléfono'}
+          </p>
+          <button onClick={onClose} style={{ color: S.silverDim }}><X size={16} /></button>
+        </div>
+
+        <div className="px-5 py-5 space-y-4">
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Nombre</p>
+            <input value={nombre} onChange={e => setNombre(e.target.value)}
+              placeholder="ej. Soporte técnico"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Número</p>
+            <input value={numero} onChange={e => setNumero(e.target.value)} type="tel"
+              placeholder="ej. 3310000000"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+        </div>
+
+        <div className="px-5 py-4" style={{ borderTop: `1px solid ${S.border}` }}>
+          {confirmarBorrar ? (
+            <div className="flex items-center gap-2">
+              <button onClick={() => setConfirmarBorrar(false)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
+                style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                Cancelar
+              </button>
+              <button onClick={eliminar} disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold"
+                style={{ background: 'rgba(220,80,80,0.15)', color: '#e07070', border: '1px solid rgba(220,80,80,0.35)', opacity: deleting ? 0.6 : 1 }}>
+                <Trash2 size={13} /> {deleting ? 'Eliminando…' : '¿Seguro? Eliminar'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {item && onDelete && (
+                <button onClick={() => setConfirmarBorrar(true)}
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all"
+                  style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.25)', background: 'rgba(220,80,80,0.06)' }}>
+                  <Trash2 size={13} /> Eliminar
+                </button>
+              )}
+              <button onClick={save} disabled={!valido || saving}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)', opacity: !valido || saving ? 0.5 : 1 }}>
+                {saving ? 'Guardando…' : item ? 'Guardar cambios' : 'Agregar teléfono'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TelefonoCard({ item, onEdit }: { item: Telefono; onEdit: () => void }) {
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.border}` }}>
+      <div className="flex items-center gap-2 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>{item.nombre}</p>
+          <p className="text-[11px] mt-0.5 font-mono" style={{ color: S.silverDim }}>{item.numero}</p>
+        </div>
+        <CopyButton value={item.numero} title="Copiar número" />
+        <a href={`tel:${item.numero}`}
+          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+          style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}
+          title="Llamar">
+          <Phone size={13} />
+        </a>
+        <button onClick={onEdit}
+          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+          style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
+          <Pencil size={13} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function AccesosPage() {
   const { member } = useAuth()
   const esAdmin = member?.isAdmin ?? false
@@ -154,7 +277,12 @@ export default function AccesosPage() {
   const { data, loading, add, update, remove } = useFirestoreCollection<Acceso>('accesos_plataformas')
   const [modal, setModal] = useState<'new' | Acceso | null>(null)
 
+  const { data: telefonos, loading: loadingTel, add: addTel, update: updateTel, remove: removeTel } =
+    useFirestoreCollection<Telefono>('telefonos_equipo')
+  const [modalTel, setModalTel] = useState<'new' | Telefono | null>(null)
+
   const items = [...data].sort((a, b) => a.plataforma.localeCompare(b.plataforma, 'es'))
+  const itemsTel = [...telefonos].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>
@@ -187,7 +315,54 @@ export default function AccesosPage() {
             ))}
           </div>
         )}
+
+        {/* ── Divider ── */}
+        <div className="flex items-center gap-3 py-6">
+          <div className="flex-1 h-px" style={{ background: S.border }} />
+          <span className="text-[10px] tracking-widest uppercase" style={{ color: S.silverDim }}>Teléfonos</span>
+          <div className="flex-1 h-px" style={{ background: S.border }} />
+        </div>
+
+        <button onClick={() => setModalTel('new')}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl mb-5 text-sm font-bold transition-all"
+          style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)' }}>
+          <Plus size={16} /> Agregar teléfono
+        </button>
+
+        {loadingTel ? (
+          <p className="text-center text-sm py-10" style={{ color: S.silverDim }}>Cargando…</p>
+        ) : itemsTel.length === 0 ? (
+          <div className="text-center py-12" style={{ color: S.silverDim }}>
+            <Phone size={32} className="mx-auto mb-3 opacity-20" />
+            <p className="text-sm">Sin teléfonos guardados todavía</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {itemsTel.map(item => (
+              <TelefonoCard key={item.id} item={item} onEdit={() => setModalTel(item)} />
+            ))}
+          </div>
+        )}
       </div>
+
+      {modalTel && (
+        <TelefonoModal
+          item={modalTel === 'new' ? null : modalTel}
+          onClose={() => setModalTel(null)}
+          onSave={async (nombre, numero) => {
+            if (modalTel === 'new') {
+              await addTel({ nombre, numero, createdAt: new Date().toISOString() })
+            } else {
+              await updateTel(modalTel.id, { nombre, numero })
+            }
+            setModalTel(null)
+          }}
+          onDelete={modalTel !== 'new' && esAdmin ? async () => {
+            await removeTel((modalTel as Telefono).id)
+            setModalTel(null)
+          } : undefined}
+        />
+      )}
 
       {modal && (
         <AccesoModal
