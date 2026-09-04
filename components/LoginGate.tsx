@@ -4,9 +4,7 @@ import { useState, useEffect, createContext, useContext } from 'react'
 import Image from 'next/image'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { login, getSession, setSession, clearSession, TeamMember, Session, getMembers, hasSignedReglamento } from '@/lib/teamStore'
-import ReglamentoGate from './ReglamentoGate'
-import ProfileSetupGate from './ProfileSetupGate'
+import { login, getSession, setSession, clearSession, TeamMember, Session, getMembers } from '@/lib/teamStore'
 
 // Routes that don't need login
 const PUBLIC_ROUTES = ['/asistencia', '/api/']
@@ -40,8 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSessionState] = useState<Session | null>(null)
   const [member, setMember] = useState<TeamMember | null>(null)
   const [ready, setReady] = useState(false)
-  const [needsSignature, setNeedsSignature] = useState(false)
-  const [needsProfile, setNeedsProfile] = useState(false)
   const pathname = usePathname()
 
   const isPublic = PUBLIC_ROUTES.some(r => (pathname ?? '').startsWith(r)) ||
@@ -52,8 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSessionState(s)
     if (!s) {
       setMember(null)
-      setNeedsSignature(false)
-      setNeedsProfile(false)
       setReady(true)
       return
     }
@@ -61,16 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const members = await getMembers()
       const m = members.find((x: TeamMember) => x.id === s.memberId) ?? null
       setMember(m)
-      if (!m?.reglamentoFirmado && !hasSignedReglamento(s.memberId)) {
-        setNeedsSignature(true)
-        setNeedsProfile(false)
-      } else {
-        setNeedsSignature(false)
-        setNeedsProfile(!m?.perfilCompleto && !m?.isAdmin)
-      }
     } catch {
-      // Lectura fallida (ej. red lenta): se conserva la sesión tal cual
-      // estaba en vez de forzar de nuevo el registro de perfil/reglamento.
+      // Lectura fallida (ej. red lenta): se conserva la sesión tal cual estaba.
     } finally {
       setReady(true)
     }
@@ -95,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearSession()
     setSessionState(null)
     setMember(null)
-    setNeedsSignature(false)
   }
 
   // Public routes: always render children immediately
@@ -129,26 +114,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ session, member, logout, refresh }}>
-      {needsSignature && session && (
-        <ReglamentoGate
-          memberId={session.memberId}
-          memberName={session.memberName}
-          onDone={() => {
-            setNeedsSignature(false)
-            getMembers().then(members => {
-              const m = members.find(x => x.id === session.memberId)
-              if (!m?.perfilCompleto && !m?.isAdmin) setNeedsProfile(true)
-            })
-          }}
-        />
-      )}
-      {!needsSignature && needsProfile && session && (
-        <ProfileSetupGate
-          memberId={session.memberId}
-          memberName={session.memberName}
-          onDone={() => setNeedsProfile(false)}
-        />
-      )}
       {children}
     </AuthContext.Provider>
   )
