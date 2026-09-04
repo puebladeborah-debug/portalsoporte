@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   Search, BookOpen, Tag, Zap, FileCheck, Banknote, AlertCircle,
   MessageCircle, Users, ClipboardList, MapPin, CalendarDays,
-  FileSpreadsheet, Video, ExternalLink,
+  FileSpreadsheet, Video, ExternalLink, KeyRound, Phone, Link2,
 } from 'lucide-react'
 import { articles, categories } from '@/lib/data'
 import { documentos, CATEGORIA_LABELS } from '@/lib/acuerdos'
@@ -40,6 +40,10 @@ type ContactoCliente = {
 type TareaDia = { id: string; personaNombre: string; tarea: string; fecha: string }
 type SheetLink = { id: string; nombre: string; url: string }
 type Tutorial = { id: string; nombre: string; url: string }
+type Comunidad = { id: string; ciudad: string; url: string; pais?: string }
+type Acceso = { id: string; plataforma: string; usuario: string }
+type TelefonoEquipo = { id: string; nombre: string; numero: string }
+type EnlacePago = { id: string; nombre: string; plataforma: string; url: string }
 
 /* ─── Ítem unificado de búsqueda ─────────────────────────────────────────── */
 type Item = {
@@ -60,8 +64,18 @@ export default function BuscarPage() {
 
   const [query, setQuery] = useState('')
   const [equipo, setEquipo] = useState<TeamMember[]>([])
+  const [comunidadesSheet, setComunidadesSheet] = useState<Comunidad[]>([])
 
   useEffect(() => { getMembers().then(setEquipo) }, [])
+  useEffect(() => {
+    fetch('/api/comunidades-sheet', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(json => {
+        const list: { pais: string; ciudad: string; url: string }[] = json.comunidades || []
+        setComunidadesSheet(list.map((c, i) => ({ id: `sheet-${i}`, ciudad: c.ciudad, pais: c.pais, url: c.url })))
+      })
+      .catch(() => {})
+  }, [])
 
   const { data: reembolsos } = useFirestoreCollection<Reembolso>('reembolsos')
   const { data: casos } = useFirestoreCollection<Caso>('incidencias')
@@ -71,6 +85,10 @@ export default function BuscarPage() {
   const { data: guardias } = useFirestoreCollection<Guardia>('guardias')
   const { data: sheets } = useFirestoreCollection<SheetLink>('sheets_links')
   const { data: tutoriales } = useFirestoreCollection<Tutorial>('tutoriales_links')
+  const { data: comunidades } = useFirestoreCollection<Comunidad>('whatsapp_comunidades')
+  const { data: accesos } = useFirestoreCollection<Acceso>('accesos_plataformas')
+  const { data: telefonosEquipo } = useFirestoreCollection<TelefonoEquipo>('telefonos_equipo')
+  const { data: enlacesPago } = useFirestoreCollection<EnlacePago>('enlaces_pago_manual')
 
   const items = useMemo<Item[]>(() => {
     const list: Item[] = []
@@ -164,6 +182,34 @@ export default function BuscarPage() {
       })
     }
 
+    for (const c of [...comunidadesSheet, ...comunidades]) {
+      list.push({
+        id: `comunidad-${c.id}`, categoria: 'Comunidades', icono: <Users size={14} />,
+        titulo: c.ciudad, subtitulo: c.pais, href: '/comunidades',
+      })
+    }
+
+    for (const a of accesos) {
+      list.push({
+        id: `acceso-${a.id}`, categoria: 'Accesos', icono: <KeyRound size={14} />,
+        titulo: a.plataforma, subtitulo: a.usuario, href: '/accesos',
+      })
+    }
+
+    for (const t of telefonosEquipo) {
+      list.push({
+        id: `telefono-${t.id}`, categoria: 'Teléfonos', icono: <Phone size={14} />,
+        titulo: t.nombre, numeros: t.numero, href: '/accesos',
+      })
+    }
+
+    for (const e of enlacesPago) {
+      list.push({
+        id: `enlacepago-${e.id}`, categoria: 'Pagos', icono: <Link2 size={14} />,
+        titulo: e.nombre, subtitulo: e.plataforma, href: '/pagos',
+      })
+    }
+
     // Equipo: nombre/rol son visibles para todos (igual que en la barra lateral).
     // El teléfono es información privada — solo se indexa y muestra si quien
     // busca es administrador, igual que en /admin/perfiles.
@@ -179,7 +225,7 @@ export default function BuscarPage() {
     }
 
     return list
-  }, [reembolsos, casos, contactos, tareas, giras, guardias, sheets, tutoriales, equipo, isAdmin])
+  }, [reembolsos, casos, contactos, tareas, giras, guardias, sheets, tutoriales, comunidades, comunidadesSheet, accesos, telefonosEquipo, enlacesPago, equipo, isAdmin])
 
   const fuse = useMemo(() => new Fuse(items, {
     keys: [
@@ -290,7 +336,8 @@ export default function BuscarPage() {
             <p className="text-base">Escribe para comenzar a buscar</p>
             <p className="text-xs mt-2" style={{ opacity: 0.7 }}>
               Busca en manuales, acuerdos, reembolsos, incidencias, contactos,<br />
-              tareas, giras, guardias, sheets, tutoriales y equipo
+              tareas, giras, guardias, sheets, tutoriales, comunidades,<br />
+              accesos, teléfonos, pagos y equipo
             </p>
           </div>
         )}
