@@ -5,6 +5,7 @@ import {
   Headset, Video, MapPin, Gem, Plus, X, Calendar, FileText,
   CheckCircle2, Clock, AlertCircle, Ban, Trash2, DollarSign,
   BarChart3, List, Trophy, Banknote, Phone, Mail, MessageCircle, UserRound,
+  Calculator, PauseCircle, PlayCircle,
 } from 'lucide-react'
 import { useAuth } from '@/components/LoginGate'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
@@ -651,6 +652,119 @@ function Estadisticas({ casos }: { casos: Caso[] }) {
   )
 }
 
+/* ─── Calculadora de pausa de membresía ──────────────────────────────────── */
+const DIAS_ANUALIDAD = 365
+
+function diffDias(desde: string, hasta: string) {
+  const a = new Date(desde + 'T12:00:00')
+  const b = new Date(hasta + 'T12:00:00')
+  return Math.round((b.getTime() - a.getTime()) / 86400000)
+}
+
+function sumarDias(fecha: string, dias: number) {
+  const d = new Date(fecha + 'T12:00:00')
+  d.setDate(d.getDate() + dias)
+  return d.toISOString().split('T')[0]
+}
+
+function fmtFecha(fecha: string) {
+  return new Date(fecha + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function CalculadoraPausa() {
+  const [inicio, setInicio] = useState('')
+  const [pausa, setPausa] = useState('')
+  const [reactivacion, setReactivacion] = useState('')
+
+  const inputStyle = { background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }
+
+  const datosCompletos = !!(inicio && pausa && reactivacion)
+  const ordenValido = datosCompletos && pausa >= inicio && reactivacion >= pausa
+
+  const diasUsados = ordenValido ? diffDias(inicio, pausa) : 0
+  const diasRestantes = ordenValido ? Math.max(0, DIAS_ANUALIDAD - diasUsados) : 0
+  const diasEnPausa = ordenValido ? diffDias(pausa, reactivacion) : 0
+  const nuevaFecha = ordenValido ? sumarDias(reactivacion, diasRestantes) : ''
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-2xl overflow-hidden" style={{ background: S.card, border: `1px solid ${S.borderLight}` }}>
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}`, background: 'rgba(180,185,210,0.02)' }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(180,185,210,0.08)', border: `1px solid ${S.border}` }}>
+            <Calculator size={16} style={{ color: S.silver }} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold" style={{ color: S.silverBright }}>Calculadora de pausa de membresía</h3>
+            <p className="text-[11px] mt-0.5" style={{ color: S.silverDim }}>Calcula la nueva fecha de vencimiento tras una pausa</p>
+          </div>
+        </div>
+
+        <div className="px-5 py-5 space-y-4">
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Fecha en que inició su Club</p>
+            <input type="date" value={inicio} onChange={e => setInicio(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5 flex items-center gap-1.5" style={{ color: S.silverDim }}>
+              <PauseCircle size={11} /> Fecha en que hizo la pausa
+            </p>
+            <input type="date" value={pausa} onChange={e => setPausa(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5 flex items-center gap-1.5" style={{ color: S.silverDim }}>
+              <PlayCircle size={11} /> Fecha en que quiere reactivar
+            </p>
+            <input type="date" value={reactivacion} onChange={e => setReactivacion(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+
+          {datosCompletos && !ordenValido && (
+            <p className="text-[11px] font-semibold text-center" style={{ color: '#e07070' }}>
+              Revisa las fechas: la pausa debe ser después del inicio, y la reactivación después de la pausa.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {ordenValido && (
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(70,140,220,0.06)', border: '1px solid rgba(70,140,220,0.18)' }}>
+            <p className="text-xs" style={{ color: 'rgba(106,173,220,0.8)' }}>Días de membresía activa antes de la pausa</p>
+            <p className="text-lg font-black" style={{ color: '#6aaddc' }}>{diasUsados} días</p>
+          </div>
+
+          <div className="flex items-center justify-between px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(220,160,60,0.06)', border: '1px solid rgba(220,160,60,0.18)' }}>
+            <p className="text-xs" style={{ color: 'rgba(220,170,80,0.8)' }}>Días que le quedan de su anualidad</p>
+            <p className="text-lg font-black" style={{ color: diasRestantes === 0 ? '#e07070' : '#dcaa50' }}>
+              {diasRestantes === 0 ? 'Ya se cumplió el año' : `${diasRestantes} días`}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(180,185,210,0.04)', border: `1px solid ${S.border}` }}>
+            <p className="text-xs" style={{ color: S.silverDim }}>Días que estuvo en pausa</p>
+            <p className="text-sm font-bold" style={{ color: S.silver }}>{diasEnPausa} días</p>
+          </div>
+
+          <div className="rounded-xl px-4 py-4" style={{ background: 'rgba(90,160,90,0.1)', border: '1px solid rgba(90,160,90,0.3)' }}>
+            <p className="text-[10px] tracking-widest uppercase mb-1" style={{ color: 'rgba(112,200,120,0.7)' }}>
+              Nueva fecha de vencimiento a capturar
+            </p>
+            <p className="text-xl font-black" style={{ color: '#70c880' }}>{fmtFecha(nuevaFecha)}</p>
+            <p className="text-[11px] mt-1" style={{ color: 'rgba(112,200,120,0.7)' }}>
+              Reactivación ({fmtFecha(reactivacion)}) + {diasRestantes} días restantes de su anualidad
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ─── Archivo de Contacto Cliente (se llenan solos al completarse) ───────── */
 function ArchivoContactos() {
   const { member } = useAuth()
@@ -752,7 +866,7 @@ function ArchivoContactos() {
 
 /* ─── Página principal ───────────────────────────────────────────────────── */
 export default function IncidenciasPage() {
-  const [vista, setVista] = useState<'lista' | 'stats' | 'contactos'>('lista')
+  const [vista, setVista] = useState<'lista' | 'stats' | 'contactos' | 'calculadora'>('lista')
   const [categoria, setCategoria] = useState<Categoria>('soporte')
   const [modal, setModal] = useState<'new' | Caso | null>(null)
 
@@ -802,10 +916,20 @@ export default function IncidenciasPage() {
             }>
             <Phone size={15} /> Contacto Cliente
           </button>
+          <button onClick={() => setVista('calculadora')}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={vista === 'calculadora'
+              ? { background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)' }
+              : { background: 'rgba(180,185,210,0.03)', color: S.silverDim, border: `1px solid ${S.border}` }
+            }>
+            <Calculator size={15} /> Calculadora
+          </button>
         </div>
 
         {vista === 'contactos' ? (
           <ArchivoContactos />
+        ) : vista === 'calculadora' ? (
+          <CalculadoraPausa />
         ) : vista === 'lista' ? (
           <>
             {/* Tabs de categoría */}
