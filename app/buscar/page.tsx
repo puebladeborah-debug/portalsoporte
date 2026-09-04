@@ -12,6 +12,7 @@ import { documentos, CATEGORIA_LABELS } from '@/lib/acuerdos'
 import { useAuth } from '@/components/LoginGate'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { getMembers, TeamMember, Guardia, GiraEvento } from '@/lib/teamStore'
+import { BLACK_ACCESS, WEBINARS_LINKS, PRESENCIALES } from '@/lib/pagosLinks'
 import Fuse from 'fuse.js'
 
 const S = {
@@ -208,6 +209,26 @@ export default function BuscarPage() {
         id: `enlacepago-${e.id}`, categoria: 'Pagos', icono: <Link2 size={14} />,
         titulo: e.nombre, subtitulo: e.plataforma, href: '/pagos',
       })
+    }
+
+    // Enlaces de pago fijos de Black Access, Webinars y Presenciales — viven
+    // en lib/pagosLinks.ts para no duplicar los datos entre esta búsqueda y
+    // la página de Pagos.
+    let i = 0
+    for (const grupo of [
+      { seccion: 'Black Access · Bootcamp', lista: BLACK_ACCESS },
+      { seccion: 'Nuevos Webinars Links',   lista: WEBINARS_LINKS },
+      { seccion: 'Presenciales',            lista: PRESENCIALES },
+    ]) {
+      for (const sub of grupo.lista) {
+        for (const item of sub.items) {
+          list.push({
+            id: `pagolink-${i++}`, categoria: 'Pagos', icono: <Banknote size={14} />,
+            titulo: item.nombre, subtitulo: `${item.precio} · ${grupo.seccion} · ${sub.titulo}`,
+            href: item.url || '/pagos', externo: !!item.url,
+          })
+        }
+      }
     }
 
     // Equipo: nombre/rol son visibles para todos (igual que en la barra lateral).
