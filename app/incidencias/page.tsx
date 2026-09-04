@@ -10,6 +10,7 @@ import {
 import { useAuth } from '@/components/LoginGate'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { getMembers, TeamMember } from '@/lib/teamStore'
+import FechaInput from '@/components/FechaInput'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -676,8 +677,6 @@ function CalculadoraPausa() {
   const [pausa, setPausa] = useState('')
   const [reactivacion, setReactivacion] = useState('')
 
-  const inputStyle = { background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }
-
   const datosCompletos = !!(inicio && pausa && reactivacion)
   const ordenValido = datosCompletos && pausa >= inicio && reactivacion >= pausa
 
@@ -702,22 +701,19 @@ function CalculadoraPausa() {
         <div className="px-5 py-5 space-y-4">
           <div>
             <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Fecha en que inició su Club</p>
-            <input type="date" value={inicio} onChange={e => setInicio(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+            <FechaInput value={inicio} onChange={setInicio} />
           </div>
           <div>
             <p className="text-[10px] tracking-widest uppercase mb-1.5 flex items-center gap-1.5" style={{ color: S.silverDim }}>
               <PauseCircle size={11} /> Fecha en que hizo la pausa
             </p>
-            <input type="date" value={pausa} onChange={e => setPausa(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+            <FechaInput value={pausa} onChange={setPausa} />
           </div>
           <div>
             <p className="text-[10px] tracking-widest uppercase mb-1.5 flex items-center gap-1.5" style={{ color: S.silverDim }}>
               <PlayCircle size={11} /> Fecha en que quiere reactivar
             </p>
-            <input type="date" value={reactivacion} onChange={e => setReactivacion(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+            <FechaInput value={reactivacion} onChange={setReactivacion} />
           </div>
 
           {datosCompletos && !ordenValido && (
