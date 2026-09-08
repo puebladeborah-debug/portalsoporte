@@ -59,7 +59,7 @@ type Reembolso = {
 }
 
 const PLATAFORMAS = [
-  'Kajabi', 'Stripe LLC', 'Stripe Meses', 'Stripe Contado', 'Hotmart',
+  'Kajabi', 'Stripe LLC', 'Stripe Meses', 'Stripe Contado', 'Hotmart', 'Skool',
   'Mercado Libre', 'Zelle', 'Transferencia', 'Cripto', 'PayPal', 'Klarna', 'Afterpay',
 ]
 
