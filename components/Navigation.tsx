@@ -26,7 +26,7 @@ const S = {
   silverDim:    'var(--th-dim)',
 }
 
-const navItems = [
+export const navItems = [
   { href: '/', label: 'Inicio', icon: Home },
   { href: '/manual', label: 'Manuales', icon: BookOpen },
   { href: '/acuerdos', label: 'Acuerdos', icon: ScrollText },
@@ -353,6 +353,13 @@ export default function Navigation() {
   const { data: avisos } = useFirestoreCollection<{ id: string; type?: string }>('avisos_equipo')
   const hayAlertaGiras = avisos.some(a => a.type === 'hojas_listas')
 
+  // Admin siempre ve todas las pestañas; los demás solo ven las que un
+  // admin les haya habilitado (sin restricción configurada = ve todas,
+  // para no quitarle acceso a nadie por default).
+  const itemsVisibles = member?.isAdmin || !member?.tabsPermitidas
+    ? navItems
+    : navItems.filter(item => item.href === '/' || member.tabsPermitidas!.includes(item.href))
+
   return (
     <>
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
@@ -372,7 +379,7 @@ export default function Navigation() {
         </Link>
 
         <div className="flex items-center min-w-0 flex-1 h-full">
-          {navItems.map(({ href, label, icon: Icon }) => (
+          {itemsVisibles.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} title={label}
               className="relative flex flex-col items-center justify-center h-[54px] rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[54px] px-0.5"
               style={pathname === href
@@ -431,7 +438,7 @@ export default function Navigation() {
       {/* Mobile bottom nav — se desliza horizontalmente porque ya no caben todas las secciones en una fila fija */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 flex overflow-x-auto no-scrollbar z-50 nav-safe-bottom"
         style={{ background: 'var(--th-nav-bottom)', borderTop: `1px solid ${S.borderLight}`, backdropFilter: 'blur(20px)' }}>
-        {navItems.map(({ href, label, icon: Icon }) => (
+        {itemsVisibles.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href}
             className="relative flex-shrink-0 flex flex-col items-center justify-center py-2.5 gap-1 text-[10px] font-medium transition-all"
             style={{ width: '64px', ...(pathname === href ? { color: '#d4d8e8' } : { color: '#3a3e4a' }) }}>

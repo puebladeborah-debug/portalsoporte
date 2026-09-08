@@ -9,6 +9,7 @@ import QRCode from 'qrcode'
 import { getMembers, updateMember, addMemberDoc, deleteMemberDoc, createAuthAccount, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, EXEC_IDS } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from './LoginGate'
+import { navItems } from './Navigation'
 import { auth, db } from '@/lib/firebase'
 import { sendPasswordResetEmail } from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
@@ -86,6 +87,7 @@ export default function TeamSidebar() {
   const [editForm, setEditForm] = useState({ name: '', role: '', username: '', password: '', email: '', tasks: '' })
   const [editHorario, setEditHorario] = useState<HorarioSemanal>({})
   const [editIsAdmin, setEditIsAdmin] = useState(false)
+  const [editTabsPermitidas, setEditTabsPermitidas] = useState<string[]>(navItems.map(i => i.href))
   const [editPasaAsistencia, setEditPasaAsistencia] = useState(true)
   const [editTieneKPI, setEditTieneKPI] = useState(true)
   const editScrollRef = useRef<HTMLDivElement>(null)
@@ -343,6 +345,7 @@ export default function TeamSidebar() {
     })
     setEditHorario(member.horario ?? {})
     setEditIsAdmin(member.isAdmin)
+    setEditTabsPermitidas(member.tabsPermitidas ?? navItems.map(i => i.href))
     setEditPasaAsistencia(member.pasaAsistencia !== false)
     setEditTieneKPI(member.tieneKPI !== false)
     setTimeout(() => {
@@ -369,6 +372,7 @@ export default function TeamSidebar() {
       horario: editHorario,
       pasaAsistencia: editPasaAsistencia,
       tieneKPI: editTieneKPI,
+      tabsPermitidas: editTabsPermitidas,
     }
     const updatedTasksLen = fields.tasks!.length
     const ok = await runTeamOp(
@@ -905,6 +909,54 @@ export default function TeamSidebar() {
                     📊 Registra KPIs (inicio/fin de jornada)
                   </label>
                 </div>
+              </div>
+
+              {/* Pestañas visibles en el menú — no aplica a administradores, que siempre ven todo */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] tracking-widest uppercase" style={{ color: S.silverDim }}>
+                    Pestañas visibles
+                  </p>
+                  {!editIsAdmin && (
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditTabsPermitidas(navItems.map(i => i.href))}
+                        className="text-[10px] font-semibold" style={{ color: S.silverDim }}>
+                        Todas
+                      </button>
+                      <button onClick={() => setEditTabsPermitidas(['/'])}
+                        className="text-[10px] font-semibold" style={{ color: S.silverDim }}>
+                        Ninguna
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {editIsAdmin ? (
+                  <p className="text-[11px]" style={{ color: S.silverDim }}>
+                    Los administradores siempre ven todas las pestañas.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {navItems.map(item => {
+                      const esInicio = item.href === '/'
+                      const checked = esInicio || editTabsPermitidas.includes(item.href)
+                      return (
+                        <label key={item.href}
+                          className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs cursor-pointer"
+                          style={{
+                            background: checked ? 'rgba(180,185,210,0.08)' : 'rgba(180,185,210,0.02)',
+                            border: `1px solid ${checked ? S.borderActive : S.border}`,
+                            color: checked ? S.silverBright : S.silverDim,
+                          }}>
+                          <input type="checkbox" checked={checked} disabled={esInicio}
+                            onChange={e => setEditTabsPermitidas(prev =>
+                              e.target.checked ? [...prev, item.href] : prev.filter(h => h !== item.href)
+                            )} />
+                          {item.label}
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Horario semanal — solo admin puede configurarlo */}

@@ -74,6 +74,11 @@ export type TeamMember = {
   alergias?: string
   tipoSangre?: string
   genero?: 'M' | 'F'
+  // Pestañas del menú visibles para esta persona (por href, ej. '/pagos').
+  // undefined = sin restricción, ve todas las pestañas (comportamiento de
+  // siempre — así ninguna cuenta existente pierde acceso al agregar esto).
+  // Los administradores siempre ven todo, sin importar este campo.
+  tabsPermitidas?: string[]
 }
 
 export type AttendanceRecord = {
