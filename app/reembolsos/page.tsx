@@ -298,19 +298,18 @@ function ReembolsoModal({ reembolso, onClose, onSaved, addReembolso, updateReemb
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Número de tarjeta</p>
-              <input value={numeroTarjeta} onChange={e => setNumeroTarjeta(e.target.value)}
-                placeholder="•••• 1234"
-                className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
-            </div>
-            <div>
-              <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Número de operación</p>
-              <input value={numeroOperacion} onChange={e => setNumeroOperacion(e.target.value)}
-                placeholder="ID de transacción"
-                className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
-            </div>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Número de tarjeta</p>
+            <input value={numeroTarjeta} onChange={e => setNumeroTarjeta(e.target.value)}
+              placeholder="•••• 1234"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+          </div>
+
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Número de operación</p>
+            <input value={numeroOperacion} onChange={e => setNumeroOperacion(e.target.value)}
+              placeholder="ID de transacción"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
           </div>
 
           <div>
