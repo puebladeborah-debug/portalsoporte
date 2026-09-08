@@ -12,6 +12,7 @@ import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { IMPORT_DISPUTAS_2026 } from '@/lib/reembolsosImport2026'
 import { IMPORT_REEMBOLSOS_DOCS_2026 } from '@/lib/reembolsosImportDocs2026'
 import { IMPORT_REEMBOLSOS_SEP_2026 } from '@/lib/reembolsosImportSep2026'
+import { IMPORT_REEMBOLSOS_KAJABI_SEP_2026 } from '@/lib/reembolsosImportKajabiSep2026'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -900,6 +901,7 @@ export default function ReembolsosPage() {
   const yaImportado = reembolsos.some(r => r.importId === 'disputas-2026-v1')
   const yaImportadoDocs = reembolsos.some(r => r.importId === 'reembolsos-docs-2026-v1')
   const yaImportadoSep2026 = reembolsos.some(r => r.importId === 'reembolsos-sep2026-v1')
+  const yaImportadoKajabiSep2026 = reembolsos.some(r => r.importId === 'reembolsos-kajabi-sep2026-v1')
 
   async function importarDisputas2026() {
     if (yaImportado) { setImportMsg('Estos datos ya se habían importado antes.'); return }
@@ -950,6 +952,23 @@ export default function ReembolsosPage() {
     }
     setImportando(false)
     setImportMsg(`Se importaron ${IMPORT_REEMBOLSOS_SEP_2026.length} reembolsos nuevos (llc 8 sep, stripe de contado, stripe meses 8sep).`)
+  }
+
+  async function importarKajabiSep2026() {
+    if (yaImportadoKajabiSep2026) { setImportMsg('Estos datos ya se habían importado antes.'); return }
+    setImportando(true)
+    setImportMsg('')
+    for (const item of IMPORT_REEMBOLSOS_KAJABI_SEP_2026) {
+      const fecha = new Date(item.fechaDevolucion + 'T12:00:00').toISOString()
+      await addReembolso({
+        ...item,
+        createdBy: session?.memberName || 'Importado',
+        createdAt: fecha,
+        updatedAt: fecha,
+      } as Omit<Reembolso, 'id'>)
+    }
+    setImportando(false)
+    setImportMsg(`Se importaron ${IMPORT_REEMBOLSOS_KAJABI_SEP_2026.length} reembolsos nuevos de Kajabi (8 sep 2026). Se excluyó 1 por estar duplicado con Stripe Contado.`)
   }
 
   // Los dos cargos de Stripe que quedaron ambiguos: el extracto real muestra
@@ -1066,6 +1085,14 @@ export default function ReembolsosPage() {
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mb-3 text-xs font-bold transition-all"
                 style={{ background: 'rgba(180,185,210,0.06)', color: S.silver, border: `1px solid ${S.border}`, opacity: importando ? 0.6 : 1 }}>
                 <Upload size={14} /> {importando ? 'Importando…' : 'Importar reembolsos nuevos (8 sep 2026)'}
+              </button>
+            )}
+
+            {!yaImportadoKajabiSep2026 && (
+              <button onClick={importarKajabiSep2026} disabled={importando}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mb-3 text-xs font-bold transition-all"
+                style={{ background: 'rgba(180,185,210,0.06)', color: S.silver, border: `1px solid ${S.border}`, opacity: importando ? 0.6 : 1 }}>
+                <Upload size={14} /> {importando ? 'Importando…' : 'Importar reembolsos Kajabi (8 sep 2026)'}
               </button>
             )}
 
