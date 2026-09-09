@@ -26,9 +26,11 @@ type ContactoCliente = {
   clienteNombre: string
   fecha: string
   hora: string
+  horarioPendiente?: boolean
   metodo: Metodo
   lada?: string
   telefono?: string
+  notasLlamada?: string
   asignadoA: string
   asignadoPor: string
   estado: 'pendiente' | 'completada'
@@ -49,8 +51,8 @@ function nombreCorto(nombre: string) {
 
 /* ─── Modal: nuevo contacto / editar contacto ────────────────────────────── */
 type DatosContacto = {
-  clienteNombre: string; fecha: string; hora: string; metodo: Metodo
-  lada?: string; telefono?: string; asignadoA: string
+  clienteNombre: string; fecha: string; hora: string; horarioPendiente?: boolean; metodo: Metodo
+  lada?: string; telefono?: string; notasLlamada?: string; asignadoA: string
 }
 
 function ContactoFormModal({ members, myId, item, onClose, onSave, onDelete }: {
@@ -64,16 +66,18 @@ function ContactoFormModal({ members, myId, item, onClose, onSave, onDelete }: {
   const [clienteNombre, setClienteNombre] = useState(item?.clienteNombre ?? '')
   const [fecha, setFecha] = useState(item?.fecha ?? '')
   const [hora, setHora] = useState(item?.hora ?? '')
+  const [horarioPendiente, setHorarioPendiente] = useState(item?.horarioPendiente ?? false)
   const [metodo, setMetodo] = useState<Metodo>(item?.metodo ?? 'whatsapp')
   const [lada, setLada] = useState(item?.lada ?? '+52')
   const [telefono, setTelefono] = useState(item?.telefono ?? '')
+  const [notasLlamada, setNotasLlamada] = useState(item?.notasLlamada ?? '')
   const [asignadoA, setAsignadoA] = useState(item?.asignadoA ?? myId)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [confirmarBorrar, setConfirmarBorrar] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  const valido = clienteNombre.trim() && fecha && hora && asignadoA && (metodo !== 'llamada' || telefono.trim())
+  const valido = clienteNombre.trim() && fecha && (hora || horarioPendiente) && asignadoA && (metodo !== 'llamada' || telefono.trim())
 
   async function guardar() {
     if (!valido) return
@@ -81,8 +85,8 @@ function ContactoFormModal({ members, myId, item, onClose, onSave, onDelete }: {
     setError('')
     try {
       await onSave({
-        clienteNombre: clienteNombre.trim(), fecha, hora, metodo,
-        ...(metodo === 'llamada' ? { lada: lada.trim(), telefono: telefono.trim() } : {}),
+        clienteNombre: clienteNombre.trim(), fecha, hora: horarioPendiente ? '' : hora, metodo,
+        ...(metodo === 'llamada' ? { lada: lada.trim(), telefono: telefono.trim(), horarioPendiente, notasLlamada: notasLlamada.trim() } : {}),
         asignadoA,
       })
       onClose()
@@ -135,10 +139,22 @@ function ContactoFormModal({ members, myId, item, onClose, onSave, onDelete }: {
             <div>
               <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Hora</p>
               <input type="time" value={hora} onChange={e => setHora(e.target.value)}
+                disabled={metodo === 'llamada' && horarioPendiente}
                 className="w-full px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright, opacity: metodo === 'llamada' && horarioPendiente ? 0.5 : 1 }} />
             </div>
           </div>
+
+          {metodo === 'llamada' && (
+            <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold cursor-pointer"
+              style={horarioPendiente
+                ? { background: 'rgba(220,150,50,0.08)', color: '#d4a050', border: '1px solid rgba(220,150,50,0.3)' }
+                : { background: 'rgba(180,185,210,0.03)', color: S.silverDim, border: `1px solid ${S.border}` }}>
+              <input type="checkbox" checked={horarioPendiente}
+                onChange={e => { setHorarioPendiente(e.target.checked); if (e.target.checked) setHora('') }} />
+              Horario pendiente de confirmar
+            </label>
+          )}
 
           <div>
             <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Método de contacto</p>
@@ -156,14 +172,24 @@ function ContactoFormModal({ members, myId, item, onClose, onSave, onDelete }: {
           </div>
 
           {metodo === 'llamada' && (
-            <div className="flex gap-2.5">
-              <input value={lada} onChange={e => setLada(e.target.value)} placeholder="Lada"
-                className="w-20 flex-shrink-0 px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
-              <input value={telefono} onChange={e => setTelefono(e.target.value)} type="tel" placeholder="Número de teléfono"
-                className="flex-1 px-3 py-2.5 rounded-xl outline-none text-sm"
-                style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
-            </div>
+            <>
+              <div className="flex gap-2.5">
+                <input value={lada} onChange={e => setLada(e.target.value)} placeholder="Lada"
+                  className="w-20 flex-shrink-0 px-3 py-2.5 rounded-xl outline-none text-sm"
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+                <input value={telefono} onChange={e => setTelefono(e.target.value)} type="tel" placeholder="Número de teléfono"
+                  className="flex-1 px-3 py-2.5 rounded-xl outline-none text-sm"
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              </div>
+
+              <div>
+                <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Notas de la llamada</p>
+                <textarea value={notasLlamada} onChange={e => setNotasLlamada(e.target.value)}
+                  placeholder="¿De qué se trata la llamada? Detalles útiles antes de hacerla…" rows={2}
+                  className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none"
+                  style={{ background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }} />
+              </div>
+            </>
           )}
 
           <div>
@@ -195,7 +221,7 @@ function ContactoFormModal({ members, myId, item, onClose, onSave, onDelete }: {
               Falta: {[
                 !clienteNombre.trim() && 'nombre del cliente',
                 !fecha && 'fecha',
-                !hora && 'hora',
+                !hora && !horarioPendiente && 'hora (o marca "horario pendiente de confirmar")',
                 metodo === 'llamada' && !telefono.trim() && 'teléfono',
               ].filter(Boolean).join(', ')}
             </p>
@@ -294,11 +320,23 @@ function ContactoCard({ c, members, puedeCompletar, onComplete, onEdit }: {
         </div>
 
         <div className="flex items-center gap-3 text-[11px] mb-2 flex-wrap" style={{ color: pendiente ? 'rgba(224,112,112,0.8)' : S.silverDim }}>
-          <span>{new Date(c.fecha + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })} · {c.hora}</span>
+          <span>
+            {new Date(c.fecha + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+            {' · '}
+            {c.horarioPendiente ? (
+              <span className="font-semibold" style={{ color: '#d4a050' }}>Horario pendiente de confirmar</span>
+            ) : c.hora}
+          </span>
           <span className="flex items-center gap-1">{mInfo.icon} {mInfo.label}</span>
           {c.metodo === 'llamada' && c.telefono && <span>{c.lada} {c.telefono}</span>}
           <span>Asignado: <span style={{ color: pendiente ? '#e07070' : S.silver }}>{asignado ? nombreCorto(asignado.name) : '—'}</span></span>
         </div>
+
+        {c.metodo === 'llamada' && c.notasLlamada && (
+          <p className="text-xs leading-relaxed mb-2" style={{ color: '#9094a4' }}>
+            <span style={{ color: S.silverDim }}>Notas: </span>{c.notasLlamada}
+          </p>
+        )}
 
         {c.estado === 'completada' && c.resolucion && (
           <p className="text-xs leading-relaxed mb-1" style={{ color: '#9094a4' }}>
