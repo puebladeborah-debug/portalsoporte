@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MessageSquare, X, Copy, Check, ChevronDown, ChevronUp, Download } from 'lucide-react'
+import { MessageSquare, X, Copy, Check, ChevronDown, ChevronUp, Download, Plus, Pencil, Trash2 } from 'lucide-react'
+import { useFirestoreCollection } from '@/lib/firestoreCollection'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -115,12 +116,119 @@ const RESPUESTAS = [
   },
 ]
 
+type RespuestaCustom = { id: string; titulo: string; emoji: string; contenido: string; createdAt: string }
+
+function RespuestaModal({ item, onClose, onSave, onDelete }: {
+  item: RespuestaCustom | null
+  onClose: () => void
+  onSave: (titulo: string, emoji: string, contenido: string) => Promise<void>
+  onDelete?: () => Promise<void>
+}) {
+  const [titulo, setTitulo] = useState(item?.titulo || '')
+  const [emoji, setEmoji] = useState(item?.emoji || '💬')
+  const [contenido, setContenido] = useState(item?.contenido || '')
+  const [saving, setSaving] = useState(false)
+  const [confirmarBorrar, setConfirmarBorrar] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const inputStyle = { background: 'var(--th-input)', border: `1px solid ${S.border}`, color: S.silverBright }
+  const valido = titulo.trim() && contenido.trim()
+
+  async function save() {
+    if (!valido) return
+    setSaving(true)
+    await onSave(titulo.trim(), emoji.trim() || '💬', contenido.trim())
+    setSaving(false)
+  }
+
+  async function eliminar() {
+    if (!onDelete) return
+    setDeleting(true)
+    await onDelete()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[500] flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)' }}>
+
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${S.border}` }}>
+          <p className="flex-1 text-sm font-bold" style={{ color: S.silverBright }}>
+            {item ? 'Editar respuesta' : 'Nueva respuesta rápida'}
+          </p>
+          <button onClick={onClose} style={{ color: S.silverDim }}><X size={16} /></button>
+        </div>
+
+        <div className="px-5 py-5 space-y-4">
+          <div className="flex gap-3">
+            <div className="w-16 flex-shrink-0">
+              <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Emoji</p>
+              <input value={emoji} onChange={e => setEmoji(e.target.value)}
+                placeholder="💬" maxLength={4}
+                className="w-full px-3 py-2.5 rounded-xl outline-none text-sm text-center" style={inputStyle} />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Título</p>
+              <input value={titulo} onChange={e => setTitulo(e.target.value)}
+                placeholder="ej. Link de pago Skool"
+                className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Contenido a copiar</p>
+            <textarea value={contenido} onChange={e => setContenido(e.target.value)} rows={5}
+              placeholder="El texto o enlace que se copiará al portapapeles…"
+              className="w-full px-3 py-2.5 rounded-xl outline-none text-sm resize-none" style={inputStyle} />
+          </div>
+        </div>
+
+        <div className="px-5 py-4" style={{ borderTop: `1px solid ${S.border}` }}>
+          {confirmarBorrar ? (
+            <div className="flex items-center gap-2">
+              <button onClick={() => setConfirmarBorrar(false)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold"
+                style={{ color: S.silverDim, border: `1px solid ${S.border}` }}>
+                Cancelar
+              </button>
+              <button onClick={eliminar} disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold"
+                style={{ background: 'rgba(220,80,80,0.15)', color: '#e07070', border: '1px solid rgba(220,80,80,0.35)', opacity: deleting ? 0.6 : 1 }}>
+                <Trash2 size={13} /> {deleting ? 'Eliminando…' : '¿Seguro? Eliminar'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {item && onDelete && (
+                <button onClick={() => setConfirmarBorrar(true)}
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all"
+                  style={{ color: '#e07070', border: '1px solid rgba(220,80,80,0.25)', background: 'rgba(220,80,80,0.06)' }}>
+                  <Trash2 size={13} /> Eliminar
+                </button>
+              )}
+              <button onClick={save} disabled={!valido || saving}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)', opacity: !valido || saving ? 0.5 : 1 }}>
+                {saving ? 'Guardando…' : item ? 'Guardar cambios' : 'Agregar respuesta'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function QuickResponses() {
   const [open, setOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [teamModalOpen, setTeamModalOpen] = useState(false)
+  const [modal, setModal] = useState<'new' | RespuestaCustom | null>(null)
+
+  const { data: custom, add, update, remove } = useFirestoreCollection<RespuestaCustom>('respuestas_rapidas')
 
   useEffect(() => {
     function handleSidebar(e: Event) { setSidebarOpen((e as CustomEvent).detail.active) }
@@ -145,6 +253,9 @@ export default function QuickResponses() {
   }
 
   const isMultiLine = (text: string) => text.includes('\n') || text.length > 80
+
+  const personalizadas = [...custom].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  const total = RESPUESTAS.length + personalizadas.length
 
   return (
     <>
@@ -186,6 +297,11 @@ export default function QuickResponses() {
                   Toca una respuesta para copiarla al portapapeles
                 </p>
               </div>
+              <button onClick={() => setModal('new')}
+                className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex-shrink-0"
+                style={{ background: 'rgba(180,185,210,0.08)', color: S.silver, border: `1px solid ${S.border}` }}>
+                <Plus size={12} /> Agregar
+              </button>
               <button onClick={() => setOpen(false)} style={{ color: S.silverDim }}>
                 <X size={18} />
               </button>
@@ -194,7 +310,9 @@ export default function QuickResponses() {
             {/* Lista */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2"
               style={{ scrollbarWidth: 'thin', scrollbarColor: `${S.silverDim} transparent` }}>
-              {RESPUESTAS.map(r => {
+              {[...RESPUESTAS, ...personalizadas].map(r => {
+                const esPersonalizada = personalizadas.some(p => p.id === r.id)
+                const imagen = 'imagen' in r ? r.imagen : undefined
                 const multi = isMultiLine(r.contenido)
                 const expanded = expandedId === r.id
                 const copied = copiedId === r.id
@@ -219,6 +337,15 @@ export default function QuickResponses() {
                             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                           </button>
                         )}
+                        {/* Editar (solo respuestas agregadas desde la app) */}
+                        {esPersonalizada && (
+                          <button
+                            onClick={() => setModal(r as RespuestaCustom)}
+                            className="p-1.5 rounded-lg transition-colors"
+                            style={{ color: S.silverDim, background: 'rgba(180,185,210,0.06)' }}>
+                            <Pencil size={12} />
+                          </button>
+                        )}
                         {/* Botón copiar */}
                         <button
                           onClick={() => copy(r.id, r.contenido)}
@@ -233,12 +360,12 @@ export default function QuickResponses() {
                     </div>
 
                     {/* Imagen adjunta (si la respuesta trae una) */}
-                    {r.imagen && (
+                    {imagen && (
                       <div className="px-4 pb-3">
-                        <img src={r.imagen} alt={r.titulo}
+                        <img src={imagen} alt={r.titulo}
                           className="rounded-xl max-w-full mb-2"
                           style={{ border: `1px solid ${S.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.35)' }} />
-                        <a href={r.imagen} download
+                        <a href={imagen} download
                           className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all"
                           style={{ background: 'rgba(180,185,210,0.08)', color: S.silver, border: `1px solid ${S.border}` }}>
                           <Download size={11} /> Descargar imagen
@@ -274,11 +401,30 @@ export default function QuickResponses() {
             <div className="px-5 py-3 flex-shrink-0 text-center"
               style={{ borderTop: `1px solid ${S.border}` }}>
               <p className="text-[9px]" style={{ color: S.silverDim }}>
-                {RESPUESTAS.length} respuestas disponibles
+                {total} respuesta{total !== 1 ? 's' : ''} disponible{total !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
         </div>
+      )}
+
+      {modal && (
+        <RespuestaModal
+          item={modal === 'new' ? null : modal}
+          onClose={() => setModal(null)}
+          onSave={async (titulo, emoji, contenido) => {
+            if (modal === 'new') {
+              await add({ titulo, emoji, contenido, createdAt: new Date().toISOString() })
+            } else {
+              await update(modal.id, { titulo, emoji, contenido })
+            }
+            setModal(null)
+          }}
+          onDelete={modal !== 'new' ? async () => {
+            await remove((modal as RespuestaCustom).id)
+            setModal(null)
+          } : undefined}
+        />
       )}
     </>
   )
