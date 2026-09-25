@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, Plus, X, Download, Trash2, Pencil, Copy, Check } from 'lucide-react'
+import { FileText, Plus, X, Download, Trash2, Pencil, Copy, Check, Eye, ExternalLink } from 'lucide-react'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from '@/components/LoginGate'
 
@@ -26,6 +26,41 @@ type Entregable = {
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+// Convierte un enlace normal de "ver/compartir" de Google Drive en uno
+// embebible dentro de un iframe (Drive bloquea el que usa /view ahí).
+// Otros enlaces (PDF directo, etc.) se usan tal cual.
+function urlParaVisor(url: string) {
+  if (url.includes('drive.google.com') && url.includes('/view')) {
+    return url.replace('/view', '/preview')
+  }
+  return url
+}
+
+function VisorModal({ item, onClose }: { item: Entregable; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      style={{ background: 'rgba(0,0,0,var(--th-overlay-alpha))', backdropFilter: 'blur(6px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full max-w-3xl h-full rounded-2xl overflow-hidden flex flex-col"
+        style={{ background: 'var(--th-inner)', border: '1px solid rgba(180,185,210,0.2)', boxShadow: '0 0 80px rgba(0,0,0,0.9)' }}>
+
+        <div className="flex items-center gap-3 px-5 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${S.border}` }}>
+          <FileText size={15} style={{ color: '#e07070' }} />
+          <p className="flex-1 text-sm font-bold truncate" style={{ color: S.silverBright }}>{item.nombre}</p>
+          <a href={item.url} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold"
+            style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}>
+            <ExternalLink size={12} /> Abrir en pestaña nueva
+          </a>
+          <button onClick={onClose} style={{ color: S.silverDim }}><X size={18} /></button>
+        </div>
+
+        <iframe src={urlParaVisor(item.url)} className="flex-1 w-full" style={{ border: 'none', background: '#fff' }} />
+      </div>
+    </div>
+  )
 }
 
 function CopyButton({ value }: { value: string }) {
@@ -147,6 +182,7 @@ export default function EntregablesPage() {
   const { member } = useAuth()
   const { data, loading, add, update, remove } = useFirestoreCollection<Entregable>('entregables')
   const [modal, setModal] = useState<'new' | Entregable | null>(null)
+  const [viendo, setViendo] = useState<Entregable | null>(null)
 
   const items = [...data].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
@@ -190,6 +226,12 @@ export default function EntregablesPage() {
                     </p>
                   </div>
                   <CopyButton value={item.url} />
+                  <button onClick={() => setViendo(item)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                    style={{ background: 'rgba(70,140,220,0.08)', border: '1px solid rgba(70,140,220,0.25)', color: '#6aaddc' }}
+                    title="Visualizar">
+                    <Eye size={14} />
+                  </button>
                   <a href={item.url} target="_blank" rel="noopener noreferrer"
                     className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
                     style={{ background: 'rgba(180,185,210,0.06)', border: `1px solid ${S.border}`, color: S.silverDim }}
@@ -226,6 +268,10 @@ export default function EntregablesPage() {
             setModal(null)
           } : undefined}
         />
+      )}
+
+      {viendo && (
+        <VisorModal item={viendo} onClose={() => setViendo(null)} />
       )}
     </div>
   )
