@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, Plus, X, Download, Trash2, Pencil, Copy, Check, Eye, ExternalLink } from 'lucide-react'
+import { FileText, Plus, X, Download, Trash2, Pencil, Copy, Check, Eye, ExternalLink, Upload } from 'lucide-react'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from '@/components/LoginGate'
 
@@ -22,7 +22,18 @@ type Entregable = {
   url: string
   createdBy: string
   createdAt: string
+  importId?: string
 }
+
+// Los 4 PDF que ya estaban en la carpeta del proyecto (3 "Notas" + 1
+// "Cuadernillo") — se sirven como archivos estáticos desde /public,
+// sin necesitar Storage. Se importan una sola vez (importId como guard).
+const IMPORT_INICIAL: { nombre: string; url: string }[] = [
+  { nombre: 'Notas Primera Entrega', url: '/entregables/notas-primera-entrega.pdf' },
+  { nombre: 'Notas Segunda Entrega', url: '/entregables/notas-segunda-entrega.pdf' },
+  { nombre: 'Cuadernillo Tercera Entrega', url: '/entregables/cuadernillo-tercera-entrega.pdf' },
+  { nombre: 'Notas Cuarta Entrega', url: '/entregables/notas-cuarta-entrega.pdf' },
+]
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -183,8 +194,24 @@ export default function EntregablesPage() {
   const { data, loading, add, update, remove } = useFirestoreCollection<Entregable>('entregables')
   const [modal, setModal] = useState<'new' | Entregable | null>(null)
   const [viendo, setViendo] = useState<Entregable | null>(null)
+  const [importando, setImportando] = useState(false)
 
   const items = [...data].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const yaImportadoInicial = data.some(d => d.importId === 'entregables-inicial-v1')
+
+  async function importarInicial() {
+    if (yaImportadoInicial) return
+    setImportando(true)
+    for (const item of IMPORT_INICIAL) {
+      await add({
+        ...item,
+        createdBy: member?.name || 'Equipo',
+        createdAt: new Date().toISOString(),
+        importId: 'entregables-inicial-v1',
+      })
+    }
+    setImportando(false)
+  }
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh' }}>
@@ -198,10 +225,18 @@ export default function EntregablesPage() {
         </div>
 
         <button onClick={() => setModal('new')}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl mb-5 text-sm font-bold transition-all"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl mb-3 text-sm font-bold transition-all"
           style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)' }}>
           <Plus size={16} /> Nuevo
         </button>
+
+        {!yaImportadoInicial && (
+          <button onClick={importarInicial} disabled={importando}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mb-5 text-xs font-bold transition-all"
+            style={{ background: 'rgba(180,185,210,0.06)', color: S.silver, border: `1px solid ${S.border}`, opacity: importando ? 0.6 : 1 }}>
+            <Upload size={14} /> {importando ? 'Importando…' : 'Importar Notas y Cuadernillo (4 PDF ya subidos)'}
+          </button>
+        )}
 
         {loading ? (
           <p className="text-center text-sm py-10" style={{ color: S.silverDim }}>Cargando…</p>
