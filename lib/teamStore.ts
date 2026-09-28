@@ -307,7 +307,23 @@ export async function getMembers(): Promise<TeamMember[]> {
   const { collection, getDocs, doc, writeBatch } = await import('firebase/firestore')
   const { db } = await import('./firebase')
 
-  const snap = await getDocs(collection(db, EQUIPO_COLLECTION))
+  // Justo después de abrir/recuperar la app, la sesión de Firebase puede
+  // tardar una fracción de segundo en restaurarse — una lectura que llega en
+  // ese instante se rechaza por falta de sesión, aunque exista un momento
+  // después. Reintenta unas pocas veces (con espera creciente) antes de darse
+  // por vencido, en vez de dejar vacías Equipo, Fechas Importantes, etc.
+  let snap
+  let intento = 0
+  while (true) {
+    try {
+      snap = await getDocs(collection(db, EQUIPO_COLLECTION))
+      break
+    } catch (err) {
+      intento++
+      if (intento >= 4) throw err
+      await new Promise(r => setTimeout(r, 400 * intento))
+    }
+  }
   if (snap.empty) {
     // Primera vez que se lee: siembra Firestore con los miembros por defecto.
     try {
