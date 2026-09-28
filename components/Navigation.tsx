@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { BookOpen, CalendarClock, Search, Home, Settings, LogOut, User, Eye, EyeOff, Pencil, X, AlertTriangle, Info, AlertCircle, Shield, CalendarDays, MapPin, ScrollText, MessageCircle, CreditCard, FileWarning, Banknote, Sheet, BarChart3, PlayCircle, ClipboardList, Clock, Users, KeyRound, IdCard, FileText } from 'lucide-react'
+import { BookOpen, CalendarClock, Search, Home, Settings, LogOut, User, Eye, EyeOff, Pencil, X, AlertTriangle, Info, AlertCircle, Shield, CalendarDays, MapPin, ScrollText, MessageCircle, CreditCard, FileWarning, Banknote, Sheet, BarChart3, PlayCircle, ClipboardList, Clock, Users, KeyRound, IdCard, FileText, Route } from 'lucide-react'
 import NoticesPanel from './NoticesPanel'
 import { useAuth } from './LoginGate'
 import { updateMember, getIncidenciasByMember, Incidencia, TipoIncidencia } from '@/lib/teamStore'
@@ -47,6 +47,7 @@ export const navItems = [
   { href: '/kpis', label: 'KPIs', icon: Clock },
   { href: '/expediente', label: 'Expediente', icon: IdCard },
   { href: '/entregables', label: 'Entregables', icon: FileText },
+  { href: '/ruta-critica', label: 'Ruta Crítica', icon: Route },
 ]
 
 const TIPO_COLOR: Record<TipoIncidencia, { text: string; icon: React.ReactNode }> = {
