@@ -132,27 +132,6 @@ export const DEFAULT_MEMBERS: TeamMember[] = [
     ],
   },
   {
-    id: 'mlf',
-    name: 'Marlen Fajardo',
-    role: 'Soporte Primer Nivel',
-    initial: 'M',
-    isAdmin: false,
-    username: 'marlen',
-    email: 'mfajardo@zigma3.com',
-    password: 'Marlen2026',
-    permissions: ['checklist','manuales','buscar'],
-    tasks: [
-      'Comunidades WhatsApp (revisar/solicitudes)',
-      'Mensajes de bienvenida (si no se han dado SAM)',
-      'Llamadas de bienvenida',
-      'Mensajes de sesión de arranque',
-      'ZENDESK',
-      'WhatsApp Skool',
-      'Apartados (Giras)',
-      'Monitoreo Mentorías',
-    ],
-  },
-  {
     id: 'so',
     name: 'Samuel Otniel',
     role: 'Administrador de Infraestructura',
@@ -236,6 +215,11 @@ export const DEFAULT_MEMBERS: TeamMember[] = [
       'Plataforma Skool',
       'Mensajes de Bienvenida',
       'Completos (Giras)',
+      // Reasignadas de Marlen (ya no está en el equipo)
+      'ZENDESK',
+      'WhatsApp Skool',
+      'Apartados (Giras)',
+      'Monitoreo Mentorías',
     ],
   },
   {
@@ -274,6 +258,10 @@ export const DEFAULT_MEMBERS: TeamMember[] = [
       'Líder de Cultura',
       'Archivo',
       'Interesados (Giras)',
+      // Reasignadas de Marlen (ya no está en el equipo)
+      'Comunidades WhatsApp (revisar/solicitudes)',
+      'Mensajes de bienvenida (si no se han dado SAM)',
+      'Mensajes de sesión de arranque',
     ],
   },
   {
