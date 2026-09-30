@@ -147,6 +147,14 @@ const ARCHIVOS: ArchivoDescargable[] = [
     categoria: 'Manual de Operación',
     tamaño: '19 KB',
   },
+  {
+    nombre: 'Manual de Community Manager',
+    descripcion: 'Atención de comunidad, moderación y seguimiento en redes sociales',
+    archivo: '/manuales/manual-community-manager.pdf',
+    tipo: 'pdf',
+    categoria: 'Manual de Operación',
+    tamaño: '909 KB',
+  },
 ]
 
 const TIPO_COLOR: Record<string, string> = {
