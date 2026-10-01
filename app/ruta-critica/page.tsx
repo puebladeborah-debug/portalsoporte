@@ -27,15 +27,16 @@ function nombreCorto(nombre: string) {
   return nombre.includes(' · ') ? nombre.split(' · ').pop()! : nombre
 }
 
-function ActividadModal({ item, miembros, onClose, onSave, onDelete }: {
+function ActividadModal({ item, miembros, defaultAsignado, onClose, onSave, onDelete }: {
   item: Actividad | null
   miembros: TeamMember[]
+  defaultAsignado?: string
   onClose: () => void
   onSave: (texto: string, asignadoA: string) => Promise<void>
   onDelete?: () => Promise<void>
 }) {
   const [texto, setTexto] = useState(item?.texto || '')
-  const [asignadoA, setAsignadoA] = useState(item?.memberId || miembros[0]?.id || '')
+  const [asignadoA, setAsignadoA] = useState(item?.memberId || defaultAsignado || miembros[0]?.id || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [confirmarBorrar, setConfirmarBorrar] = useState(false)
@@ -155,6 +156,7 @@ export default function RutaCriticaPage() {
   const [miembros, setMiembros] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<'new' | Actividad | null>(null)
+  const [nuevoPara, setNuevoPara] = useState<string | undefined>(undefined)
   const [error, setError] = useState('')
 
   async function cargar() {
@@ -246,7 +248,7 @@ export default function RutaCriticaPage() {
           </div>
         </div>
 
-        <button onClick={() => setModal('new')}
+        <button onClick={() => { setNuevoPara(undefined); setModal('new') }}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl mb-5 text-sm font-bold transition-all"
           style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: '1px solid rgba(180,185,210,0.22)' }}>
           <Plus size={16} /> Nueva actividad
@@ -274,6 +276,12 @@ export default function RutaCriticaPage() {
                   <span className="flex items-center gap-1 text-[10px]" style={{ color: S.silverDim }}>
                     <ListChecks size={11} /> {m.tasks.length}
                   </span>
+                  <button onClick={() => { setNuevoPara(m.id); setModal('new') }}
+                    className="w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center transition-all"
+                    style={{ background: 'rgba(180,185,210,0.08)', border: `1px solid ${S.border}`, color: S.silver }}
+                    title={`Agregar actividad a ${nombreCorto(m.name)}`}>
+                    <Plus size={13} />
+                  </button>
                 </div>
                 {m.tasks.length === 0 ? (
                   <p className="text-xs px-5 py-3" style={{ color: S.silverDim }}>Sin actividades asignadas</p>
@@ -302,7 +310,8 @@ export default function RutaCriticaPage() {
         <ActividadModal
           item={modal === 'new' ? null : modal}
           miembros={asignables}
-          onClose={() => setModal(null)}
+          defaultAsignado={nuevoPara}
+          onClose={() => { setModal(null); setNuevoPara(undefined) }}
           onSave={async (texto, asignadoA) => {
             setError('')
             try {
