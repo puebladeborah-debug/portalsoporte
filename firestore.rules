@@ -100,6 +100,9 @@ service cloud.firestore {
     match /fechas_importantes/{docId} {
       allow read, write: if request.auth != null;
     }
+    match /seguimiento_skool/{docId} {
+      allow read, write: if request.auth != null;
+    }
 
     // Agenda personal (Pendientes, Notas, Llamadas): privada de verdad.
     // Ni siquiera el administrador puede leer o escribir lo de otra
