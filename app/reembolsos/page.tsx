@@ -13,6 +13,7 @@ import { IMPORT_DISPUTAS_2026 } from '@/lib/reembolsosImport2026'
 import { IMPORT_REEMBOLSOS_DOCS_2026 } from '@/lib/reembolsosImportDocs2026'
 import { IMPORT_REEMBOLSOS_SEP_2026 } from '@/lib/reembolsosImportSep2026'
 import { IMPORT_REEMBOLSOS_KAJABI_SEP_2026 } from '@/lib/reembolsosImportKajabiSep2026'
+import { IMPORT_REEMBOLSOS_OCT_2026 } from '@/lib/reembolsosImportOct2026'
 
 const S = {
   bg:           'var(--th-bg)',
@@ -57,6 +58,16 @@ type Reembolso = {
   importId?: string
   resultado?: Resultado
 }
+
+// Hotmart repetidos: la misma transacción quedó cargada dos veces, una desde
+// la hoja "disputas 2026" (monto correcto) y otra desde los exports de
+// Hotmart (montos en la moneda de compra etiquetados como MXN). Se conserva
+// la de la hoja y se borra la del export.
+const HOTMART_REPETIDOS = new Set([
+  'HP0155595229', 'HP2181372567', 'HP0538356846',
+  'HP4198277731', 'HP2945269868', 'HP3395426081',
+])
+const IMPORT_ID_DOCS = 'reembolsos-docs-2026-v1'
 
 const PLATAFORMAS = [
   'Kajabi', 'Stripe LLC', 'Stripe Meses', 'Stripe Contado', 'Hotmart', 'Skool',
@@ -902,6 +913,7 @@ export default function ReembolsosPage() {
   const yaImportadoDocs = reembolsos.some(r => r.importId === 'reembolsos-docs-2026-v1')
   const yaImportadoSep2026 = reembolsos.some(r => r.importId === 'reembolsos-sep2026-v1')
   const yaImportadoKajabiSep2026 = reembolsos.some(r => r.importId === 'reembolsos-kajabi-sep2026-v1')
+  const yaImportadoOct2026 = reembolsos.some(r => r.importId === 'reembolsos-oct2026-v1')
 
   async function importarDisputas2026() {
     if (yaImportado) { setImportMsg('Estos datos ya se habían importado antes.'); return }
@@ -971,6 +983,28 @@ export default function ReembolsosPage() {
     setImportMsg(`Se importaron ${IMPORT_REEMBOLSOS_KAJABI_SEP_2026.length} reembolsos nuevos de Kajabi (8 sep 2026). Se excluyó 1 por estar duplicado con Stripe Contado.`)
   }
 
+  async function importarOct2026() {
+    if (yaImportadoOct2026) { setImportMsg('Estos datos ya se habían importado antes.'); return }
+    setImportando(true)
+    setImportMsg('')
+    // Se salta cualquier devolución cuyo número de operación ya exista en la
+    // base (por ejemplo, una que alguien capturó a mano), para no duplicarla.
+    const existentes = new Set(reembolsos.map(r => r.numeroOperacion).filter(Boolean))
+    const nuevos = IMPORT_REEMBOLSOS_OCT_2026.filter(i => !existentes.has(i.numeroOperacion))
+    for (const item of nuevos) {
+      const fecha = new Date(item.fechaDevolucion + 'T12:00:00').toISOString()
+      await addReembolso({
+        ...item,
+        createdBy: session?.memberName || 'Importado',
+        createdAt: fecha,
+        updatedAt: fecha,
+      } as Omit<Reembolso, 'id'>)
+    }
+    setImportando(false)
+    const omitidos = IMPORT_REEMBOLSOS_OCT_2026.length - nuevos.length
+    setImportMsg(`Se importaron ${nuevos.length} reembolsos nuevos (Hotmart, Kajabi, Stripe LLC y Stripe Meses, 15 oct 2026).${omitidos ? ` Se omitieron ${omitidos} que ya estaban registrados.` : ''}`)
+  }
+
   // Los dos cargos de Stripe que quedaron ambiguos: el extracto real muestra
   // un total reembolsado distinto al que se había registrado a mano en el Excel.
   const CORRECCIONES_EXTRACTO: {
@@ -996,6 +1030,22 @@ export default function ReembolsosPage() {
     const r = reembolsos.find(x => x.numeroOperacion === c.opIdViejo)
     return r && r.monto !== c.montoNuevo
   })
+
+  // Solo se borra la copia del export si la de la hoja sí existe, para
+  // nunca dejar una transacción sin registro.
+  const repetidosHotmart = reembolsos.filter(r =>
+    r.importId === IMPORT_ID_DOCS &&
+    HOTMART_REPETIDOS.has(r.numeroOperacion) &&
+    reembolsos.some(o => o.id !== r.id && o.numeroOperacion === r.numeroOperacion && o.importId !== IMPORT_ID_DOCS)
+  )
+
+  async function quitarRepetidosHotmart() {
+    setImportando(true)
+    setImportMsg('')
+    for (const r of repetidosHotmart) await removeReembolso(r.id)
+    setImportando(false)
+    setImportMsg(`Se borraron ${repetidosHotmart.length} reembolsos repetidos de Hotmart.`)
+  }
 
   async function corregirMontosSegunExtracto() {
     setImportando(true)
@@ -1093,6 +1143,22 @@ export default function ReembolsosPage() {
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mb-3 text-xs font-bold transition-all"
                 style={{ background: 'rgba(180,185,210,0.06)', color: S.silver, border: `1px solid ${S.border}`, opacity: importando ? 0.6 : 1 }}>
                 <Upload size={14} /> {importando ? 'Importando…' : 'Importar reembolsos Kajabi (8 sep 2026)'}
+              </button>
+            )}
+
+            {!yaImportadoOct2026 && (
+              <button onClick={importarOct2026} disabled={importando}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mb-3 text-xs font-bold transition-all"
+                style={{ background: 'rgba(180,185,210,0.06)', color: S.silver, border: `1px solid ${S.border}`, opacity: importando ? 0.6 : 1 }}>
+                <Upload size={14} /> {importando ? 'Importando…' : 'Importar reembolsos nuevos (15 oct 2026)'}
+              </button>
+            )}
+
+            {repetidosHotmart.length > 0 && (
+              <button onClick={quitarRepetidosHotmart} disabled={importando}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl mb-3 text-xs font-bold transition-all"
+                style={{ background: 'rgba(220,80,80,0.08)', color: '#e07070', border: '1px solid rgba(220,80,80,0.3)', opacity: importando ? 0.6 : 1 }}>
+                <Trash2 size={14} /> {importando ? 'Borrando…' : `Borrar ${repetidosHotmart.length} reembolsos repetidos de Hotmart`}
               </button>
             )}
 
