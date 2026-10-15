@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Plus, X, Trash2, Pencil, Search, MessageSquareHeart } from 'lucide-react'
+import { Plus, X, Trash2, Pencil, Search, MessageSquareHeart, FileText, Download } from 'lucide-react'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from '@/components/LoginGate'
 import FechaInput from '@/components/FechaInput'
@@ -16,6 +16,11 @@ const S = {
   silverBright: 'var(--th-bright)',
   silverDim:    'var(--th-dim)',
 }
+
+const PDFS = [
+  { titulo: 'Mensajes de acompañamiento', detalle: 'Planes de 3, 6 y 12 meses', href: '/seguimiento-skool/Mensajes_acompanamiento_Club_Sinergetico.pdf' },
+  { titulo: 'WhatsApp · GHL', detalle: 'Máximo 990 caracteres por mensaje', href: '/seguimiento-skool/WhatsApp_GHL_Club_Sinergetico_990_caracteres.pdf' },
+]
 
 type Seguimiento = {
   id: string
@@ -168,6 +173,24 @@ export default function SeguimientoSkoolPage() {
           <p className="text-sm mt-1" style={{ color: S.silverDim }}>
             Registro de los mensajes de seguimiento enviados a los miembros
           </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+          {PDFS.map(p => (
+            <a key={p.href} href={p.href} download target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
+              style={{ background: S.card, border: `1px solid ${S.borderLight}` }}>
+              <div className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(220,80,80,0.08)', border: '1px solid rgba(220,80,80,0.2)', color: '#e07070' }}>
+                <FileText size={16} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold truncate" style={{ color: S.silverBright }}>{p.titulo}</p>
+                <p className="text-[11px]" style={{ color: S.silverDim }}>PDF · {p.detalle}</p>
+              </div>
+              <Download size={15} style={{ color: S.silverDim }} />
+            </a>
+          ))}
         </div>
 
         <div className="flex gap-2 mb-3">
