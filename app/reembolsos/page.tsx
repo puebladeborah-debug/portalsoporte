@@ -8,6 +8,7 @@ import {
   CheckCircle2, CircleDashed, Gavel, Search,
 } from 'lucide-react'
 import { useAuth } from '@/components/LoginGate'
+import HistorialAxis from '@/components/HistorialAxis'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { IMPORT_DISPUTAS_2026 } from '@/lib/reembolsosImport2026'
 import { IMPORT_REEMBOLSOS_DOCS_2026 } from '@/lib/reembolsosImportDocs2026'
@@ -252,6 +253,8 @@ function ReembolsoModal({ reembolso, onClose, onSaved, addReembolso, updateReemb
                 className="w-full px-3 py-2.5 rounded-xl outline-none text-sm" style={inputStyle} />
             </div>
           </div>
+
+          <HistorialAxis correo={correo} />
 
           <div>
             <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Producto</p>
