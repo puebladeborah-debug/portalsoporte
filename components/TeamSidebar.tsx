@@ -6,7 +6,7 @@ import {
   QrCode, Trash2, Pencil, Check, Zap, Bell, KeyRound, Sun,
 } from 'lucide-react'
 import QRCode from 'qrcode'
-import { getMembers, updateMember, addMemberDoc, deleteMemberDoc, createAuthAccount, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, EXEC_IDS } from '@/lib/teamStore'
+import { getMembers, getMemberFromServer, updateMember, addMemberDoc, deleteMemberDoc, createAuthAccount, recordAttendance, getAttendance, TeamMember, Permission, HorarioSemanal, DiaSemana, EXEC_IDS } from '@/lib/teamStore'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { useAuth } from './LoginGate'
 import { navItems } from './Navigation'
@@ -345,12 +345,36 @@ export default function TeamSidebar() {
     })
     setEditHorario(member.horario ?? {})
     setEditIsAdmin(member.isAdmin)
+    setAdminSave({ estado: 'idle' })
     setEditTabsPermitidas(member.tabsPermitidas ?? navItems.map(i => i.href))
     setEditPasaAsistencia(member.pasaAsistencia !== false)
     setEditTieneKPI(member.tieneKPI !== false)
     setTimeout(() => {
       if (editScrollRef.current) editScrollRef.current.scrollTop = 0
     }, 50)
+  }
+
+  // Guarda SOLO el acceso de administrador de la persona que se está editando
+  // y lo confirma leyendo directo del servidor, para no dar un "listo" falso.
+  const [adminSave, setAdminSave] = useState<{ estado: 'idle' | 'saving' | 'ok' | 'error'; msg?: string }>({ estado: 'idle' })
+
+  async function guardarAcceso() {
+    if (!editingMember || editingMember.id === 'dlp') return
+    const memberId = editingMember.id
+    const valor = editIsAdmin
+    setAdminSave({ estado: 'saving' })
+    try {
+      await updateMember(memberId, { isAdmin: valor })
+      const guardado = await getMemberFromServer(memberId)
+      if (!guardado) throw new Error('No se encontró el perfil en la base de datos')
+      if (guardado.isAdmin !== valor) throw new Error('La base de datos no aceptó el cambio')
+      setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, isAdmin: valor } : m)))
+      setEditingMember(prev => (prev ? { ...prev, isAdmin: valor } : prev))
+      setAdminSave({ estado: 'ok' })
+      setTimeout(() => setAdminSave({ estado: 'idle' }), 3000)
+    } catch (err) {
+      setAdminSave({ estado: 'error', msg: err instanceof Error ? err.message : 'No se pudo guardar' })
+    }
   }
 
   async function saveEditMember() {
@@ -880,9 +904,22 @@ export default function TeamSidebar() {
                 }}>
                 <input type="checkbox" checked={editIsAdmin}
                   disabled={editingMember?.id === 'dlp'}
-                  onChange={e => setEditIsAdmin(e.target.checked)} />
+                  onChange={e => { setEditIsAdmin(e.target.checked); setAdminSave({ estado: 'idle' }) }} />
                 Administrador (acceso total)
               </label>
+              {editingMember?.id !== 'dlp' && editIsAdmin !== editingMember?.isAdmin && (
+                <button onClick={guardarAcceso} disabled={adminSave.estado === 'saving'}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold"
+                  style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.35)', opacity: adminSave.estado === 'saving' ? 0.6 : 1 }}>
+                  <Check size={12} /> {adminSave.estado === 'saving' ? 'Guardando…' : 'Guardar cambios de acceso'}
+                </button>
+              )}
+              {adminSave.estado === 'ok' && (
+                <p className="text-[10px] text-center" style={{ color: '#70c080' }}>✓ Acceso guardado y confirmado en el servidor</p>
+              )}
+              {adminSave.estado === 'error' && (
+                <p className="text-[10px] text-center" style={{ color: '#e07070' }}>No se guardó: {adminSave.msg}</p>
+              )}
 
               {/* Participación operativa */}
               <div>
@@ -1057,7 +1094,7 @@ export default function TeamSidebar() {
                 <button onClick={saveEditMember} disabled={savingTeam}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
                   style={{ background: 'rgba(180,185,210,0.1)', color: S.silverBright, border: `1px solid ${S.borderActive}`, opacity: savingTeam ? 0.6 : 1 }}>
-                  <Check size={14} /> {savingTeam ? 'Guardando…' : 'Guardar'}
+                  <Check size={14} /> {savingTeam ? 'Guardando…' : 'Guardar cambios'}
                 </button>
               </div>
             </div>
