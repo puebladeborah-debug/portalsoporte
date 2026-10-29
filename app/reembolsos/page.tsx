@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   Plus, X, Calendar, FileText, Trash2, BarChart3, List,
   Trophy, Banknote, ShieldCheck, ShieldOff, ShieldAlert,
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/LoginGate'
 import HistorialAxis from '@/components/HistorialAxis'
+import FechaInput from '@/components/FechaInput'
 import { useFirestoreCollection } from '@/lib/firestoreCollection'
 import { IMPORT_DISPUTAS_2026 } from '@/lib/reembolsosImport2026'
 import { IMPORT_REEMBOLSOS_DOCS_2026 } from '@/lib/reembolsosImportDocs2026'
@@ -31,6 +33,13 @@ const S = {
 type Divisa = 'MXN' | 'USD' | 'CAD'
 type Acceso = 'activo' | 'sin-acceso' | 'revocado'
 type Resultado = 'completo' | 'parcial' | 'disputa-perdida'
+type EstatusCaso = 'en-disputa' | 'ganada' | 'perdida'
+
+const ESTATUS_CASO: { id: EstatusCaso; label: string }[] = [
+  { id: 'en-disputa', label: 'En disputa' },
+  { id: 'ganada',     label: 'Disputa ganada' },
+  { id: 'perdida',    label: 'Disputa perdida' },
+]
 
 type Reembolso = {
   id: string
@@ -58,6 +67,9 @@ type Reembolso = {
   updatedAt: string
   importId?: string
   resultado?: Resultado
+  estatusCaso?: EstatusCaso | ''
+  fechaVencimiento?: string
+  apiUpdatedAt?: string
 }
 
 // Hotmart repetidos: la misma transacción quedó cargada dos veces, una desde
@@ -127,6 +139,8 @@ function ReembolsoModal({ reembolso, onClose, onSaved, addReembolso, updateReemb
   const [productoDetalle, setProductoDetalle] = useState(reembolso?.productoDetalle || '')
   const [acceso, setAcceso] = useState<Acceso>(reembolso?.acceso || 'activo')
   const [resultado, setResultado] = useState<Resultado | ''>(reembolso?.resultado || '')
+  const [estatusCaso, setEstatusCaso] = useState<EstatusCaso | ''>(reembolso?.estatusCaso || '')
+  const [fechaVencimiento, setFechaVencimiento] = useState(reembolso?.fechaVencimiento || '')
   const [banco, setBanco] = useState(reembolso?.banco || BANCOS[0])
   const [bancoDetalle, setBancoDetalle] = useState(reembolso?.bancoDetalle || '')
   const [numeroTarjeta, setNumeroTarjeta] = useState(reembolso?.numeroTarjeta || '')
@@ -146,6 +160,8 @@ function ReembolsoModal({ reembolso, onClose, onSaved, addReembolso, updateReemb
       banco, bancoDetalle, numeroTarjeta, numeroOperacion, notas,
       costoEmpresa: parseFloat(costoEmpresa.replace(/,/g, '')) || 0, costoEmpresaDivisa,
       ...(resultado ? { resultado } : {}),
+      // Vacíos se guardan como '' para que, al editar, limpiar el campo sí quite el valor anterior.
+      estatusCaso, fechaVencimiento,
     }
     const now = new Date().toISOString()
     if (reembolso) {
@@ -299,6 +315,28 @@ function ReembolsoModal({ reembolso, onClose, onSaved, addReembolso, updateReemb
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Estatus de la disputa (opcional)</p>
+            <div className="flex flex-wrap gap-2">
+              {ESTATUS_CASO.map(e => (
+                <button key={e.id} onClick={() => setEstatusCaso(prev => prev === e.id ? '' : e.id)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                  style={estatusCaso === e.id
+                    ? { background: 'rgba(220,190,60,0.15)', color: '#dcbe3c', border: '1px solid rgba(220,190,60,0.4)' }
+                    : { background: 'rgba(180,185,210,0.05)', color: S.silverDim, border: `1px solid ${S.border}` }
+                  }>
+                  {e.label}
+                </button>
+              ))}
+            </div>
+            {estatusCaso === 'en-disputa' && (
+              <div className="mt-2">
+                <p className="text-[10px] tracking-widest uppercase mb-1.5" style={{ color: S.silverDim }}>Fecha límite para responder</p>
+                <FechaInput value={fechaVencimiento} onChange={setFechaVencimiento} />
+              </div>
+            )}
           </div>
 
           <div>
@@ -847,7 +885,7 @@ function FiltrosReembolsos({
 }
 
 /* ─── Página principal ───────────────────────────────────────────────────── */
-export default function ReembolsosPage() {
+function ReembolsosContenido() {
   const { session } = useAuth()
   const [vista, setVista] = useState<'lista' | 'stats'>('lista')
   const [modal, setModal] = useState<'new' | Reembolso | null>(null)
@@ -861,8 +899,20 @@ export default function ReembolsosPage() {
   const [fDia, setFDia] = useState('')
   const [busqueda, setBusqueda] = useState('')
 
-  const { data: todos, loading, add: addReembolso, update: updateReembolso, remove: removeReembolso } =
+  const { data: todos, loading, add: addRaw, update: updateRaw, remove: removeReembolso } =
     useFirestoreCollection<Reembolso>('reembolsos')
+
+  // Cada alta o cambio (manual o importación) sella apiUpdatedAt: es el campo
+  // confiable que usa la API interna para el polling de cambios.
+  const addReembolso = (item: Omit<Reembolso, 'id'>) =>
+    addRaw({ ...item, apiUpdatedAt: new Date().toISOString() })
+  const updateReembolso = (id: string, item: Partial<Reembolso>) =>
+    updateRaw(id, { ...item, apiUpdatedAt: new Date().toISOString() })
+
+  // Enlace directo a un caso: /reembolsos?caso=<id> abre su ficha (lo usa url_portal de la API).
+  const casoParam = useSearchParams().get('caso')
+  const [casoDescartado, setCasoDescartado] = useState(false)
+  const modalActual = modal ?? (casoParam && !casoDescartado ? todos.find(x => x.id === casoParam) ?? null : null)
 
   const reembolsos = [...todos].sort((a, b) => b.fechaDevolucion.localeCompare(a.fechaDevolucion))
 
@@ -1072,6 +1122,7 @@ export default function ReembolsosPage() {
 
   function cerrarModal() {
     setModal(null)
+    setCasoDescartado(true)
   }
 
   return (
@@ -1242,10 +1293,10 @@ export default function ReembolsosPage() {
         )}
       </div>
 
-      {modal && (
+      {modalActual && (
         <ReembolsoModal
-          reembolso={modal === 'new' ? null : modal}
-          onClose={() => setModal(null)}
+          reembolso={modalActual === 'new' ? null : modalActual}
+          onClose={cerrarModal}
           onSaved={cerrarModal}
           addReembolso={addReembolso}
           updateReembolso={updateReembolso}
@@ -1253,5 +1304,13 @@ export default function ReembolsosPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function ReembolsosPage() {
+  return (
+    <Suspense fallback={null}>
+      <ReembolsosContenido />
+    </Suspense>
   )
 }

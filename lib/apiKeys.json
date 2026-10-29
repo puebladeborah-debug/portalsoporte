@@ -1,0 +1,14 @@
+[
+  {
+    "consumidor": "donna",
+    "sha256": "f953217e938f85afc3966b49d2a2ee440305fdb543cd470b51a8118c4eca3868"
+  },
+  {
+    "consumidor": "comercial",
+    "sha256": "ac229302967ba46576fafb0340c4d3ec8b71e059537ce38ae938f4a810ba8d66"
+  },
+  {
+    "consumidor": "cron",
+    "sha256": "d7ab0997af5e20c336e09ae6c1b1c619d0a8969632e86a73f85c6afc072ab1f5"
+  }
+]
