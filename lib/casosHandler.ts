@@ -12,13 +12,30 @@ async function leerTodos(): Promise<DocReembolso[]> {
   return snap.docs.map(d => ({ ...(d.data() as Omit<DocReembolso, 'id'>), id: d.id }))
 }
 
+function clasificarError(err: unknown) {
+  const e = err as { code?: unknown; message?: string; name?: string }
+  const msg = String(e?.message || '')
+  if (e?.name === 'SyntaxError') return 'credencial_json_invalido'
+  if (/private key|PEM|DECODER|asn1/i.test(msg)) return 'credencial_llave_invalida'
+  if (/invalid_grant|UNAUTHENTICATED|default credentials|invalid_rapt|Getting metadata/i.test(msg) || e?.code === 16) return 'credencial_rechazada'
+  if (/PERMISSION_DENIED|permission/i.test(msg) || e?.code === 7) return 'sin_permiso_firestore'
+  if (/NOT_FOUND|does not exist|has not been used|disabled/i.test(msg) || e?.code === 5) return 'firestore_no_encontrado_o_desactivado'
+  return 'desconocida'
+}
+
 function envolver(request: Request, trabajo: (consumidor: string) => Promise<NextResponse>) {
   const inicio = Date.now()
   const auth = autenticar(request)
   if (!auth.ok) return Promise.resolve(auth.respuesta)
   const respuesta = !adminConfigurado()
     ? Promise.resolve(NextResponse.json({ error: 'Base de datos no configurada en el servidor' }, { status: 503 }))
-    : trabajo(auth.consumidor).catch(() => NextResponse.json({ error: 'Error interno' }, { status: 500 }))
+    : trabajo(auth.consumidor).catch(err => {
+        // Se registra y se devuelve solo la categoría de la falla (nunca el mensaje
+        // completo, que podría incluir datos de la credencial).
+        const causa = clasificarError(err)
+        console.error(JSON.stringify({ api: 'v1', error: causa, codigo: (err as { code?: unknown })?.code ?? null }))
+        return NextResponse.json({ error: 'Error interno', causa }, { status: 500 })
+      })
   return respuesta.then(r => { logAcceso(auth.consumidor, request, r.status, inicio); return r })
 }
 
